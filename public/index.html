@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0369a1" />
+    <title>Masuk — SiKasir</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
+    <link rel="apple-touch-icon" href="/icons/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div class="login-page">
+      <div class="login-card">
+        <div class="login-brand">
+          <img src="/icons/logo.svg" alt="" width="48" height="48" />
+          <div>
+            <h1>SiKasir</h1>
+            <p style="margin: 0; color: var(--text); font-size: 0.9rem">
+              Supermarket POS &amp; stok
+            </p>
+          </div>
+        </div>
+        <div id="login-alert" class="alert alert-error hidden"></div>
+        <div class="auth-tabs" role="tablist">
+          <button type="button" class="auth-tab active" id="tab-login" data-panel="login" aria-selected="true">
+            Masuk
+          </button>
+          <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
+            Daftar
+          </button>
+        </div>
+
+        <form id="login-form" class="auth-panel" data-panel="login">
+          <div class="field">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="password-field">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+              <button type="button" class="btn-pw-toggle" data-pw-target="password">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+        </form>
+
+        <form id="register-form" class="auth-panel hidden" data-panel="register">
+          <p class="auth-hint">Buat akun kasir baru (akses POS &amp; riwayat).</p>
+          <div class="field">
+            <label for="reg-username">Username</label>
+            <input
+              id="reg-username"
+              name="username"
+              autocomplete="username"
+              required
+              minlength="3"
+              maxlength="64"
+              title="Nama atau nama pengguna (huruf, angka, spasi, titik, dll.)"
+            />
+          </div>
+          <div class="field">
+            <label for="reg-password">Password</label>
+            <div class="password-field">
+              <input
+                id="reg-password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="8"
+              />
+              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="reg-password2">Ulangi password</label>
+            <div class="password-field">
+              <input
+                id="reg-password2"
+                name="password2"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="8"
+              />
+              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password2">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Daftar</button>
+        </form>
+      </div>
+    </div>
+    <footer class="app-footer-watermark">Product by Sivilize Corp</footer>
+    <script type="module" src="/js/login.js"></script>
+  </body>
+</html>
