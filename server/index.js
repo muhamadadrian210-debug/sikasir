@@ -11,6 +11,7 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeBody } = require('./middleware/sanitize');
 const { issueCsrf, csrfProtection } = require('./middleware/csrf');
 
+const setupRoutes = require('./routes/setup');
 const authRoutes = require('./routes/auth');
 const categoriesRoutes = require('./routes/categories');
 const productsRoutes = require('./routes/products');
@@ -42,6 +43,9 @@ app.get('/api/csrf-token', issueCsrf);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+/** Setup admin pertama — tidak butuh auth */
+app.use('/api/setup', setupRoutes);
 
 app.use('/api', apiLimiter);
 app.use('/api', csrfProtection);

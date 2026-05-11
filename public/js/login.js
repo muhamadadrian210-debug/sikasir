@@ -10,6 +10,19 @@ if (localStorage.getItem('sikasir_token')) {
   window.location.href = localStorage.getItem('sikasir_app_mode') ? '/app.html' : '/mode.html';
 }
 
+// Cek apakah admin sudah ada, kalau belum redirect ke setup
+(async () => {
+  try {
+    const res = await fetch('/api/setup/status');
+    const data = await res.json();
+    if (!data.hasAdmin) {
+      window.location.href = '/setup.html';
+    }
+  } catch {
+    // Server belum siap, biarkan halaman login tampil
+  }
+})();
+
 function showAlert(msg, kind = 'error') {
   alertEl.textContent = msg;
   alertEl.className = `alert ${kind === 'success' ? 'alert-success' : 'alert-error'}`;

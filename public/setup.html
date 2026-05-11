@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0369a1" />
+    <title>Setup Admin — SiKasir</title>
+    <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div class="login-page">
+      <div class="login-card">
+        <div class="login-brand">
+          <img src="/icons/logo.svg" alt="" width="48" height="48" />
+          <div>
+            <h1>SiKasir</h1>
+            <p style="margin:0;color:var(--text);font-size:0.9rem">Setup Awal</p>
+          </div>
+        </div>
+
+        <div id="setup-alert" class="alert alert-error hidden"></div>
+
+        <p style="color:var(--secondary);font-size:.9rem;margin-bottom:1rem">
+          Selamat datang! Buat akun admin pertama untuk mulai menggunakan SiKasir.
+        </p>
+
+        <form id="setup-form">
+          <div class="field">
+            <label for="setup-username">Username Admin</label>
+            <input
+              id="setup-username"
+              name="username"
+              autocomplete="username"
+              required
+              minlength="3"
+              maxlength="64"
+              placeholder="Contoh: admin"
+            />
+          </div>
+          <div class="field">
+            <label for="setup-password">Password</label>
+            <div class="password-field">
+              <input
+                id="setup-password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="8"
+                placeholder="Minimal 8 karakter"
+              />
+              <button type="button" class="btn-pw-toggle" data-pw-target="setup-password">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="setup-password2">Ulangi Password</label>
+            <div class="password-field">
+              <input
+                id="setup-password2"
+                name="password2"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="8"
+                placeholder="Ulangi password"
+              />
+              <button type="button" class="btn-pw-toggle" data-pw-target="setup-password2">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="setup-btn">
+            Buat Akun Admin
+          </button>
+        </form>
+      </div>
+    </div>
+    <footer class="app-footer-watermark">Product by Sivilize Corp</footer>
+
+    <script type="module">
+      const alertEl = document.getElementById('setup-alert');
+
+      function showAlert(msg, kind = 'error') {
+        alertEl.textContent = msg;
+        alertEl.className = `alert alert-${kind === 'success' ? 'success' : 'alert-error'}`;
+        alertEl.classList.remove('hidden');
+      }
+
+      // Cek apakah admin sudah ada
+      async function checkStatus() {
+        try {
+          const res = await fetch('/api/setup/status');
+          const data = await res.json();
+          if (data.hasAdmin) {
+            // Admin sudah ada, redirect ke login
+            window.location.href = '/';
+          }
+        } catch {
+          // Server belum siap, biarkan form tampil
+        }
+      }
+      checkStatus();
+
+      // Toggle password visibility
+      document.querySelectorAll('.btn-pw-toggle').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-pw-target');
+          const input = document.getElementById(id);
+          if (!input) return;
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          btn.textContent = show ? 'Sembunyikan' : 'Tampilkan';
+        });
+      });
+
+      document.getElementById('setup-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        alertEl.classList.add('hidden');
+
+        const username = document.getElementById('setup-username').value.trim();
+        const password = document.getElementById('setup-password').value;
+        const password2 = document.getElementById('setup-password2').value;
+
+        if (password !== password2) {
+          showAlert('Password tidak sama');
+          return;
+        }
+
+        const btn = document.getElementById('setup-btn');
+        btn.disabled = true;
+        btn.textContent = 'Membuat akun...';
+
+        try {
+          // Ambil CSRF token
+          const csrfRes = await fetch('/api/csrf-token');
+          const { csrfToken } = await csrfRes.json();
+
+          const res = await fetch('/api/setup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken,
+            },
+            body: JSON.stringify({ username, password }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showAlert(data.error || 'Gagal membuat admin');
+            btn.disabled = false;
+            btn.textContent = 'Buat Akun Admin';
+            return;
+          }
+
+          showAlert('Akun admin berhasil dibuat! Mengalihkan ke halaman login...', 'success');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        } catch (err) {
+          showAlert('Gagal terhubung ke server');
+          btn.disabled = false;
+          btn.textContent = 'Buat Akun Admin';
+        }
+      });
+    </script>
+  </body>
+</html>
