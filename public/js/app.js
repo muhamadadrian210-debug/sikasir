@@ -360,8 +360,12 @@ async function checkout() {
 }
 
 function printReceiptPdf(rec) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: [72, 200] });
+  const jsPDFLib = window.jspdf?.jsPDF || window.jsPDF;
+  if (!jsPDFLib) {
+    alert('Library PDF belum dimuat. Coba refresh halaman.');
+    return;
+  }
+  const doc = new jsPDFLib({ unit: 'mm', format: [72, 200] });
   let y = 8;
   doc.setFontSize(11);
   doc.text('SiKasir', 36, y, { align: 'center' });
@@ -660,8 +664,12 @@ async function loadReports() {
   document.getElementById('rep-export-pdf').onclick = () => {
     const r = window.__lastReport;
     if (!r) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const jsPDFLib = window.jspdf?.jsPDF || window.jsPDF;
+    if (!jsPDFLib) {
+      alert('Library PDF belum dimuat. Coba refresh halaman.');
+      return;
+    }
+    const doc = new jsPDFLib();
     let y = 10;
     doc.text('SiKasir — Laporan', 14, y);
     y += 8;
@@ -1038,6 +1046,12 @@ async function init() {
   document.getElementById('btn-change-mode').onclick = () => {
     window.location.href = '/mode.html';
   };
+
+  // PWA install button
+  const btnInstall = document.getElementById('btn-install-pwa');
+  if (btnInstall) {
+    btnInstall.onclick = () => window.__installPWA?.();
+  }
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
