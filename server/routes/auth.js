@@ -2,25 +2,27 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 const { clientIp } = require('../lib/ipLists');
 const { isLoginLocked, recordLoginFailure, clearLoginState } = require('../lib/loginBrute');
 
 const router = express.Router();
 
 /**
- * Pendaftaran publik: akun baru selalu role `kasir`.
- * Set PUBLIC_REGISTER=false untuk menonaktifkan (produksi ketat).
+ * Pendaftaran kasir baru oleh admin.
+ * Memerlukan JWT admin yang sudah login (tenant_id diambil dari token).
+ * PUBLIC_REGISTER=false menonaktifkan endpoint ini sepenuhnya.
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
     if (process.env.PUBLIC_REGISTER === 'false') {
-      return res.status(403).json({ error: 'Pendaftaran publik dinonaktifkan' });
+      return res.status(403).json({ error: 'Pendaftaran dinonaktifkan' });
     }
 
-    const { username, password } = req.body || {};
+    const { username, password, role } = req.body || {};
     const u = String(username || '').trim();
     const p = String(password || '');
+    const r = role === 'admin' ? 'admin' : 'kasir';
 
     if (!u || !p) {
       return res.status(400).json({ error: 'Username dan password wajib diisi' });
@@ -30,39 +32,47 @@ router.post('/register', async (req, res) => {
     }
     if (!/^[\p{L}\p{N} ._-]+$/u.test(u)) {
       return res.status(400).json({
-        error:
-          'Username hanya huruf, angka, spasi, titik, underscore, atau strip (tanpa karakter aneh)',
+        error: 'Username hanya huruf, angka, spasi, titik, underscore, atau strip',
       });
     }
     if (p.length < 8) {
       return res.status(400).json({ error: 'Password minimal 8 karakter' });
     }
 
+    const tenantId = req.user.tenant_id;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Konteks tenant tidak ditemukan. Silakan login ulang.' });
+    }
+
     const hash = await bcrypt.hash(p, 10);
     const [ins] = await pool.execute(
-      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-      [u, hash, 'kasir']
+      'INSERT INTO users (tenant_id, username, password_hash, role) VALUES (?, ?, ?, ?)',
+      [tenantId, u, hash, r]
     );
 
     const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
     const token = jwt.sign(
-      { id: ins.insertId, username: u, role: 'kasir' },
+      { id: ins.insertId, username: u, role: r, tenant_id: tenantId },
       secret,
       { expiresIn: '7d' }
     );
     res.status(201).json({
       token,
-      user: { id: ins.insertId, username: u, role: 'kasir' },
+      user: { id: ins.insertId, username: u, role: r, tenant_id: tenantId },
     });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'Username sudah dipakai' });
+      return res.status(409).json({ error: 'Username sudah dipakai di toko ini' });
     }
     console.error(e);
     res.status(500).json({ error: 'Gagal mendaftar' });
   }
 });
 
+/**
+ * Login — mencari user secara global berdasarkan username,
+ * lalu menyertakan tenant_id dalam JWT.
+ */
 router.post('/login', async (req, res) => {
   try {
     const ip = clientIp(req);
@@ -78,7 +88,7 @@ router.post('/login', async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      'SELECT id, username, password_hash, role FROM users WHERE username = ? LIMIT 1',
+      'SELECT id, tenant_id, username, password_hash, role FROM users WHERE username = ? LIMIT 1',
       [String(username).trim()]
     );
 
@@ -108,13 +118,13 @@ router.post('/login', async (req, res) => {
 
     const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id },
       secret,
       { expiresIn: '7d' }
     );
     res.json({
       token,
-      user: { id: user.id, username: user.username, role: user.role },
+      user: { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id },
     });
   } catch (e) {
     console.error(e);
@@ -125,7 +135,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, username, role, created_at FROM users WHERE id = ? LIMIT 1',
+      'SELECT id, tenant_id, username, role, created_at FROM users WHERE id = ? LIMIT 1',
       [req.user.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Pengguna tidak ditemukan' });

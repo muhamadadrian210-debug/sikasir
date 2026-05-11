@@ -24,4 +24,15 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authMiddleware, requireRole };
+/**
+ * Ensures the authenticated user has a tenant_id in their JWT.
+ * Use after authMiddleware on routes that require tenant context.
+ */
+function requireTenant(req, res, next) {
+  if (!req.user || !req.user.tenant_id) {
+    return res.status(401).json({ error: 'Konteks tenant diperlukan. Silakan login ulang.' });
+  }
+  next();
+}
+
+module.exports = { authMiddleware, requireRole, requireTenant };

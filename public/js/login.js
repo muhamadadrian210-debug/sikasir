@@ -1,4 +1,4 @@
-import { api, setToken, setUser } from './api.js';
+import { api, setToken, setUser, clearAuth } from './api.js';
 
 const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
@@ -6,11 +6,12 @@ const alertEl = document.getElementById('login-alert');
 const tabLogin = document.getElementById('tab-login');
 const tabRegister = document.getElementById('tab-register');
 
+// If already logged in, skip to app
 if (localStorage.getItem('sikasir_token')) {
   window.location.href = localStorage.getItem('sikasir_app_mode') ? '/app.html' : '/mode.html';
 }
 
-// Cek apakah admin sudah ada, kalau belum redirect ke setup
+// Cek apakah setup sudah dilakukan — kalau belum ada tenant, redirect ke setup
 (async () => {
   try {
     const res = await fetch('/api/setup/status');
@@ -63,6 +64,10 @@ loginForm.addEventListener('submit', async (e) => {
     localStorage.removeItem('sikasir_app_mode');
     window.location.href = '/mode.html';
   } catch (err) {
+    // If server returns 401 with stale session hint, clear any stored token
+    if (err.status === 401) {
+      clearAuth();
+    }
     showAlert(err.message || 'Gagal masuk');
   }
 });

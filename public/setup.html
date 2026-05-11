@@ -30,6 +30,18 @@
 
         <form id="setup-form">
           <div class="field">
+            <label for="setup-store-name">Nama Toko</label>
+            <input
+              id="setup-store-name"
+              name="store_name"
+              autocomplete="organization"
+              required
+              minlength="2"
+              maxlength="255"
+              placeholder="Contoh: Toko Maju Jaya"
+            />
+          </div>
+          <div class="field">
             <label for="setup-username">Username Admin</label>
             <input
               id="setup-username"
@@ -123,6 +135,7 @@
         e.preventDefault();
         alertEl.classList.add('hidden');
 
+        const store_name = document.getElementById('setup-store-name').value.trim();
         const username = document.getElementById('setup-username').value.trim();
         const password = document.getElementById('setup-password').value;
         const password2 = document.getElementById('setup-password2').value;
@@ -147,7 +160,7 @@
               'Content-Type': 'application/json',
               'X-CSRF-Token': csrfToken,
             },
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify({ store_name, username, password }),
           });
           const data = await res.json();
 

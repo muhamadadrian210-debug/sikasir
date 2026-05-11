@@ -1,14 +1,17 @@
 const express = require('express');
 const { pool } = require('../config/db');
-const { authMiddleware, requireRole } = require('../middleware/auth');
+const { authMiddleware, requireRole, requireTenant } = require('../middleware/auth');
+const { tenantId } = require('../middleware/tenant');
 const { auditAdmin } = require('../lib/audit');
 
 const router = express.Router();
 router.use(authMiddleware);
+router.use(requireTenant);
 router.use(requireRole('admin'));
 
 router.get('/summary/today', async (req, res) => {
   try {
+    const tid = tenantId(req);
     let day = req.query.date ? String(req.query.date).slice(0, 10) : null;
     if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
       day = new Date().toISOString().slice(0, 10);
@@ -16,8 +19,8 @@ router.get('/summary/today', async (req, res) => {
     const [rows] = await pool.execute(
       `SELECT COUNT(*) AS items, COALESCE(SUM(quantity),0) AS total_qty
        FROM incoming_goods
-       WHERE entry_date = ?`,
-      [day]
+       WHERE tenant_id = ? AND entry_date = ?`,
+      [tid, day]
     );
     res.json(rows[0] || { items: 0, total_qty: 0 });
   } catch (e) {
@@ -28,6 +31,7 @@ router.get('/summary/today', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const [rows] = await pool.execute(
       `SELECT g.id, g.entry_date, g.description, g.quantity, g.unit, g.product_id, g.created_at,
@@ -35,9 +39,9 @@ router.get('/', async (req, res) => {
        FROM incoming_goods g
        JOIN users u ON u.id = g.created_by
        LEFT JOIN products p ON p.id = g.product_id
-       WHERE g.entry_date = ?
+       WHERE g.tenant_id = ? AND g.entry_date = ?
        ORDER BY g.created_at DESC`,
-      [date]
+      [tid, date]
     );
     res.json(rows);
   } catch (e) {
@@ -47,6 +51,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+  const tid = tenantId(req);
   const { entry_date, description, quantity, unit, product_id } = req.body || {};
   const desc = String(description || '').trim();
   if (!desc) return res.status(400).json({ error: 'Deskripsi wajib (contoh: rokok filter 1 slof)' });
@@ -60,13 +65,17 @@ router.post('/', async (req, res) => {
   try {
     await conn.beginTransaction();
     const [ins] = await conn.execute(
-      `INSERT INTO incoming_goods (entry_date, description, quantity, unit, product_id, created_by)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [dateStr, desc, qty, unitStr, pid || null, req.user.id]
+      `INSERT INTO incoming_goods (tenant_id, entry_date, description, quantity, unit, product_id, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [tid, dateStr, desc, qty, unitStr, pid || null, req.user.id]
     );
 
     if (pid) {
-      const [u] = await conn.execute('UPDATE products SET stock = stock + ? WHERE id = ?', [qty, pid]);
+      // Only update stock for products belonging to this tenant
+      const [u] = await conn.execute(
+        'UPDATE products SET stock = stock + ? WHERE id = ? AND tenant_id = ?',
+        [qty, pid, tid]
+      );
       if (!u.affectedRows) {
         await conn.rollback();
         return res.status(400).json({ error: 'Produk terpilih tidak ditemukan' });
@@ -87,8 +96,12 @@ router.post('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const id = parseInt(req.params.id, 10);
-    const [r] = await pool.execute('DELETE FROM incoming_goods WHERE id=?', [id]);
+    const [r] = await pool.execute(
+      'DELETE FROM incoming_goods WHERE id=? AND tenant_id=?',
+      [id, tid]
+    );
     if (!r.affectedRows) return res.status(404).json({ error: 'Data tidak ditemukan' });
     await auditAdmin(req, 'incoming.delete', { id });
     res.json({ ok: true });

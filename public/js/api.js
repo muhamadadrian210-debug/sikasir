@@ -23,6 +23,12 @@ export function setUser(u) {
   else localStorage.removeItem('sikasir_user');
 }
 
+/** Clear all stored auth state (token + user). */
+export function clearAuth() {
+  localStorage.removeItem('sikasir_token');
+  localStorage.removeItem('sikasir_user');
+}
+
 async function getCsrfToken() {
   let res;
   try {

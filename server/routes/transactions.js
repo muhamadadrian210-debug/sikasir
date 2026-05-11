@@ -1,13 +1,16 @@
 const express = require('express');
 const { pool } = require('../config/db');
-const { authMiddleware, requireRole } = require('../middleware/auth');
+const { authMiddleware, requireRole, requireTenant } = require('../middleware/auth');
+const { tenantId } = require('../middleware/tenant');
 
 const router = express.Router();
 router.use(authMiddleware);
+router.use(requireTenant);
 
 router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
   const conn = await pool.getConnection();
   try {
+    const tid = tenantId(req);
     const { items, paid } = req.body || {};
     if (!Array.isArray(items) || !items.length) {
       return res.status(400).json({ error: 'Keranjang kosong' });
@@ -25,9 +28,10 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
       if (Number.isNaN(pid) || Number.isNaN(qty) || qty < 1) {
         return res.status(400).json({ error: 'Item tidak valid' });
       }
+      // Scope product lookup to tenant
       const [prows] = await conn.execute(
-        'SELECT id, sale_price, stock, name FROM products WHERE id = ? FOR UPDATE',
-        [pid]
+        'SELECT id, sale_price, stock, name FROM products WHERE id = ? AND tenant_id = ? FOR UPDATE',
+        [pid, tid]
       );
       if (!prows.length) {
         return res.status(400).json({ error: `Produk #${pid} tidak ada` });
@@ -49,8 +53,8 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
 
     await conn.beginTransaction();
     const [ins] = await conn.execute(
-      'INSERT INTO transactions (user_id, total, paid, change_amount) VALUES (?, ?, ?, ?)',
-      [req.user.id, total, paidNum, changeAmt]
+      'INSERT INTO transactions (tenant_id, user_id, total, paid, change_amount) VALUES (?, ?, ?, ?, ?)',
+      [tid, req.user.id, total, paidNum, changeAmt]
     );
     const txId = ins.insertId;
 
@@ -60,10 +64,10 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
          VALUES (?, ?, ?, ?, ?)`,
         [txId, line.product_id, line.qty, line.unit_price, line.subtotal]
       );
-      await conn.execute('UPDATE products SET stock = stock - ? WHERE id = ?', [
-        line.qty,
-        line.product_id,
-      ]);
+      await conn.execute(
+        'UPDATE products SET stock = stock - ? WHERE id = ? AND tenant_id = ?',
+        [line.qty, line.product_id, tid]
+      );
     }
 
     await conn.commit();
@@ -76,6 +80,12 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
   } catch (e) {
     await conn.rollback();
     console.error(e);
+    // Task 2: catch foreign key constraint error (stale JWT user_id)
+    if (e.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(401).json({
+        error: 'Sesi tidak valid. Silakan logout dan login kembali.',
+      });
+    }
     res.status(500).json({ error: 'Gagal menyimpan transaksi' });
   } finally {
     conn.release();
@@ -84,6 +94,7 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
     const offset = parseInt(req.query.offset, 10) || 0;
     const kasirOnly = req.user.role === 'kasir';
@@ -91,10 +102,11 @@ router.get('/', async (req, res) => {
       SELECT t.id, t.user_id, u.username AS kasir_name, t.total, t.paid, t.change_amount, t.created_at
       FROM transactions t
       JOIN users u ON u.id = t.user_id
+      WHERE t.tenant_id = ?
     `;
-    const params = [];
+    const params = [tid];
     if (kasirOnly) {
-      sql += ' WHERE t.user_id = ?';
+      sql += ' AND t.user_id = ?';
       params.push(req.user.id);
     }
     sql += ' ORDER BY t.created_at DESC LIMIT ? OFFSET ?';
@@ -109,15 +121,16 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const id = parseInt(req.params.id, 10);
     const kasirOnly = req.user.role === 'kasir';
     let sql = `
       SELECT t.id, t.user_id, u.username AS kasir_name, t.total, t.paid, t.change_amount, t.created_at
       FROM transactions t
       JOIN users u ON u.id = t.user_id
-      WHERE t.id = ?
+      WHERE t.id = ? AND t.tenant_id = ?
     `;
-    const params = [id];
+    const params = [id, tid];
     if (kasirOnly) {
       sql += ' AND t.user_id = ?';
       params.push(req.user.id);

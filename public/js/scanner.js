@@ -1,65 +1,53 @@
 /**
- * Barcode scanner via QuaggaJS (global Quagga from CDN)
+ * Barcode scanner via ZXing (global ZXing from CDN UMD build)
  */
-export function startScanner(targetEl, onCode) {
-  if (typeof Quagga === 'undefined') {
-    return Promise.reject(new Error('Quagga belum dimuat'));
-  }
-  return new Promise((resolve, reject) => {
-    Quagga.init(
-      {
-        inputStream: {
-          type: 'LiveStream',
-          target: targetEl,
-          constraints: {
-            facingMode: 'environment',
-            width: { min: 640 },
-            height: { min: 480 },
-          },
-        },
-        locator: { patchSize: 'medium', halfSample: true },
-        numOfWorkers: 2,
-        frequency: 10,
-        decoder: {
-          readers: [
-            'ean_reader',
-            'ean_8_reader',
-            'code_128_reader',
-            'code_39_reader',
-          ],
-        },
-        locate: true,
-      },
-      (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        Quagga.start();
-        resolve();
-      }
-    );
+let codeReader = null;
 
-    let last = '';
-    let t = 0;
-    Quagga.onDetected((data) => {
-      const code = data?.codeResult?.code;
-      if (!code) return;
+export async function startScanner(targetEl, onCode) {
+  const ZXing = window.ZXing;
+  if (!ZXing) {
+    throw new Error('ZXing belum dimuat');
+  }
+
+  // Create video element
+  const video = document.createElement('video');
+  video.style.width = '100%';
+  video.style.maxHeight = '300px';
+  targetEl.appendChild(video);
+
+  codeReader = new ZXing.BrowserMultiFormatReader();
+
+  // Prefer back/environment camera
+  const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
+  const backCamera =
+    devices.find((d) => /back|rear|environment/i.test(d.label)) ||
+    devices[devices.length - 1];
+  const deviceId = backCamera?.deviceId;
+
+  let last = '';
+  let lastTime = 0;
+
+  await codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+    if (result) {
+      const code = result.getText();
       const now = Date.now();
-      if (code === last && now - t < 1200) return;
+      // Debounce: ignore same code within 1.5 s
+      if (code === last && now - lastTime < 1500) return;
       last = code;
-      t = now;
+      lastTime = now;
       onCode(code);
-    });
+    }
+    // err is normal when no barcode in frame — ignore
   });
 }
 
 export function stopScanner() {
-  if (typeof Quagga !== 'undefined') {
+  if (codeReader) {
     try {
-      Quagga.stop();
+      codeReader.reset();
     } catch {
       /* noop */
     }
+    codeReader = null;
   }
 }

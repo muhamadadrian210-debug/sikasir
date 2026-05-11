@@ -1,9 +1,11 @@
 const express = require('express');
 const { pool } = require('../config/db');
-const { authMiddleware, requireRole } = require('../middleware/auth');
+const { authMiddleware, requireRole, requireTenant } = require('../middleware/auth');
+const { tenantId } = require('../middleware/tenant');
 
 const router = express.Router();
 router.use(authMiddleware);
+router.use(requireTenant);
 router.use(requireRole('admin'));
 
 function periodWhere(period) {
@@ -22,15 +24,16 @@ function periodWhere(period) {
 
 router.get('/sales-summary', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const period = req.query.period || 'daily';
     const start = periodWhere(period);
     const [rows] = await pool.execute(
       `SELECT DATE(t.created_at) AS day, SUM(t.total) AS revenue, COUNT(*) AS tx_count
        FROM transactions t
-       WHERE t.created_at >= ?
+       WHERE t.tenant_id = ? AND t.created_at >= ?
        GROUP BY DATE(t.created_at)
        ORDER BY day`,
-      [start]
+      [tid, start]
     );
     res.json(rows);
   } catch (e) {
@@ -41,6 +44,7 @@ router.get('/sales-summary', async (req, res) => {
 
 router.get('/margin', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const period = req.query.period || 'daily';
     const start = periodWhere(period);
     const [rows] = await pool.execute(
@@ -52,10 +56,10 @@ router.get('/margin', async (req, res) => {
        FROM transaction_items ti
        JOIN transactions t ON t.id = ti.transaction_id
        JOIN products p ON p.id = ti.product_id
-       WHERE t.created_at >= ?
+       WHERE t.tenant_id = ? AND t.created_at >= ?
        GROUP BY p.id, p.barcode, p.name
        ORDER BY profit DESC`,
-      [start]
+      [tid, start]
     );
     const [tot] = await pool.execute(
       `SELECT COALESCE(SUM(ti.subtotal),0) AS revenue,
@@ -63,8 +67,8 @@ router.get('/margin', async (req, res) => {
        FROM transaction_items ti
        JOIN transactions t ON t.id = ti.transaction_id
        JOIN products p ON p.id = ti.product_id
-       WHERE t.created_at >= ?`,
-      [start]
+       WHERE t.tenant_id = ? AND t.created_at >= ?`,
+      [tid, start]
     );
     res.json({
       products: rows,
@@ -80,13 +84,14 @@ router.get('/margin', async (req, res) => {
 
 router.get('/low-stock', async (req, res) => {
   try {
+    const tid = tenantId(req);
     const threshold = parseInt(req.query.threshold, 10) || 10;
     const [rows] = await pool.execute(
       `SELECT id, barcode, name, stock, sale_price
        FROM products
-       WHERE stock <= ?
+       WHERE tenant_id = ? AND stock <= ?
        ORDER BY stock ASC, name`,
-      [threshold]
+      [tid, threshold]
     );
     res.json(rows);
   } catch (e) {
