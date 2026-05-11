@@ -263,6 +263,18 @@ sikasir/
 
 ---
 
+## Riwayat Pengembangan
+
+| Tanggal | Milestone |
+|---------|-----------|
+| 9 Mei 2026 | Mulai dibangun — versi pertama SiKasir POS |
+| 9 Mei 2026 | Penambahan lisensi MIT |
+| 11 Mei 2026 | Fitur setup toko pertama kali |
+| 11 Mei 2026 | Multi-tenant, scanner ZXing, fix transaksi |
+| 11 Mei 2026 | Fix PDF export, tombol install PWA, README lengkap |
+
+---
+
 ## Lisensi
 
 MIT License — © 2026 Sivilize Corp
