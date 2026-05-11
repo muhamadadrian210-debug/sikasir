@@ -99,6 +99,13 @@ export async function api(path, opts = {}) {
     const err = new Error(data?.error || res.statusText);
     err.status = res.status;
     err.body = data;
+    // Auto-logout jika token tidak valid / expired / tidak punya tenant_id
+    if (res.status === 401) {
+      localStorage.removeItem('sikasir_token');
+      localStorage.removeItem('sikasir_user');
+      localStorage.removeItem('sikasir_app_mode');
+      window.location.href = '/';
+    }
     throw err;
   }
   return data;
