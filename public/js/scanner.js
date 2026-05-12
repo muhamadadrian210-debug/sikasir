@@ -1,21 +1,32 @@
 /**
- * SiKasir Advanced Barcode Scanner v3
+ * SiKasir Advanced Barcode Scanner v5 — Full Resolution + Web Worker
+ * - Decode di Web Worker (thread terpisah) = tidak blocking UI
+ * - Resolusi penuh 1920x1080
+ * - Scan instan seperti scanner kasir
  * - Flip kamera depan/belakang
- * - Scan super cepat (<300ms debounce)
- * - Torch/flashlight
- * - Brightness boost untuk kondisi gelap
- * - Viewfinder UI
+ * - Torch support
  */
 
 let activeStream = null;
 let scanning = false;
 let torchOn = false;
 let activeTrack = null;
-let currentFacing = 'environment'; // 'environment' = belakang, 'user' = depan
+let currentFacing = 'environment';
+let worker = null;
+let workerReady = false;
+let pendingDecode = false;
+let msgId = 0;
 
-/**
- * Pilih kamera terbaik — hindari ultrawide/macro/depth
- */
+function initWorker() {
+  try {
+    worker = new Worker('/js/scanner-worker.js');
+    worker.onmessage = null; // akan di-set per decode
+    workerReady = true;
+  } catch {
+    workerReady = false;
+  }
+}
+
 async function pickBestCamera(facing = 'environment') {
   try {
     const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } });
@@ -24,12 +35,10 @@ async function pickBestCamera(facing = 'environment') {
     const videoCams = devices.filter(d => d.kind === 'videoinput');
 
     if (facing === 'user') {
-      // Kamera depan — ambil yang pertama dengan label "front"/"selfie"/"depan" atau fallback
       const front = videoCams.find(d => /front|selfie|depan|user/i.test(d.label));
       return front?.deviceId || null;
     }
 
-    // Kamera belakang — hindari ultrawide/macro/depth/tele
     const backCams = videoCams.filter(d => {
       const l = d.label.toLowerCase();
       return l.includes('back') || l.includes('rear') || l.includes('environment') ||
@@ -47,17 +56,49 @@ async function pickBestCamera(facing = 'environment') {
 
 async function openStream(facing) {
   const deviceId = await pickBestCamera(facing);
-  const constraints = deviceId
-    ? { video: { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } } }
-    : { video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } } };
-  return navigator.mediaDevices.getUserMedia(constraints);
+  const videoConstraints = deviceId
+    ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    : { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+  return navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+}
+
+// Fallback decode di main thread jika worker tidak tersedia
+function decodeMainThread(canvas, ZXing) {
+  const reader = decodeMainThread._reader;
+  if (!reader) return null;
+  try {
+    const luminance = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+    const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminance));
+    return reader.decode(bitmap).getText();
+  } catch {
+    return null;
+  }
 }
 
 export async function startScanner(targetEl, onCode) {
   const ZXing = window.ZXing;
   if (!ZXing) throw new Error('ZXing belum dimuat. Coba refresh halaman.');
 
+  // Init fallback reader untuk main thread
+  const fallbackReader = new ZXing.MultiFormatReader();
+  const hints = new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.UPC_A,
+    ZXing.BarcodeFormat.UPC_E, ZXing.BarcodeFormat.DATA_MATRIX,
+    ZXing.BarcodeFormat.ITF, ZXing.BarcodeFormat.CODABAR,
+  ]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+  fallbackReader.setHints(hints);
+  decodeMainThread._reader = fallbackReader;
+
+  // Init worker
+  initWorker();
+
   currentFacing = 'environment';
+  scanning = false;
+  pendingDecode = false;
 
   // Container
   const container = document.createElement('div');
@@ -72,25 +113,16 @@ export async function startScanner(targetEl, onCode) {
   video.setAttribute('muted', '');
   container.appendChild(video);
 
-  // Viewfinder overlay
+  // Viewfinder
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;border-radius:10px;overflow:hidden;';
   overlay.innerHTML = `
-    <div style="
-      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-      width:70%;height:50%;
-      border-radius:8px;
-      box-shadow:0 0 0 9999px rgba(0,0,0,0.4);
-    ">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:50%;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4);">
       <div style="position:absolute;top:-2px;left:-2px;width:22px;height:22px;border-top:3px solid #3b82f6;border-left:3px solid #3b82f6;border-radius:3px 0 0 0;"></div>
       <div style="position:absolute;top:-2px;right:-2px;width:22px;height:22px;border-top:3px solid #3b82f6;border-right:3px solid #3b82f6;border-radius:0 3px 0 0;"></div>
       <div style="position:absolute;bottom:-2px;left:-2px;width:22px;height:22px;border-bottom:3px solid #3b82f6;border-left:3px solid #3b82f6;border-radius:0 0 0 3px;"></div>
       <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-bottom:3px solid #3b82f6;border-right:3px solid #3b82f6;border-radius:0 0 3px 0;"></div>
-      <div id="scan-line-anim" style="
-        position:absolute;top:0;left:4px;right:4px;height:2px;
-        background:linear-gradient(90deg,transparent,#3b82f6,transparent);
-        animation:scanline 1.5s ease-in-out infinite;
-      "></div>
+      <div style="position:absolute;top:0;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,#3b82f6,transparent);animation:scanline 1.5s ease-in-out infinite;"></div>
     </div>
     <style>@keyframes scanline{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}</style>
   `;
@@ -105,17 +137,9 @@ export async function startScanner(targetEl, onCode) {
   `;
   targetEl.appendChild(controls);
 
-  // Start stream
-  let stream;
-  try {
-    stream = await openStream(currentFacing);
-  } catch {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    } catch {
-      throw new Error('Izin kamera ditolak atau kamera tidak tersedia.');
-    }
-  }
+  // Canvas untuk capture frame — resolusi penuh
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: false });
 
   const applyStream = async (s) => {
     activeStream = s;
@@ -127,8 +151,67 @@ export async function startScanner(targetEl, onCode) {
     });
   };
 
+  let stream;
+  try {
+    stream = await openStream(currentFacing);
+  } catch {
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); }
+    catch { throw new Error('Izin kamera ditolak atau kamera tidak tersedia.'); }
+  }
   await applyStream(stream);
   scanning = true;
+
+  let lastCode = '';
+  let lastTime = 0;
+
+  const handleCode = (code) => {
+    if (!code || !scanning) return;
+    const now = Date.now();
+    if (code === lastCode && now - lastTime < 150) return;
+    lastCode = code;
+    lastTime = now;
+    onCode(code);
+  };
+
+  // Scan loop — rAF untuk sinkron dengan frame kamera
+  const scanLoop = () => {
+    if (!scanning) return;
+    if (pendingDecode || video.readyState < video.HAVE_ENOUGH_DATA || video.videoWidth === 0) {
+      requestAnimationFrame(scanLoop);
+      return;
+    }
+
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(video, 0, 0, w, h);
+
+    if (workerReady && worker) {
+      // Decode di worker — non-blocking
+      pendingDecode = true;
+      const id = ++msgId;
+      const imageData = ctx.getImageData(0, 0, w, h);
+
+      const handler = (e) => {
+        if (e.data.id !== id) return;
+        worker.removeEventListener('message', handler);
+        pendingDecode = false;
+        if (e.data.code) handleCode(e.data.code);
+        if (scanning) requestAnimationFrame(scanLoop);
+      };
+      worker.addEventListener('message', handler);
+      // Transfer imageData buffer untuk zero-copy
+      worker.postMessage({ imageData: imageData.data, width: w, height: h, id }, [imageData.data.buffer]);
+    } else {
+      // Fallback main thread
+      const code = decodeMainThread(canvas, ZXing);
+      if (code) handleCode(code);
+      requestAnimationFrame(scanLoop);
+    }
+  };
+
+  requestAnimationFrame(scanLoop);
 
   // Torch
   const btnTorch = controls.querySelector('#btn-torch');
@@ -139,12 +222,10 @@ export async function startScanner(targetEl, onCode) {
       await activeTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
       btnTorch.style.background = torchOn ? '#fef3c7' : '#f8fafc';
       btnTorch.innerHTML = torchOn ? '🔦 ON' : '🔦 Senter';
-    } catch {
-      torchOn = !torchOn;
-    }
+    } catch { torchOn = !torchOn; }
   });
 
-  // Flip kamera depan/belakang
+  // Flip kamera
   const btnFlip = controls.querySelector('#btn-flip');
   let flipping = false;
   btnFlip.addEventListener('click', async () => {
@@ -152,87 +233,38 @@ export async function startScanner(targetEl, onCode) {
     flipping = true;
     btnFlip.disabled = true;
     btnFlip.innerHTML = '⏳';
-
-    // Stop stream lama
+    scanning = false;
+    pendingDecode = false;
     if (activeStream) activeStream.getTracks().forEach(t => t.stop());
     torchOn = false;
     btnTorch.style.background = '#f8fafc';
     btnTorch.innerHTML = '🔦 Senter';
 
     currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
-
     try {
       const newStream = await openStream(currentFacing);
       await applyStream(newStream);
       btnFlip.innerHTML = currentFacing === 'environment' ? '🔄 Balik Kamera' : '🤳 Kamera Depan';
     } catch {
-      // Fallback balik lagi
       currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
       btnFlip.innerHTML = '🔄 Gagal';
     }
+    scanning = true;
+    requestAnimationFrame(scanLoop);
     btnFlip.disabled = false;
     flipping = false;
   });
-
-  // ZXing reader
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  const reader = new ZXing.MultiFormatReader();
-  const hints = new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXing.BarcodeFormat.EAN_13,
-    ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128,
-    ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.QR_CODE,
-    ZXing.BarcodeFormat.UPC_A,
-    ZXing.BarcodeFormat.UPC_E,
-    ZXing.BarcodeFormat.DATA_MATRIX,
-    ZXing.BarcodeFormat.ITF,
-    ZXing.BarcodeFormat.CODABAR,
-  ]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-  reader.setHints(hints);
-
-  let lastCode = '';
-  let lastTime = 0;
-
-  const scan = () => {
-    if (!scanning) return;
-    if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      // Brightness boost untuk kondisi gelap
-      ctx.filter = 'brightness(1.4) contrast(1.25)';
-      ctx.drawImage(video, 0, 0);
-      ctx.filter = 'none';
-
-      try {
-        const luminance = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
-        const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminance));
-        const result = reader.decode(bitmap);
-        if (result) {
-          const code = result.getText();
-          const now = Date.now();
-          // Debounce 300ms — cepat tapi tidak double-fire
-          if (code !== lastCode || now - lastTime > 300) {
-            lastCode = code;
-            lastTime = now;
-            onCode(code);
-            return;
-          }
-        }
-      } catch { /* NotFoundException — normal */ }
-    }
-    if (scanning) requestAnimationFrame(scan);
-  };
-
-  requestAnimationFrame(scan);
 }
 
 export function stopScanner() {
   scanning = false;
+  pendingDecode = false;
   torchOn = false;
+  if (worker) {
+    worker.terminate();
+    worker = null;
+    workerReady = false;
+  }
   if (activeStream) {
     activeStream.getTracks().forEach(t => t.stop());
     activeStream = null;
