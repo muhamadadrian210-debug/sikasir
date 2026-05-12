@@ -606,3 +606,48 @@ table.data th {
   border-top: 1px solid var(--border);
   margin-top: auto;
 }
+
+/* Samsung Browser Banner */
+.samsung-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #1a73e8;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.samsung-banner p {
+  margin: 0;
+  flex: 1;
+  line-height: 1.4;
+}
+.samsung-banner-btn {
+  background: #fff;
+  color: #1a73e8;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.samsung-banner-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
