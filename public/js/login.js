@@ -24,6 +24,26 @@ if (localStorage.getItem('sikasir_token')) {
   }
 })();
 
+// Muat daftar toko untuk form daftar
+async function loadTenants() {
+  try {
+    const res = await fetch('/api/setup/tenants');
+    const data = await res.json();
+    const sel = document.getElementById('reg-tenant');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Pilih toko —</option>';
+    (data || []).forEach((t) => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name;
+      sel.appendChild(opt);
+    });
+  } catch {
+    /* noop */
+  }
+}
+loadTenants();
+
 function showAlert(msg, kind = 'error') {
   alertEl.textContent = msg;
   alertEl.className = `alert ${kind === 'success' ? 'alert-success' : 'alert-error'}`;
@@ -64,7 +84,6 @@ loginForm.addEventListener('submit', async (e) => {
     localStorage.removeItem('sikasir_app_mode');
     window.location.href = '/mode.html';
   } catch (err) {
-    // If server returns 401 with stale session hint, clear any stored token
     if (err.status === 401) {
       clearAuth();
     }
@@ -91,14 +110,19 @@ registerForm.addEventListener('submit', async (e) => {
   const u = document.getElementById('reg-username').value.trim();
   const p = document.getElementById('reg-password').value;
   const p2 = document.getElementById('reg-password2').value;
+  const tenant_id = document.getElementById('reg-tenant')?.value;
   if (p !== p2) {
     showAlert('Password tidak sama');
+    return;
+  }
+  if (!tenant_id) {
+    showAlert('Pilih toko terlebih dahulu');
     return;
   }
   try {
     const data = await api('/auth/register', {
       method: 'POST',
-      body: { username: u, password: p },
+      body: { username: u, password: p, tenant_id: Number(tenant_id) },
     });
     setToken(data.token);
     setUser(data.user);

@@ -9,20 +9,21 @@ const { isLoginLocked, recordLoginFailure, clearLoginState } = require('../lib/l
 const router = express.Router();
 
 /**
- * Pendaftaran kasir baru oleh admin.
- * Memerlukan JWT admin yang sudah login (tenant_id diambil dari token).
- * PUBLIC_REGISTER=false menonaktifkan endpoint ini sepenuhnya.
+ * Pendaftaran kasir baru secara publik.
+ * Memerlukan tenant_id (dari login sebelumnya tersimpan di localStorage)
+ * ATAU bisa dinonaktifkan dengan PUBLIC_REGISTER=false.
+ * Role selalu 'kasir' untuk pendaftaran publik.
  */
-router.post('/register', authMiddleware, requireRole('admin'), async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
     if (process.env.PUBLIC_REGISTER === 'false') {
-      return res.status(403).json({ error: 'Pendaftaran dinonaktifkan' });
+      return res.status(403).json({ error: 'Pendaftaran publik dinonaktifkan' });
     }
 
-    const { username, password, role } = req.body || {};
+    const { username, password, tenant_id } = req.body || {};
     const u = String(username || '').trim();
     const p = String(password || '');
-    const r = role === 'admin' ? 'admin' : 'kasir';
+    const tid = parseInt(tenant_id, 10);
 
     if (!u || !p) {
       return res.status(400).json({ error: 'Username dan password wajib diisi' });
@@ -38,27 +39,31 @@ router.post('/register', authMiddleware, requireRole('admin'), async (req, res) 
     if (p.length < 8) {
       return res.status(400).json({ error: 'Password minimal 8 karakter' });
     }
+    if (!tid || Number.isNaN(tid)) {
+      return res.status(400).json({ error: 'Tenant tidak valid. Pastikan sudah ada toko yang terdaftar.' });
+    }
 
-    const tenantId = req.user.tenant_id;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Konteks tenant tidak ditemukan. Silakan login ulang.' });
+    // Pastikan tenant ada
+    const [tenantRows] = await pool.execute('SELECT id FROM tenants WHERE id = ?', [tid]);
+    if (!tenantRows.length) {
+      return res.status(400).json({ error: 'Toko tidak ditemukan.' });
     }
 
     const hash = await bcrypt.hash(p, 10);
     const [ins] = await pool.execute(
       'INSERT INTO users (tenant_id, username, password_hash, role) VALUES (?, ?, ?, ?)',
-      [tenantId, u, hash, r]
+      [tid, u, hash, 'kasir']
     );
 
     const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
     const token = jwt.sign(
-      { id: ins.insertId, username: u, role: r, tenant_id: tenantId },
+      { id: ins.insertId, username: u, role: 'kasir', tenant_id: tid },
       secret,
       { expiresIn: '7d' }
     );
     res.status(201).json({
       token,
-      user: { id: ins.insertId, username: u, role: r, tenant_id: tenantId },
+      user: { id: ins.insertId, username: u, role: 'kasir', tenant_id: tid },
     });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') {

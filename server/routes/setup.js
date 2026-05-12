@@ -20,6 +20,19 @@ router.get('/status', async (req, res) => {
 });
 
 /**
+ * Daftar semua tenant (untuk dropdown pilih toko di form register).
+ */
+router.get('/tenants', async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT id, name, slug FROM tenants ORDER BY name');
+    res.json(rows);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Gagal memuat daftar toko' });
+  }
+});
+
+/**
  * Buat tenant + admin pertama.
  * Body: { store_name, username, password }
  * Hanya bisa dijalankan jika belum ada tenant sama sekali.

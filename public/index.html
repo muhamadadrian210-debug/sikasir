@@ -64,6 +64,12 @@
         <form id="register-form" class="auth-panel hidden" data-panel="register">
           <p class="auth-hint">Buat akun kasir baru (akses POS &amp; riwayat).</p>
           <div class="field">
+            <label for="reg-tenant">Toko</label>
+            <select id="reg-tenant" required>
+              <option value="">— Pilih toko —</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="reg-username">Username</label>
             <input
               id="reg-username"
