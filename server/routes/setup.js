@@ -96,6 +96,15 @@ router.post('/', async (req, res) => {
 
       await conn.commit();
 
+      // Tambahkan kategori default
+      const defaultCategories = ['Umum', 'Minuman', 'Makanan', 'Snack', 'Rokok', 'Kebersihan', 'Lainnya'];
+      for (const cat of defaultCategories) {
+        await conn.execute(
+          'INSERT IGNORE INTO categories (tenant_id, name) VALUES (?, ?)',
+          [tenantId, cat]
+        );
+      }
+
       res.status(201).json({
         ok: true,
         message: 'Setup berhasil. Silakan login.',
