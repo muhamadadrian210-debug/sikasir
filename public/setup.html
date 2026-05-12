@@ -30,6 +30,25 @@
 
         <form id="setup-form">
           <div class="field">
+            <label for="setup-store-type">Jenis Toko / Barang yang Dijual</label>
+            <select id="setup-store-type" name="store_type" required>
+              <option value="">— Pilih jenis toko —</option>
+              <option value="Minimarket">Minimarket</option>
+              <option value="Warung Sembako">Warung Sembako</option>
+              <option value="Toko Kelontong">Toko Kelontong</option>
+              <option value="Apotek / Toko Obat">Apotek / Toko Obat</option>
+              <option value="Toko Elektronik">Toko Elektronik</option>
+              <option value="Toko Pakaian / Fashion">Toko Pakaian / Fashion</option>
+              <option value="Toko Alat Tulis / ATK">Toko Alat Tulis / ATK</option>
+              <option value="Toko Bangunan / Material">Toko Bangunan / Material</option>
+              <option value="Toko Kosmetik / Kecantikan">Toko Kosmetik / Kecantikan</option>
+              <option value="Toko Makanan & Minuman">Toko Makanan & Minuman</option>
+              <option value="Toko Peralatan Rumah Tangga">Toko Peralatan Rumah Tangga</option>
+              <option value="Toko Otomotif / Spare Part">Toko Otomotif / Spare Part</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="setup-store-name">Nama Toko</label>
             <input
               id="setup-store-name"
@@ -135,15 +154,24 @@
         e.preventDefault();
         alertEl.classList.add('hidden');
 
+        const store_type = document.getElementById('setup-store-type').value;
         const store_name = document.getElementById('setup-store-name').value.trim();
         const username = document.getElementById('setup-username').value.trim();
         const password = document.getElementById('setup-password').value;
         const password2 = document.getElementById('setup-password2').value;
 
+        if (!store_type) {
+          showAlert('Pilih jenis toko terlebih dahulu');
+          return;
+        }
+
         if (password !== password2) {
           showAlert('Password tidak sama');
           return;
         }
+
+        // Gabungkan nama toko dengan jenis toko
+        const full_store_name = `${store_name} (${store_type})`;
 
         const btn = document.getElementById('setup-btn');
         btn.disabled = true;
@@ -160,7 +188,7 @@
               'Content-Type': 'application/json',
               'X-CSRF-Token': csrfToken,
             },
-            body: JSON.stringify({ store_name, username, password }),
+            body: JSON.stringify({ store_name: full_store_name, username, password }),
           });
           const data = await res.json();
 
