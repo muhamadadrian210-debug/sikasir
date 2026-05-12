@@ -2,14 +2,16 @@
 
 Aplikasi kasir supermarket & UMKM berbasis **PWA** (Progressive Web App) dengan Node.js + Express + MySQL. Mendukung multi-toko, multi-kasir, dan dapat diinstall sebagai aplikasi di HP maupun komputer.
 
-> **Product by Sivilize Corp**
+> **Copyright © 2026 Muhamad Adrian. All rights reserved. Owned and Published by Sivilize Corp.**
+
+🌐 **Live:** [https://sikasir-production.up.railway.app](https://sikasir-production.up.railway.app)
 
 ---
 
 ## Fitur Lengkap
 
 ### 🛒 Kasir (POS)
-- Scan barcode produk via kamera HP/laptop (ZXing — akurat untuk EAN-13, EAN-8, Code 128, Code 39)
+- Scan barcode produk via kamera HP/laptop (ZXing — EAN-13, EAN-8, Code 128, Code 39, QR Code, dll.)
 - Input barcode manual
 - Keranjang belanja dengan tambah/kurang/hapus item
 - Kalkulasi total dan kembalian otomatis
@@ -56,19 +58,26 @@ Aplikasi kasir supermarket & UMKM berbasis **PWA** (Progressive Web App) dengan 
 
 ### 🏪 Multi-Toko (Multi-Tenant)
 - Setiap toko punya data **terpisah** — Toko A tidak bisa lihat data Toko B
-- Setup pertama kali: isi nama toko + username + password admin
+- Setup pertama kali: pilih jenis toko, isi nama toko + username + password admin
+- Kategori default otomatis dibuat saat setup (Umum, Minuman, Makanan, Snack, Rokok, Kebersihan, Lainnya)
 - Satu deployment bisa melayani banyak UMKM sekaligus
 
+### 🏷️ Jenis Toko
+Saat setup, admin memilih jenis toko dari pilihan:
+Minimarket, Warung Sembako, Toko Kelontong, Apotek, Toko Elektronik, Toko Pakaian, ATK, Toko Bangunan, Kosmetik, Makanan & Minuman, Peralatan Rumah Tangga, Otomotif, dan Lainnya.
+
 ### 📲 PWA — Bisa Diinstall Sebagai Aplikasi
-- Buka di browser → klik **"Install Aplikasi"** di sidebar
+- Buka di **Chrome** → klik **"Install Aplikasi"** di sidebar
 - Atau di browser: menu → "Add to Home Screen" / "Install App"
 - Setelah install, berjalan seperti aplikasi native (fullscreen, tanpa address bar)
-- Tersedia di Android, iOS (Safari), Windows, dan macOS
+- Tersedia di Android (Chrome), iOS (Safari), Windows, dan macOS
+- **Samsung Browser**: muncul banner otomatis yang mengarahkan ke Chrome untuk install
 
 ### 🔄 Mode Tampilan
 - **Mode Kasir**: hanya tampil menu POS dan riwayat
-- **Mode Admin**: tampil semua menu manajemen
-- **Mode Keduanya**: akses penuh (khusus akun admin)
+- **Mode Admin**: tampil semua menu manajemen tanpa POS
+- **Mode Keduanya**: akses penuh kasir + admin
+- Semua user bisa memilih mode saat login
 - Ganti mode kapan saja tanpa logout
 
 ---
@@ -85,7 +94,7 @@ Aplikasi kasir supermarket & UMKM berbasis **PWA** (Progressive Web App) dengan 
 | 6 | **Temp Ban** | Setelah rate limit tercapai, IP diblokir sementara 15 menit secara otomatis. |
 | 7 | **Bot & Scanner Blocker** | Middleware menolak User-Agent alat scanner umum: `sqlmap`, `nikto`, `nessus`, `masscan`, `acunetix`, `burpsuite`, dll. |
 | 8 | **Input Sanitization** | Semua input dibersihkan dari null byte, pola `<script>`, dan dibatasi panjangnya. Semua query SQL menggunakan **parameterized statements** (`?`) — anti SQL injection. |
-| 9 | **Security Headers (Helmet)** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, **HSTS** aktif di production, `Referrer-Policy`, `Permissions-Policy`. CSP dapat diaktifkan per environment. |
+| 9 | **Security Headers (Helmet)** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, **HSTS** aktif di production, `Referrer-Policy`, `Permissions-Policy`. |
 
 ### Tambahan:
 - **Role-based access control**: kasir tidak bisa akses endpoint admin meskipun mengubah localStorage
@@ -109,6 +118,7 @@ Aplikasi kasir supermarket & UMKM berbasis **PWA** (Progressive Web App) dengan 
 | Chart | Chart.js 4.4 |
 | Security | Helmet, express-rate-limit, validator |
 | Email Alert | Nodemailer |
+| Deploy | Railway (Node.js + MySQL) |
 
 ---
 
@@ -202,9 +212,9 @@ sikasir/
 │   ├── schema.sql                    # Schema lengkap (fresh install)
 │   └── migration_multitenant.sql     # Migrasi multi-tenant
 ├── public/
-│   ├── index.html                    # Halaman login
+│   ├── index.html                    # Halaman login & register
 │   ├── app.html                      # Dashboard utama
-│   ├── mode.html                     # Pilih mode (kasir/admin)
+│   ├── mode.html                     # Pilih mode (kasir/admin/keduanya)
 │   ├── setup.html                    # Setup toko pertama kali
 │   ├── sw.js                         # Service Worker (PWA)
 │   ├── manifest.json                 # Web App Manifest (PWA)
@@ -214,7 +224,8 @@ sikasir/
 │   │   ├── app.js                    # Logika dashboard utama
 │   │   ├── login.js                  # Logika login/register
 │   │   ├── mode.js                   # Logika pilih mode
-│   │   └── scanner.js                # Barcode scanner (ZXing)
+│   │   ├── scanner.js                # Barcode scanner (ZXing)
+│   │   └── samsung-redirect.js       # Deteksi Samsung Browser → redirect Chrome
 │   └── icons/logo.svg
 ├── server/
 │   ├── index.js                      # Entry point Express
@@ -231,7 +242,7 @@ sikasir/
 │   │   └── tenant.js                 # Helper tenant_id
 │   ├── routes/
 │   │   ├── auth.js                   # Login, register, /me
-│   │   ├── setup.js                  # Setup toko pertama
+│   │   ├── setup.js                  # Setup toko pertama + kategori default
 │   │   ├── products.js               # CRUD produk
 │   │   ├── categories.js             # CRUD kategori
 │   │   ├── transactions.js           # Checkout, riwayat
@@ -249,6 +260,7 @@ sikasir/
 │       └── init-db.js                # Seed data awal
 ├── .env.example
 ├── package.json
+├── fly.toml
 └── README.md
 ```
 
@@ -260,6 +272,7 @@ sikasir/
 - **Offline checkout** belum didukung penuh — hanya cache produk. Transaksi tetap butuh koneksi server.
 - **CSP** dinonaktifkan secara default agar CDN aset berjalan. Aktifkan dan sesuaikan per environment untuk keamanan lebih ketat.
 - Ganti `JWT_SECRET` dengan string acak panjang (minimal 32 karakter) sebelum deploy ke production.
+- Install PWA hanya didukung di **Chrome** (Android/Desktop) dan **Safari** (iOS). Samsung Browser tidak mendukung — gunakan banner redirect yang sudah tersedia.
 
 ---
 
@@ -272,9 +285,19 @@ sikasir/
 | 11 Mei 2026 | Fitur setup toko pertama kali |
 | 11 Mei 2026 | Multi-tenant, scanner ZXing, fix transaksi |
 | 11 Mei 2026 | Fix PDF export, tombol install PWA, README lengkap |
+| 12 Mei 2026 | Lisensi diubah ke proprietary (Muhamad Adrian / Sivilize Corp) |
+| 12 Mei 2026 | Footer copyright diperbarui di semua halaman |
+| 12 Mei 2026 | Semua user bisa memilih 3 mode (Kasir, Admin, Keduanya) |
+| 12 Mei 2026 | Isolasi data antar tenant diperbaiki — Abizar & Adrian dipisah ke tenant berbeda |
+| 12 Mei 2026 | Form setup: tambah dropdown jenis toko (13 pilihan) + nama toko manual |
+| 12 Mei 2026 | Kategori default otomatis dibuat saat setup toko baru |
+| 12 Mei 2026 | Samsung Browser detection — banner redirect ke Chrome otomatis |
+| 12 Mei 2026 | Scanner barcode di-rewrite: lebih reliable, support lebih banyak format |
 
 ---
 
 ## Lisensi
 
-MIT License — © 2026 Sivilize Corp
+Copyright © 2026 Muhamad Adrian. All rights reserved.
+Unauthorized copying, modification, or distribution of this software is strictly prohibited.
+Owned and Published by Sivilize Corp.
