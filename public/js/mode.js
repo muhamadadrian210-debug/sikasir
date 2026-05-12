@@ -30,14 +30,14 @@ const options = [
     title: 'Admin',
     desc: 'Kelola produk, stok, laporan, akun — tanpa menu POS di sidebar.',
     icon: '📊',
-    show: isAdmin,
+    show: true,
   },
   {
     mode: 'both',
     title: 'Keduanya',
     desc: 'Akses penuh: kasir + semua fitur admin.',
     icon: '⚡',
-    show: isAdmin,
+    show: true,
   },
 ];
 

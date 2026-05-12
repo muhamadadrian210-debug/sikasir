@@ -15,7 +15,6 @@ const user = getUser();
 const isAdmin = user?.role === 'admin';
 
 function normalizeMode() {
-  if (!isAdmin) return 'kasir';
   const m = localStorage.getItem(MODE_KEY);
   if (!m || !['kasir', 'admin', 'both'].includes(m)) return 'both';
   return m;
@@ -49,13 +48,13 @@ const TITLE_LOOKUP = {};
 });
 
 function getNavItems() {
-  if (!isAdmin || storedMode === 'kasir') return NAV_KASIR;
+  if (storedMode === 'kasir') return NAV_KASIR;
   if (storedMode === 'admin') return NAV_ADMIN.filter((x) => x.id !== 'pos');
   return NAV_ADMIN;
 }
 
 function getDefaultStartView() {
-  if (!isAdmin || storedMode === 'kasir') return 'pos';
+  if (storedMode === 'kasir') return 'pos';
   if (storedMode === 'admin') return 'scan';
   return 'pos';
 }
