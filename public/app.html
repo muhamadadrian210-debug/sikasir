@@ -69,8 +69,14 @@
         <h3>Scan barcode</h3>
         <div id="scan-video-host" class="scan-video-wrap"></div>
         <p class="mt-1" style="font-size: 0.9rem">Arahkan kamera ke barcode. Izinkan akses kamera jika diminta.</p>
+        <div class="scan-upload-area mt-1">
+          <label for="modal-scan-upload" class="btn btn-secondary btn-block" style="cursor:pointer;text-align:center;">
+            🖼️ Upload foto dari galeri
+          </label>
+          <input type="file" id="modal-scan-upload" accept="image/*" style="display:none"/>
+        </div>
         <div class="actions-inline mt-1">
-          <button type="button" class="btn btn-secondary" id="modal-scan-close">Tutup</button>
+          <button type="button" class="btn btn-secondary" id="modal-scan-close">✕ Tutup</button>
         </div>
       </div>
     </div>

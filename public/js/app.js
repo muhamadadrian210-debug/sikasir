@@ -24,20 +24,20 @@ const storedMode = normalizeMode();
 localStorage.setItem(MODE_KEY, storedMode);
 
 const NAV_ADMIN = [
-  { id: 'pos', label: 'Kasir (POS)', title: 'Kasir (POS)' },
-  { id: 'scan', label: 'Scan & Daftarkan Barang', title: 'Scan & Daftarkan Barang' },
-  { id: 'products', label: 'Manajemen Produk', title: 'Manajemen Produk' },
-  { id: 'incoming', label: 'Barang Masuk', title: 'Barang Masuk (log)' },
-  { id: 'reports', label: 'Laporan & Margin', title: 'Laporan & Margin' },
-  { id: 'stock', label: 'Manajemen Stok', title: 'Manajemen Stok' },
-  { id: 'users', label: 'Manajemen Kasir', title: 'Manajemen Kasir' },
-  { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin' },
-  { id: 'history', label: 'Riwayat Transaksi', title: 'Riwayat Transaksi' },
+  { id: 'pos', label: 'Kasir (POS)', title: 'Kasir (POS)', icon: '🛒' },
+  { id: 'scan', label: 'Scan & Daftarkan', title: 'Scan & Daftarkan Barang', icon: '📷' },
+  { id: 'products', label: 'Produk', title: 'Manajemen Produk', icon: '📦' },
+  { id: 'incoming', label: 'Barang Masuk', title: 'Barang Masuk (log)', icon: '📥' },
+  { id: 'reports', label: 'Laporan & Margin', title: 'Laporan & Margin', icon: '📊' },
+  { id: 'stock', label: 'Stok', title: 'Manajemen Stok', icon: '🗃️' },
+  { id: 'users', label: 'Kasir', title: 'Manajemen Kasir', icon: '👥' },
+  { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin', icon: '📝' },
+  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
 ];
 
 const NAV_KASIR = [
-  { id: 'pos', label: 'Kasir (POS)', title: 'Kasir (POS)' },
-  { id: 'history', label: 'Riwayat Transaksi', title: 'Riwayat Transaksi' },
+  { id: 'pos', label: 'Kasir (POS)', title: 'Kasir (POS)', icon: '🛒' },
+  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
 ];
 
 const TITLE_LOOKUP = {};
@@ -143,7 +143,9 @@ function buildSidebar() {
   nav.innerHTML = items
     .map(
       (it) =>
-        `<button type="button" data-view="${it.id}" data-title="${it.title}">${it.label}</button>`
+        `<button type="button" data-view="${it.id}" data-title="${it.title}">
+          <span class="nav-icon">${it.icon}</span>${it.label}
+        </button>`
     )
     .join('');
   nav.querySelectorAll('button').forEach((btn) => {
@@ -404,6 +406,10 @@ function openScanModal(cb) {
   const host = document.getElementById('scan-video-host');
   host.innerHTML = '';
   backdrop.classList.add('open');
+
+  // Push history state so back button closes modal instead of leaving app
+  history.pushState({ modal: 'scan' }, '');
+
   startScanner(host, (code) => {
     stopScanner();
     backdrop.classList.remove('open');
@@ -423,6 +429,46 @@ function closeScanModal() {
 document.getElementById('modal-scan-close').addEventListener('click', () => {
   closeScanModal();
   scanCallback = null;
+});
+
+/* Upload foto dari galeri untuk scan barcode */
+document.getElementById('modal-scan-upload').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const ZXing = window.ZXing;
+  if (!ZXing) { showAlert('ZXing belum dimuat', 'error'); return; }
+
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    try {
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      const reader = new ZXing.MultiFormatReader();
+      reader.setHints(hints);
+      const luminance = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+      const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminance));
+      const result = reader.decode(bitmap);
+      if (result) {
+        const code = result.getText();
+        closeScanModal();
+        scanCallback?.(code);
+        scanCallback = null;
+      }
+    } catch {
+      showAlert('Barcode tidak terbaca dari foto. Coba foto yang lebih jelas.', 'warn');
+    }
+  };
+  img.src = url;
+  // reset input so same file can be re-selected
+  e.target.value = '';
 });
 
 /* -------- Scan register (admin) -------- */
@@ -1051,6 +1097,27 @@ async function init() {
   if (btnInstall) {
     btnInstall.onclick = () => window.__installPWA?.();
   }
+
+  // Hardware back button — intercept popstate so Android back doesn't exit app
+  history.pushState({ view: start }, '');
+  window.addEventListener('popstate', (e) => {
+    // If scan modal is open, close it
+    if (document.getElementById('modal-scan').classList.contains('open')) {
+      closeScanModal();
+      scanCallback = null;
+      history.pushState({ view: currentView }, '');
+      return;
+    }
+    // If sidebar is open, close it
+    if (document.getElementById('sidebar').classList.contains('open')) {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('visible');
+      history.pushState({ view: currentView }, '');
+      return;
+    }
+    // Otherwise push state again to prevent exit
+    history.pushState({ view: currentView }, '');
+  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
