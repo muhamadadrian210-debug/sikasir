@@ -405,16 +405,68 @@ function openScanModal(cb) {
   const backdrop = document.getElementById('modal-scan');
   const host = document.getElementById('scan-video-host');
   host.innerHTML = '';
-  backdrop.classList.add('open');
 
-  // Push history state so back button closes modal instead of leaving app
+  // Bersihkan preview lama
+  const preview = document.getElementById('scan-product-preview');
+  if (preview) preview.innerHTML = '';
+
+  backdrop.classList.add('open');
   history.pushState({ modal: 'scan' }, '');
 
-  startScanner(host, (code) => {
-    stopScanner();
-    backdrop.classList.remove('open');
-    scanCallback?.(code);
-    scanCallback = null;
+  startScanner(host, async (code) => {
+    // Tampilkan preview nama + harga dulu sebelum callback
+    try {
+      await fetchProductsCached();
+      const p = productByBarcode(code);
+      const previewEl = document.getElementById('scan-product-preview');
+      if (previewEl) {
+        if (p) {
+          previewEl.innerHTML = `
+            <div style="
+              background:linear-gradient(135deg,#eff6ff,#dbeafe);
+              border:1px solid #93c5fd;border-radius:10px;
+              padding:0.75rem 1rem;margin-top:0.5rem;
+              display:flex;align-items:center;justify-content:space-between;gap:0.5rem;
+            ">
+              <div>
+                <div style="font-weight:700;color:#1e3a5f;font-size:1rem;">✅ ${escapeHtml(p.name)}</div>
+                <div style="font-size:0.85rem;color:#475569;margin-top:2px;">
+                  Harga: <strong>${money(p.sale_price)}</strong> · Stok: ${p.stock}
+                </div>
+              </div>
+              <div style="font-size:1.5rem;">🛒</div>
+            </div>`;
+          // Auto-close setelah 600ms supaya user sempat lihat
+          setTimeout(() => {
+            stopScanner();
+            backdrop.classList.remove('open');
+            scanCallback?.(code);
+            scanCallback = null;
+          }, 600);
+        } else {
+          previewEl.innerHTML = `
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:0.75rem 1rem;margin-top:0.5rem;color:#b91c1c;font-size:0.9rem;">
+              ⚠️ Barcode <strong>${escapeHtml(code)}</strong> belum terdaftar
+            </div>`;
+          setTimeout(() => {
+            stopScanner();
+            backdrop.classList.remove('open');
+            scanCallback?.(code);
+            scanCallback = null;
+          }, 800);
+        }
+      } else {
+        stopScanner();
+        backdrop.classList.remove('open');
+        scanCallback?.(code);
+        scanCallback = null;
+      }
+    } catch {
+      stopScanner();
+      backdrop.classList.remove('open');
+      scanCallback?.(code);
+      scanCallback = null;
+    }
   }).catch((err) => {
     showAlert(err.message || 'Kamera gagal', 'error');
     backdrop.classList.remove('open');
