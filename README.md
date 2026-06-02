@@ -169,11 +169,13 @@ DB_PASSWORD=<dari Variables MySQL>
 DB_NAME=railway
 JWT_SECRET=<string acak panjang>
 NODE_ENV=production
-PORT=3000
 ```
 
-6. Generate domain di Settings → Networking → Generate Domain
-7. Buka URL → isi form Setup Toko
+   Jangan isi `PORT` manual di Railway. Railway akan memberi port otomatis dan aplikasi sudah membaca `process.env.PORT`.
+
+6. Buka service Node.js → Settings → Networking → Generate Domain
+7. Pastikan domain dibuat di service Node.js, bukan di service MySQL
+8. Buka URL → isi form Setup Toko
 
 ---
 
