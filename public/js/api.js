@@ -1,4 +1,6 @@
-const API_BASE = '';
+const API_BASE = typeof window !== 'undefined' && window.Capacitor 
+  ? 'https://sikasir-alpha.vercel.app' 
+  : '';
 
 export function getToken() {
   return localStorage.getItem('sikasir_token');

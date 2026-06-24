@@ -1,0 +1,6 @@
+{
+  "appId": "com.sikasir.app",
+  "appName": "SiKasir",
+  "webDir": "public",
+  "bundledWebRuntime": false
+}
