@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     const q = req.query.q ? `%${String(req.query.q).trim()}%` : null;
     let sql = `
       SELECT p.id, p.barcode, p.name, p.purchase_price, p.sale_price, p.stock,
-             p.category_id, p.expiry_date, p.batch_number, c.name AS category_name
+             p.category_id, p.expiry_date, p.batch_number, p.size, p.color, p.warranty, p.brand, p.rack_location, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       WHERE p.tenant_id = ?
@@ -39,7 +39,7 @@ router.get('/barcode/:code', async (req, res) => {
     const code = String(req.params.code).trim();
     const [rows] = await pool.execute(
       `SELECT p.id, p.barcode, p.name, p.purchase_price, p.sale_price, p.stock,
-              p.category_id, p.expiry_date, p.batch_number, c.name AS category_name
+              p.category_id, p.expiry_date, p.batch_number, p.size, p.color, p.warranty, p.brand, p.rack_location, c.name AS category_name
        FROM products p
        LEFT JOIN categories c ON c.id = p.category_id
        WHERE p.barcode = ? AND p.tenant_id = ? LIMIT 1`,
@@ -56,7 +56,7 @@ router.get('/barcode/:code', async (req, res) => {
 router.post('/', requireRole('admin'), async (req, res) => {
   try {
     const tid = tenantId(req);
-    const { barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number } = req.body || {};
+    const { barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number, size, color, warranty, brand, rack_location } = req.body || {};
     const bc = String(barcode || '').trim();
     const nm = String(name || '').trim();
     if (!bc || !nm) return res.status(400).json({ error: 'Barcode dan nama wajib' });
@@ -68,9 +68,9 @@ router.post('/', requireRole('admin'), async (req, res) => {
     }
     const catId = category_id ? parseInt(category_id, 10) : null;
     const [r] = await pool.execute(
-      `INSERT INTO products (tenant_id, barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [tid, bc, nm, pp, sp, st, catId || null, expiry_date || null, batch_number || null]
+      `INSERT INTO products (tenant_id, barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number, size, color, warranty, brand, rack_location)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tid, bc, nm, pp, sp, st, catId || null, expiry_date || null, batch_number || null, size || null, color || null, warranty || null, brand || null, rack_location || null]
     );
     await auditAdmin(req, 'product.create', { id: r.insertId, barcode: bc });
     res.status(201).json({ id: r.insertId });
@@ -87,7 +87,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
   try {
     const tid = tenantId(req);
     const id = parseInt(req.params.id, 10);
-    const { barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number } = req.body || {};
+    const { barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number, size, color, warranty, brand, rack_location } = req.body || {};
     const bc = String(barcode || '').trim();
     const nm = String(name || '').trim();
     if (!bc || !nm) return res.status(400).json({ error: 'Barcode dan nama wajib' });
@@ -99,9 +99,9 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
     }
     const catId = category_id ? parseInt(category_id, 10) : null;
     const [r] = await pool.execute(
-      `UPDATE products SET barcode=?, name=?, purchase_price=?, sale_price=?, stock=?, category_id=?, expiry_date=?, batch_number=?
+      `UPDATE products SET barcode=?, name=?, purchase_price=?, sale_price=?, stock=?, category_id=?, expiry_date=?, batch_number=?, size=?, color=?, warranty=?, brand=?, rack_location=?
        WHERE id=? AND tenant_id=?`,
-      [bc, nm, pp, sp, st, catId || null, expiry_date || null, batch_number || null, id, tid]
+      [bc, nm, pp, sp, st, catId || null, expiry_date || null, batch_number || null, size || null, color || null, warranty || null, brand || null, rack_location || null, id, tid]
     );
     if (!r.affectedRows) return res.status(404).json({ error: 'Produk tidak ditemukan' });
     await auditAdmin(req, 'product.update', { id });

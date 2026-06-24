@@ -9,7 +9,193 @@ if (!getToken()) {
 
 const user = getUser();
 const isAdmin = user?.role === 'admin';
-const isApotek = (user?.tenant_name || '').toLowerCase().includes('(apotek');
+const tenantName = user?.tenant_name || '';
+
+function getStoreType(name) {
+  const m = name.match(/\(([^)]+)\)/);
+  return m ? m[1].trim() : 'Lainnya';
+}
+const storeType = getStoreType(tenantName);
+const isApotek = storeType === 'Apotek / Toko Obat';
+
+const StoreTypeConfig = {
+  'Apotek / Toko Obat': {
+    nameLabel: 'Nama Obat',
+    extraFields: [
+      { key: 'batch_number', label: 'Nomor Batch', placeholder: 'Contoh: B1234', type: 'text', class: 'pf-batch' },
+      { key: 'expiry_date', label: 'Tanggal Kadaluarsa', type: 'date', class: 'pf-expiry' }
+    ]
+  },
+  'Toko Kosmetik / Kecantikan': {
+    nameLabel: 'Nama Kosmetik',
+    extraFields: [
+      { key: 'batch_number', label: 'Nomor Batch', placeholder: 'Contoh: B1234', type: 'text', class: 'pf-batch' },
+      { key: 'expiry_date', label: 'Tanggal Kadaluarsa', type: 'date', class: 'pf-expiry' }
+    ]
+  },
+  'Toko Makanan & Minuman': {
+    nameLabel: 'Nama Makanan/Minuman',
+    extraFields: [
+      { key: 'batch_number', label: 'Kode Produksi / Batch', placeholder: 'Contoh: B1234', type: 'text', class: 'pf-batch' },
+      { key: 'expiry_date', label: 'Tanggal Kadaluarsa', type: 'date', class: 'pf-expiry' }
+    ]
+  },
+  'Toko Pakaian / Fashion': {
+    nameLabel: 'Nama Pakaian',
+    extraFields: [
+      { key: 'size', label: 'Ukuran (Size)', placeholder: 'Contoh: S, M, L, XL, 32', type: 'text', class: 'pf-size' },
+      { key: 'color', label: 'Warna', placeholder: 'Contoh: Merah, Hitam, Denim', type: 'text', class: 'pf-color' }
+    ]
+  },
+  'Toko Elektronik': {
+    nameLabel: 'Nama Elektronik',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Samsung, Sony, Philips', type: 'text', class: 'pf-brand' },
+      { key: 'warranty', label: 'Garansi', placeholder: 'Contoh: 1 Tahun, 6 Bulan', type: 'text', class: 'pf-warranty' }
+    ]
+  },
+  'Toko Peralatan Rumah Tangga': {
+    nameLabel: 'Nama Peralatan',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Philips, Sharp, Miyako', type: 'text', class: 'pf-brand' },
+      { key: 'warranty', label: 'Garansi', placeholder: 'Contoh: 1 Tahun, 6 Bulan', type: 'text', class: 'pf-warranty' }
+    ]
+  },
+  'Toko Otomotif / Spare Part': {
+    nameLabel: 'Nama Spare Part / Barang',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Honda, Yamaha, Bosch', type: 'text', class: 'pf-brand' },
+      { key: 'warranty', label: 'Garansi', placeholder: 'Contoh: 1 Tahun, 3 Bulan', type: 'text', class: 'pf-warranty' }
+    ]
+  },
+  'Toko Bangunan / Material': {
+    nameLabel: 'Nama Material',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Holcim, Vinilex, Makita', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Lokasi Rak / Sektor', placeholder: 'Contoh: Rak Semen, Sektor B-3', type: 'text', class: 'pf-rack' }
+    ]
+  },
+  'Minimarket': {
+    nameLabel: 'Nama Barang',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Indofood, Unilever', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Lokasi Rak / Aisle', placeholder: 'Contoh: Aisle 3, Rak A', type: 'text', class: 'pf-rack' }
+    ]
+  },
+  'Warung Sembako': {
+    nameLabel: 'Nama Sembako',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Produsen', placeholder: 'Contoh: Segitiga Biru, Bimoli', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Lokasi Rak / Wadah', placeholder: 'Contoh: Rak Depan, Karung Belakang', type: 'text', class: 'pf-rack' }
+    ]
+  },
+  'Toko Kelontong': {
+    nameLabel: 'Nama Barang Kelontong',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Produsen', placeholder: 'Contoh: Wings, Unilever', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Lokasi Rak', placeholder: 'Contoh: Rak Depan, Gantung', type: 'text', class: 'pf-rack' }
+    ]
+  },
+  'Toko Alat Tulis / ATK': {
+    nameLabel: 'Nama ATK',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Pilot, Faber-Castell', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Lokasi Rak', placeholder: 'Contoh: Laci 1, Rak ATK', type: 'text', class: 'pf-rack' }
+    ]
+  },
+  'Lainnya': {
+    nameLabel: 'Nama Barang',
+    extraFields: [
+      { key: 'brand', label: 'Merek / Brand', placeholder: 'Contoh: Merk X', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Lokasi Rak', placeholder: 'Contoh: Rak Utama', type: 'text', class: 'pf-rack' }
+    ]
+  }
+};
+
+const StoreConfig = {
+  getMenuLabel(id, label) {
+    if (storeType === 'Apotek / Toko Obat') {
+      if (id === 'products') return 'Obat & Produk';
+      if (id === 'stock') return 'Stok Obat';
+      if (id === 'incoming') return 'Obat Masuk';
+    } else if (storeType === 'Toko Kosmetik / Kecantikan') {
+      if (id === 'products') return 'Kosmetik & Produk';
+      if (id === 'stock') return 'Stok Kosmetik';
+      if (id === 'incoming') return 'Kosmetik Masuk';
+    } else if (storeType === 'Toko Makanan & Minuman') {
+      if (id === 'products') return 'Makanan & Produk';
+      if (id === 'stock') return 'Stok Makanan';
+      if (id === 'incoming') return 'Makanan Masuk';
+    } else if (storeType === 'Toko Pakaian / Fashion') {
+      if (id === 'products') return 'Pakaian & Fashion';
+      if (id === 'stock') return 'Stok Pakaian';
+      if (id === 'incoming') return 'Pakaian Masuk';
+    } else if (storeType === 'Toko Elektronik') {
+      if (id === 'products') return 'Barang & Elektronik';
+      if (id === 'stock') return 'Stok Elektronik';
+      if (id === 'incoming') return 'Elektronik Masuk';
+    } else if (storeType === 'Toko Peralatan Rumah Tangga') {
+      if (id === 'products') return 'Peralatan & Barang';
+      if (id === 'stock') return 'Stok Peralatan';
+      if (id === 'incoming') return 'Peralatan Masuk';
+    } else if (storeType === 'Toko Otomotif / Spare Part') {
+      if (id === 'products') return 'Spare Part & Barang';
+      if (id === 'stock') return 'Stok Spare Part';
+      if (id === 'incoming') return 'Spare Part Masuk';
+    } else if (storeType === 'Toko Bangunan / Material') {
+      if (id === 'products') return 'Material & Alat';
+      if (id === 'stock') return 'Stok Material';
+      if (id === 'incoming') return 'Material Masuk';
+    } else if (storeType === 'Minimarket') {
+      if (id === 'products') return 'Produk Minimarket';
+      if (id === 'stock') return 'Stok Minimarket';
+      if (id === 'incoming') return 'Produk Masuk';
+    } else if (storeType === 'Warung Sembako') {
+      if (id === 'products') return 'Sembako & Produk';
+      if (id === 'stock') return 'Stok Sembako';
+      if (id === 'incoming') return 'Sembako Masuk';
+    } else if (storeType === 'Toko Kelontong') {
+      if (id === 'products') return 'Barang Kelontong';
+      if (id === 'stock') return 'Stok Kelontong';
+      if (id === 'incoming') return 'Barang Masuk';
+    } else if (storeType === 'Toko Alat Tulis / ATK') {
+      if (id === 'products') return 'ATK & Buku';
+      if (id === 'stock') return 'Stok ATK';
+      if (id === 'incoming') return 'ATK Masuk';
+    } else {
+      if (id === 'products') return 'Produk & Barang';
+      if (id === 'stock') return 'Stok Produk';
+      if (id === 'incoming') return 'Produk Masuk';
+    }
+    return label;
+  },
+  getPageTitle(id, defaultTitle) {
+    const customLabel = this.getMenuLabel(id, null);
+    if (customLabel) {
+      if (id === 'products') return 'Manajemen ' + customLabel;
+      if (id === 'stock') return 'Manajemen ' + customLabel;
+      if (id === 'incoming') return 'Log Penerimaan ' + customLabel.replace(' Masuk', '');
+    }
+    return defaultTitle;
+  },
+  getIncomingPlaceholder() {
+    switch (storeType) {
+      case 'Apotek / Toko Obat': return 'Mis. Paracetamol 500mg 1 box';
+      case 'Toko Kosmetik / Kecantikan': return 'Mis. Lipstik Matte Shade 04 1 box';
+      case 'Toko Makanan & Minuman': return 'Mis. Roti Tawar Kupas 1 kardus';
+      case 'Toko Pakaian / Fashion': return 'Mis. Kemeja Flanel Merah M 1 lusin';
+      case 'Toko Elektronik': return 'Mis. Charger Laptop ASUS 19V 5 pcs';
+      case 'Toko Peralatan Rumah Tangga': return 'Mis. Blender Philips HR2115 2 unit';
+      case 'Toko Otomotif / Spare Part': return 'Mis. Oli Mesin 10W-40 1 dus';
+      case 'Toko Bangunan / Material': return 'Mis. Semen Tiga Roda 50kg 20 sak';
+      case 'Minimarket': return 'Mis. Air Mineral 600ml 5 dus';
+      case 'Warung Sembako': return 'Mis. Beras Cianjur 5kg 2 karung';
+      case 'Toko Kelontong': return 'Mis. Gula Pasir 1kg 10 bungkus';
+      case 'Toko Alat Tulis / ATK': return 'Mis. Kertas HVS A4 80gsm 1 dus';
+      default: return 'Mis. Barang Merk X 1 dus';
+    }
+  }
+};
 
 if (!localStorage.getItem(MODE_KEY)) {
   const defaultMode = isAdmin ? 'both' : 'kasir';
@@ -51,14 +237,9 @@ const TITLE_LOOKUP = {};
 
 function getNavItems() {
   let items = storedMode === 'kasir' ? NAV_KASIR : (storedMode === 'admin' ? NAV_ADMIN.filter((x) => x.id !== 'pos') : NAV_ADMIN);
-  if (isApotek) {
-    items = items.map((it) => {
-      if (it.id === 'products') return { ...it, label: 'Obat & Produk', title: 'Manajemen Obat' };
-      if (it.id === 'stock') return { ...it, label: 'Stok Obat', title: 'Manajemen Stok Obat' };
-      if (it.id === 'incoming') return { ...it, label: 'Obat Masuk', title: 'Log Penerimaan Obat' };
-      return it;
-    });
-  }
+  items = items.map((it) => {
+    return { ...it, label: StoreConfig.getMenuLabel(it.id, it.label) };
+  });
   return items;
 }
 
@@ -124,21 +305,11 @@ function showAlert(msg, kind = 'error') {
   el.innerHTML = `<div class="alert alert-${kind === 'success' ? 'success' : kind === 'warn' ? 'warn' : 'error'}">${msg}</div>`;
 }
 
-function getPageTitle(id) {
-  let title = TITLE_LOOKUP[id] || '';
-  if (isApotek) {
-    if (id === 'products') title = 'Manajemen Obat & Produk';
-    if (id === 'stock') title = 'Manajemen Stok Obat';
-    if (id === 'incoming') title = 'Log Penerimaan Obat';
-  }
-  return title;
-}
-
 function setActiveNav(id) {
   document.querySelectorAll('#sidebar-nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.view === id);
   });
-  document.getElementById('page-title').textContent = getPageTitle(id);
+  document.getElementById('page-title').textContent = StoreConfig.getPageTitle(id, TITLE_LOOKUP[id] || '');
 }
 
 function showView(id) {
@@ -315,8 +486,10 @@ async function onPosScan(code) {
     showAlert('Barang belum terdaftar, hubungi admin', 'warn');
     return;
   }
-  if (isApotek && p.expiry_date && new Date(p.expiry_date) < new Date()) {
-    showAlert(`⚠️ Obat "${p.name}" sudah KADALUARSA! Jangan dijual!`, 'error');
+  const hasExpiry = ['Apotek / Toko Obat', 'Toko Kosmetik / Kecantikan', 'Toko Makanan & Minuman'].includes(storeType);
+  if (hasExpiry && p.expiry_date && new Date(p.expiry_date) < new Date()) {
+    const typeLabel = storeType === 'Apotek / Toko Obat' ? 'Obat' : (storeType === 'Toko Makanan & Minuman' ? 'Makanan/Minuman' : 'Kosmetik');
+    showAlert(`⚠️ ${typeLabel} "${p.name}" sudah KADALUARSA! Jangan dijual!`, 'error');
     return;
   }
   if (p.stock < 1) {
@@ -581,21 +754,34 @@ async function lookupOrForm(barcode) {
 
 function productForm(p, isEdit) {
   const cats = categories.map((c) => `<option value="${c.id}" ${p.category_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-  let apotekFields = '';
-  if (isApotek) {
-    const expDate = p.expiry_date ? p.expiry_date.substring(0, 10) : '';
-    apotekFields = `
-      <div class="grid-2">
-        <div class="field"><label>Nomor Batch</label><input class="pf-batch" value="${escapeHtml(p.batch_number || '')}" placeholder="Contoh: B1234"/></div>
-        <div class="field"><label>Tanggal Kadaluarsa</label><input type="date" class="pf-expiry" value="${expDate}"/></div>
-      </div>
-    `;
+  
+  const cfg = StoreTypeConfig[storeType] || StoreTypeConfig['Lainnya'];
+  const prodNameLabel = cfg.nameLabel;
+  
+  let extraFieldsHtml = '';
+  if (cfg.extraFields && cfg.extraFields.length > 0) {
+    extraFieldsHtml += '<div class="grid-2">';
+    cfg.extraFields.forEach((f) => {
+      let val = p[f.key] || '';
+      if (f.type === 'date' && val) {
+        val = val.substring(0, 10);
+      }
+      const phAttr = f.placeholder ? `placeholder="${escapeHtml(f.placeholder)}"` : '';
+      extraFieldsHtml += `
+        <div class="field">
+          <label>${f.label}</label>
+          <input type="${f.type}" class="${f.class}" value="${escapeHtml(val)}" ${phAttr}/>
+        </div>
+      `;
+    });
+    extraFieldsHtml += '</div>';
   }
+
   return `
     <div class="panel pf-root" style="margin-top:1rem">
-      <h4>${isEdit ? (isApotek ? 'Edit Obat / Produk' : 'Edit barang') : (isApotek ? 'Daftarkan Obat Baru' : 'Daftarkan barang baru')}</h4>
+      <h4>${isEdit ? 'Edit produk' : 'Daftarkan produk baru'}</h4>
       <div class="field"><label>Barcode / Nomor Reg</label><input class="mono pf-barcode" value="${escapeHtml(p.barcode || '')}" ${isEdit ? 'readonly' : ''}/></div>
-      <div class="field"><label>${isApotek ? 'Nama Obat' : 'Nama barang'}</label><input class="pf-name" value="${escapeHtml(p.name || '')}"/></div>
+      <div class="field"><label>${prodNameLabel}</label><input class="pf-name" value="${escapeHtml(p.name || '')}"/></div>
       <div class="grid-2">
         <div class="field"><label>Harga beli</label><input type="number" class="pf-buy" value="${p.purchase_price ?? 0}"/></div>
         <div class="field"><label>Harga jual</label><input type="number" class="pf-sale" value="${p.sale_price ?? 0}"/></div>
@@ -604,7 +790,7 @@ function productForm(p, isEdit) {
         <div class="field"><label>Stok awal / stok</label><input type="number" class="pf-stock" value="${p.stock ?? 0}"/></div>
         <div class="field"><label>Kategori</label><select class="pf-cat"><option value="">—</option>${cats}</select></div>
       </div>
-      ${apotekFields}
+      ${extraFieldsHtml}
       <button type="button" class="btn btn-primary pf-save">Simpan</button>
     </div>`;
 }
@@ -627,15 +813,21 @@ function bindProductForm(container, id) {
       stock: parseInt(root.querySelector('.pf-stock').value, 10),
       category_id: root.querySelector('.pf-cat').value || null,
     };
-    if (isApotek) {
-      body.batch_number = root.querySelector('.pf-batch')?.value.trim() || null;
-      body.expiry_date = root.querySelector('.pf-expiry')?.value || null;
-    }
+    
+    const cfg = StoreTypeConfig[storeType] || StoreTypeConfig['Lainnya'];
+    cfg.extraFields.forEach((f) => {
+      const el = root.querySelector(`.${f.class}`);
+      if (el) {
+        body[f.key] = el.value.trim() || null;
+      }
+    });
+
     try {
       if (id) await api(`/products/${id}`, { method: 'PUT', body });
       else await api('/products', { method: 'POST', body });
       showAlert('Produk disimpan.', 'success');
       fetchProductsCached().catch(() => {});
+      renderProd();
     } catch (e) {
       showAlert(e.message, 'error');
     }
@@ -670,9 +862,17 @@ async function renderProd() {
     document.getElementById('prod-table-wrap').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
     return;
   }
-  const tableHead = isApotek 
-    ? '<thead><tr><th>Barcode / Reg</th><th>Nama Obat</th><th>Beli</th><th>Jual</th><th>Stok</th><th>No. Batch</th><th>Kadaluarsa</th><th></th></tr></thead>'
-    : '<thead><tr><th>Barcode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Stok</th><th></th></tr></thead>';
+  
+  const cfg = StoreTypeConfig[storeType] || StoreTypeConfig['Lainnya'];
+  
+  let tableHead = '<thead><tr><th>Barcode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Stok</th>';
+  if (cfg.extraFields && cfg.extraFields.length > 0) {
+    cfg.extraFields.forEach((f) => {
+      tableHead += `<th>${f.label}</th>`;
+    });
+  }
+  tableHead += '<th></th></tr></thead>';
+
   const html = `
     <div class="table-wrap"><table class="data">
       ${tableHead}
@@ -681,14 +881,28 @@ async function renderProd() {
         .map(
           (r) => {
             let extraCells = '';
-            if (isApotek) {
-              const expStr = r.expiry_date ? new Date(r.expiry_date).toLocaleDateString('id-ID') : '—';
-              const isExpired = r.expiry_date && new Date(r.expiry_date) < new Date();
-              const expClass = isExpired ? 'style="color: var(--danger); font-weight: bold;"' : '';
-              extraCells = `
-                <td class="mono">${r.batch_number || '—'}</td>
-                <td ${expClass}>${expStr} ${isExpired ? '<span class="badge" style="margin-left:4px;background:var(--danger);color:#fff">EXPIRED</span>' : ''}</td>
-              `;
+            if (cfg.extraFields && cfg.extraFields.length > 0) {
+              cfg.extraFields.forEach((f) => {
+                const val = r[f.key];
+                if (f.type === 'date') {
+                  const expStr = val ? new Date(val).toLocaleDateString('id-ID') : '—';
+                  const isExpired = val && new Date(val) < new Date();
+                  const expClass = isExpired ? 'style="color: var(--danger); font-weight: bold;"' : '';
+                  extraCells += `
+                    <td ${expClass}>${expStr} ${isExpired ? '<span class="badge" style="margin-left:4px;background:var(--danger);color:#fff">EXPIRED</span>' : ''}</td>
+                  `;
+                } else {
+                  let displayVal = val || '—';
+                  if (f.key === 'size') {
+                    displayVal = `<span class="badge badge-admin">${displayVal}</span>`;
+                  } else if (f.key === 'warranty') {
+                    displayVal = `<span class="badge badge-warn">${displayVal}</span>`;
+                  } else if (f.key === 'rack_location') {
+                    displayVal = `<span class="badge badge-admin">${displayVal}</span>`;
+                  }
+                  extraCells += `<td>${displayVal}</td>`;
+                }
+              });
             }
             return `
               <tr>
@@ -706,7 +920,9 @@ async function renderProd() {
         .join('')}
       </tbody>
     </table></div>`;
+    
   document.getElementById('prod-table-wrap').innerHTML = html;
+  
   document.getElementById('prod-table-wrap').querySelectorAll('[data-edit]').forEach((b) => {
     b.onclick = async () => {
       const p = rows.find((x) => x.id === Number(b.dataset.edit));
@@ -716,6 +932,7 @@ async function renderProd() {
       bindProductForm(wrap, p.id);
     };
   });
+  
   document.getElementById('prod-table-wrap').querySelectorAll('[data-del]').forEach((b) => {
     b.onclick = async () => {
       if (!confirm('Hapus produk ini?')) return;
@@ -994,8 +1211,9 @@ async function loadUsersTable() {
 /* -------- Barang masuk (admin) -------- */
 async function loadIncomingPanel() {
   const el = document.getElementById('view-incoming');
-  const descPlaceholder = isApotek ? 'Mis. Paracetamol 500mg 1 box' : 'Mis. Rokok merk X 1 slof';
-  el.innerHTML = `<p>Catat penerimaan ${isApotek ? 'obat/produk' : 'barang'} hari ini (contoh: <em>${isApotek ? 'Paracetamol 500mg 1 box' : 'Rokok filter 1 slof'}</em>). Jika memilih produk katalog, stok otomatis bertambah.</p>
+  const descPlaceholder = StoreConfig.getIncomingPlaceholder();
+  const labelText = StoreConfig.getMenuLabel('products', 'barang').toLowerCase();
+  el.innerHTML = `<p>Catat penerimaan ${labelText} hari ini (contoh: <em>${descPlaceholder}</em>). Jika memilih produk katalog, stok otomatis bertambah.</p>
     <div class="grid-2">
       <div class="panel">
         <h4 style="margin-top:0">Ringkasan hari ini</h4>
@@ -1005,7 +1223,7 @@ async function loadIncomingPanel() {
         <div class="field"><label>Deskripsi</label><input id="inc-desc" placeholder="${descPlaceholder}"/></div>
         <div class="grid-2">
           <div class="field"><label>Jumlah</label><input type="number" id="inc-qty" value="1" min="0.001" step="any"/></div>
-          <div class="field"><label>Satuan</label><input id="inc-unit" placeholder="slof, dus, pcs, box…"/></div>
+          <div class="field"><label>Satuan</label><input id="inc-unit" placeholder="slof, dus, pcs, box, sak, kg…"/></div>
         </div>
         <div class="field"><label>Hubungkan produk (opsional)</label><select id="inc-product"><option value="">— Tidak —</option></select></div>
         <button type="button" class="btn btn-primary" id="inc-save">Simpan</button>
@@ -1188,6 +1406,14 @@ document.getElementById('btn-logout').onclick = () => {
 
 async function init() {
   buildSidebar();
+  
+  // Tampilkan nama toko di topbar
+  const storeLabelEl = document.getElementById('topbar-store-name');
+  if (storeLabelEl) {
+    const cleanStoreName = tenantName.replace(/\s*\([^)]+\)$/, '').trim();
+    storeLabelEl.textContent = cleanStoreName;
+  }
+
   try {
     await loadCategories();
   } catch {
