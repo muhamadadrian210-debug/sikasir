@@ -76,19 +76,27 @@ registerForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideAlert();
   const store_name = document.getElementById('reg-store-name').value.trim();
+  const store_type = document.getElementById('reg-store-type').value;
   const username = document.getElementById('reg-username').value.trim();
   const password = document.getElementById('reg-password').value;
   const passwordConfirm = document.getElementById('reg-password-confirm').value;
+
+  if (!store_type) {
+    showAlert('Pilih jenis toko terlebih dahulu');
+    return;
+  }
 
   if (password !== passwordConfirm) {
     showAlert('Password tidak sama');
     return;
   }
 
+  const full_store_name = `${store_name} (${store_type})`;
+
   try {
     const data = await api('/auth/register-tenant', {
       method: 'POST',
-      body: { store_name, username, password },
+      body: { store_name: full_store_name, username, password },
     });
     setToken(data.token);
     setUser(data.user);
