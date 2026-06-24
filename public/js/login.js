@@ -1,7 +1,10 @@
 import { api, setToken, setUser, clearAuth } from './api.js';
 
 const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
 const alertEl = document.getElementById('login-alert');
+const tabLogin = document.getElementById('tab-login');
+const tabRegister = document.getElementById('tab-register');
 
 // If already logged in, skip to app
 if (localStorage.getItem('sikasir_token')) {
@@ -31,6 +34,20 @@ function hideAlert() {
   alertEl.classList.add('hidden');
 }
 
+function switchPanel(panel) {
+  const loginActive = panel === 'login';
+  loginForm.classList.toggle('hidden', !loginActive);
+  registerForm.classList.toggle('hidden', loginActive);
+  tabLogin.classList.toggle('active', loginActive);
+  tabRegister.classList.toggle('active', !loginActive);
+  tabLogin.setAttribute('aria-selected', loginActive);
+  tabRegister.setAttribute('aria-selected', !loginActive);
+  hideAlert();
+}
+
+tabLogin.addEventListener('click', () => switchPanel('login'));
+tabRegister.addEventListener('click', () => switchPanel('register'));
+
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideAlert();
@@ -52,6 +69,34 @@ loginForm.addEventListener('submit', async (e) => {
       clearAuth();
     }
     showAlert(err.message || 'Gagal masuk');
+  }
+});
+
+registerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideAlert();
+  const store_name = document.getElementById('reg-store-name').value.trim();
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const passwordConfirm = document.getElementById('reg-password-confirm').value;
+
+  if (password !== passwordConfirm) {
+    showAlert('Password tidak sama');
+    return;
+  }
+
+  try {
+    const data = await api('/auth/register-tenant', {
+      method: 'POST',
+      body: { store_name, username, password },
+    });
+    setToken(data.token);
+    setUser(data.user);
+    const defaultMode = data.user.role === 'admin' ? 'both' : 'kasir';
+    localStorage.setItem('sikasir_app_mode', defaultMode);
+    window.location.href = '/app.html';
+  } catch (err) {
+    showAlert(err.message || 'Gagal mendaftar toko');
   }
 });
 

@@ -29,8 +29,16 @@
           </div>
         </div>
         <div id="login-alert" class="alert alert-error hidden"></div>
+        <div class="auth-tabs" role="tablist">
+          <button type="button" class="auth-tab active" id="tab-login" data-panel="login" aria-selected="true">
+            Masuk
+          </button>
+          <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
+            Daftar Toko
+          </button>
+        </div>
 
-        <form id="login-form" class="auth-panel">
+        <form id="login-form" class="auth-panel" data-panel="login">
           <div class="field">
             <label for="username">Username</label>
             <input id="username" name="username" autocomplete="username" required />
@@ -51,6 +59,37 @@
             </div>
           </div>
           <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+        </form>
+
+        <form id="register-form" class="auth-panel hidden" data-panel="register">
+          <p class="auth-hint">Daftarkan kios/toko baru dan buat akun admin Anda.</p>
+          <div class="field">
+            <label for="reg-store-name">Nama Toko / Kios</label>
+            <input id="reg-store-name" name="store_name" required placeholder="Contoh: Kios Abizar" />
+          </div>
+          <div class="field">
+            <label for="reg-username">Username Admin</label>
+            <input id="reg-username" name="username" required placeholder="Contoh: admin" />
+          </div>
+          <div class="field">
+            <label for="reg-password">Password</label>
+            <div class="password-field">
+              <input id="reg-password" name="password" type="password" required placeholder="Minimal 8 karakter" />
+              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="reg-password-confirm">Ulangi Password</label>
+            <div class="password-field">
+              <input id="reg-password-confirm" name="password_confirm" type="password" required placeholder="Ulangi password" />
+              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password-confirm">
+                Tampilkan
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Daftar &amp; Masuk</button>
         </form>
       </div>
     </div>

@@ -75,6 +75,101 @@ router.post('/register', async (req, res) => {
 });
 
 /**
+ * Pendaftaran toko (tenant) baru beserta adminnya secara publik.
+ */
+router.post('/register-tenant', async (req, res) => {
+  try {
+    const { store_name, username, password } = req.body || {};
+    const sn = String(store_name || '').trim();
+    const u = String(username || '').trim();
+    const p = String(password || '');
+
+    if (!sn || !u || !p) {
+      return res.status(400).json({ error: 'Nama toko, username, dan password wajib diisi' });
+    }
+    if (sn.length < 2 || sn.length > 255) {
+      return res.status(400).json({ error: 'Nama toko 2–255 karakter' });
+    }
+    if (u.length < 3 || u.length > 64) {
+      return res.status(400).json({ error: 'Username 3–64 karakter' });
+    }
+    if (!/^[\p{L}\p{N} ._-]+$/u.test(u)) {
+      return res.status(400).json({
+        error: 'Username hanya huruf, angka, spasi, titik, underscore, atau strip',
+      });
+    }
+    if (p.length < 8) {
+      return res.status(400).json({ error: 'Password minimal 8 karakter' });
+    }
+
+    // Buat slug unik
+    let slug = sn
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 120) || 'store';
+
+    const [dup] = await pool.execute('SELECT id FROM tenants WHERE slug = ? LIMIT 1', [slug]);
+    if (dup.length > 0) {
+      slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+
+      // Buat tenant
+      const [tenantIns] = await conn.execute(
+        'INSERT INTO tenants (name, slug) VALUES (?, ?)',
+        [sn, slug]
+      );
+      const tenantId = tenantIns.insertId;
+
+      // Buat admin
+      const hash = await bcrypt.hash(p, 10);
+      const [userIns] = await conn.execute(
+        'INSERT INTO users (tenant_id, username, password_hash, role) VALUES (?, ?, ?, ?)',
+        [tenantId, u, hash, 'admin']
+      );
+
+      await conn.commit();
+
+      // Tambahkan kategori default
+      const defaultCategories = ['Umum', 'Minuman', 'Makanan', 'Snack', 'Rokok', 'Kebersihan', 'Lainnya'];
+      for (const cat of defaultCategories) {
+        await conn.execute(
+          'INSERT IGNORE INTO categories (tenant_id, name) VALUES (?, ?)',
+          [tenantId, cat]
+        );
+      }
+
+      const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
+      const token = jwt.sign(
+        { id: userIns.insertId, username: u, role: 'admin', tenant_id: tenantId },
+        secret,
+        { expiresIn: '7d' }
+      );
+
+      res.status(201).json({
+        token,
+        user: { id: userIns.insertId, username: u, role: 'admin', tenant_id: tenantId },
+      });
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+  } catch (e) {
+    if (e.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Username sudah dipakai' });
+    }
+    console.error(e);
+    res.status(500).json({ error: 'Gagal mendaftar toko' });
+  }
+});
+
+/**
  * Login — mencari user secara global berdasarkan username,
  * lalu menyertakan tenant_id dalam JWT.
  */
