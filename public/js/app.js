@@ -7,12 +7,13 @@ if (!getToken()) {
   window.location.href = '/';
 }
 
-if (!localStorage.getItem(MODE_KEY)) {
-  window.location.href = '/mode.html';
-}
-
 const user = getUser();
 const isAdmin = user?.role === 'admin';
+
+if (!localStorage.getItem(MODE_KEY)) {
+  const defaultMode = isAdmin ? 'both' : 'kasir';
+  localStorage.setItem(MODE_KEY, defaultMode);
+}
 
 function normalizeMode() {
   const m = localStorage.getItem(MODE_KEY);
@@ -852,10 +853,17 @@ async function loadUsersTable() {
   const el = document.getElementById('view-users');
   el.innerHTML = `
     <div class="panel">
-      <h4 style="margin-top:0">Tambah akun kasir</h4>
+      <h4 style="margin-top:0">Tambah akun</h4>
       <div class="grid-2">
         <div class="field"><label>Username</label><input id="nu-user"/></div>
         <div class="field"><label>Password</label><input type="password" id="nu-pass"/></div>
+        <div class="field">
+          <label>Role</label>
+          <select id="nu-role">
+            <option value="kasir">Kasir</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
       </div>
       <button type="button" class="btn btn-primary" id="nu-save">Tambah</button>
     </div>
@@ -864,10 +872,12 @@ async function loadUsersTable() {
   document.getElementById('nu-save').onclick = async () => {
     const username = document.getElementById('nu-user').value.trim();
     const password = document.getElementById('nu-pass').value;
+    const role = document.getElementById('nu-role').value;
     try {
-      await api('/users', { method: 'POST', body: { username, password, role: 'kasir' } });
+      await api('/users', { method: 'POST', body: { username, password, role } });
       document.getElementById('nu-user').value = '';
       document.getElementById('nu-pass').value = '';
+      document.getElementById('nu-role').value = 'kasir';
       loadUsersTable();
     } catch (e) {
       alert(e.message);
@@ -886,7 +896,7 @@ async function loadUsersTable() {
           <td>${u.username}</td>
           <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-kasir'}">${u.role}</span></td>
           <td>
-            ${u.role === 'kasir' ? `<button type="button" class="btn btn-secondary" data-edit-user="${u.id}">Edit</button>
+            ${u.id !== user.id ? `<button type="button" class="btn btn-secondary" data-edit-user="${u.id}">Edit</button>
             <button type="button" class="btn btn-danger" data-del-user="${u.id}">Hapus</button>` : '—'}
           </td>
         </tr>`
@@ -910,10 +920,14 @@ async function loadUsersTable() {
     b.onclick = async () => {
       const u = users.find((x) => x.id === Number(b.dataset.editUser));
       const password = prompt(`Password baru untuk ${u.username} (kosongkan jika tidak diubah):`);
+      if (password === null) return;
       const username = prompt('Username baru:', u.username);
       if (!username) return;
+      const roleInput = prompt('Role baru (admin/kasir):', u.role);
+      if (roleInput === null) return;
+      const role = roleInput.trim().toLowerCase() === 'admin' ? 'admin' : 'kasir';
       try {
-        const body = { username, role: 'kasir' };
+        const body = { username, role };
         if (password) body.password = password;
         await api(`/users/${u.id}`, { method: 'PUT', body });
         loadUsersTable();
@@ -1140,9 +1154,17 @@ async function init() {
 
   showView(start);
 
-  document.getElementById('btn-change-mode').onclick = () => {
-    window.location.href = '/mode.html';
-  };
+  const btnChangeMode = document.getElementById('btn-change-mode');
+  if (btnChangeMode) {
+    if (isAdmin) {
+      btnChangeMode.style.display = '';
+      btnChangeMode.onclick = () => {
+        window.location.href = '/mode.html';
+      };
+    } else {
+      btnChangeMode.style.display = 'none';
+    }
+  }
 
   // PWA install button
   const btnInstall = document.getElementById('btn-install-pwa');

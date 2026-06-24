@@ -29,16 +29,8 @@
           </div>
         </div>
         <div id="login-alert" class="alert alert-error hidden"></div>
-        <div class="auth-tabs" role="tablist">
-          <button type="button" class="auth-tab active" id="tab-login" data-panel="login" aria-selected="true">
-            Masuk
-          </button>
-          <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
-            Daftar
-          </button>
-        </div>
 
-        <form id="login-form" class="auth-panel" data-panel="login">
+        <form id="login-form" class="auth-panel">
           <div class="field">
             <label for="username">Username</label>
             <input id="username" name="username" autocomplete="username" required />
@@ -59,61 +51,6 @@
             </div>
           </div>
           <button type="submit" class="btn btn-primary btn-block">Masuk</button>
-        </form>
-
-        <form id="register-form" class="auth-panel hidden" data-panel="register">
-          <p class="auth-hint">Buat akun kasir baru (akses POS &amp; riwayat).</p>
-          <div class="field">
-            <label for="reg-tenant">Toko</label>
-            <select id="reg-tenant" required>
-              <option value="">— Pilih toko —</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="reg-username">Username</label>
-            <input
-              id="reg-username"
-              name="username"
-              autocomplete="username"
-              required
-              minlength="3"
-              maxlength="64"
-              title="Nama atau nama pengguna (huruf, angka, spasi, titik, dll.)"
-            />
-          </div>
-          <div class="field">
-            <label for="reg-password">Password</label>
-            <div class="password-field">
-              <input
-                id="reg-password"
-                name="password"
-                type="password"
-                autocomplete="new-password"
-                required
-                minlength="8"
-              />
-              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password">
-                Tampilkan
-              </button>
-            </div>
-          </div>
-          <div class="field">
-            <label for="reg-password2">Ulangi password</label>
-            <div class="password-field">
-              <input
-                id="reg-password2"
-                name="password2"
-                type="password"
-                autocomplete="new-password"
-                required
-                minlength="8"
-              />
-              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password2">
-                Tampilkan
-              </button>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Daftar</button>
         </form>
       </div>
     </div>
