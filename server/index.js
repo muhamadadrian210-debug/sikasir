@@ -67,9 +67,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Terjadi kesalahan server' });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`SiKasir API http://localhost:${PORT}`);
-});
+let server;
+if (require.main === module || !process.env.VERCEL) {
+  server = app.listen(PORT, () => {
+    console.log(`SiKasir API http://localhost:${PORT}`);
+  });
+}
 
 /** Tangkap unhandled rejection agar proses tidak mati diam-diam */
 process.on('unhandledRejection', (reason) => {
@@ -81,3 +84,5 @@ process.on('uncaughtException', (err) => {
   // Beri waktu log tertulis sebelum exit
   setTimeout(() => process.exit(1), 500);
 });
+
+module.exports = app;
