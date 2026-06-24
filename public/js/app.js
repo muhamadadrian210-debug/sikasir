@@ -9,6 +9,7 @@ if (!getToken()) {
 
 const user = getUser();
 const isAdmin = user?.role === 'admin';
+const isApotek = (user?.tenant_name || '').toLowerCase().includes('(apotek');
 
 if (!localStorage.getItem(MODE_KEY)) {
   const defaultMode = isAdmin ? 'both' : 'kasir';
@@ -49,9 +50,16 @@ const TITLE_LOOKUP = {};
 });
 
 function getNavItems() {
-  if (storedMode === 'kasir') return NAV_KASIR;
-  if (storedMode === 'admin') return NAV_ADMIN.filter((x) => x.id !== 'pos');
-  return NAV_ADMIN;
+  let items = storedMode === 'kasir' ? NAV_KASIR : (storedMode === 'admin' ? NAV_ADMIN.filter((x) => x.id !== 'pos') : NAV_ADMIN);
+  if (isApotek) {
+    items = items.map((it) => {
+      if (it.id === 'products') return { ...it, label: 'Obat & Produk', title: 'Manajemen Obat' };
+      if (it.id === 'stock') return { ...it, label: 'Stok Obat', title: 'Manajemen Stok Obat' };
+      if (it.id === 'incoming') return { ...it, label: 'Obat Masuk', title: 'Log Penerimaan Obat' };
+      return it;
+    });
+  }
+  return items;
 }
 
 function getDefaultStartView() {
@@ -116,11 +124,21 @@ function showAlert(msg, kind = 'error') {
   el.innerHTML = `<div class="alert alert-${kind === 'success' ? 'success' : kind === 'warn' ? 'warn' : 'error'}">${msg}</div>`;
 }
 
+function getPageTitle(id) {
+  let title = TITLE_LOOKUP[id] || '';
+  if (isApotek) {
+    if (id === 'products') title = 'Manajemen Obat & Produk';
+    if (id === 'stock') title = 'Manajemen Stok Obat';
+    if (id === 'incoming') title = 'Log Penerimaan Obat';
+  }
+  return title;
+}
+
 function setActiveNav(id) {
   document.querySelectorAll('#sidebar-nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.view === id);
   });
-  document.getElementById('page-title').textContent = TITLE_LOOKUP[id] || '';
+  document.getElementById('page-title').textContent = getPageTitle(id);
 }
 
 function showView(id) {
@@ -295,6 +313,10 @@ async function onPosScan(code) {
   const p = productByBarcode(code);
   if (!p) {
     showAlert('Barang belum terdaftar, hubungi admin', 'warn');
+    return;
+  }
+  if (isApotek && p.expiry_date && new Date(p.expiry_date) < new Date()) {
+    showAlert(`⚠️ Obat "${p.name}" sudah KADALUARSA! Jangan dijual!`, 'error');
     return;
   }
   if (p.stock < 1) {
@@ -559,11 +581,21 @@ async function lookupOrForm(barcode) {
 
 function productForm(p, isEdit) {
   const cats = categories.map((c) => `<option value="${c.id}" ${p.category_id == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+  let apotekFields = '';
+  if (isApotek) {
+    const expDate = p.expiry_date ? p.expiry_date.substring(0, 10) : '';
+    apotekFields = `
+      <div class="grid-2">
+        <div class="field"><label>Nomor Batch</label><input class="pf-batch" value="${escapeHtml(p.batch_number || '')}" placeholder="Contoh: B1234"/></div>
+        <div class="field"><label>Tanggal Kadaluarsa</label><input type="date" class="pf-expiry" value="${expDate}"/></div>
+      </div>
+    `;
+  }
   return `
     <div class="panel pf-root" style="margin-top:1rem">
-      <h4>${isEdit ? 'Edit barang' : 'Daftarkan barang baru'}</h4>
-      <div class="field"><label>Barcode</label><input class="mono pf-barcode" value="${escapeHtml(p.barcode || '')}" ${isEdit ? 'readonly' : ''}/></div>
-      <div class="field"><label>Nama barang</label><input class="pf-name" value="${escapeHtml(p.name || '')}"/></div>
+      <h4>${isEdit ? (isApotek ? 'Edit Obat / Produk' : 'Edit barang') : (isApotek ? 'Daftarkan Obat Baru' : 'Daftarkan barang baru')}</h4>
+      <div class="field"><label>Barcode / Nomor Reg</label><input class="mono pf-barcode" value="${escapeHtml(p.barcode || '')}" ${isEdit ? 'readonly' : ''}/></div>
+      <div class="field"><label>${isApotek ? 'Nama Obat' : 'Nama barang'}</label><input class="pf-name" value="${escapeHtml(p.name || '')}"/></div>
       <div class="grid-2">
         <div class="field"><label>Harga beli</label><input type="number" class="pf-buy" value="${p.purchase_price ?? 0}"/></div>
         <div class="field"><label>Harga jual</label><input type="number" class="pf-sale" value="${p.sale_price ?? 0}"/></div>
@@ -572,6 +604,7 @@ function productForm(p, isEdit) {
         <div class="field"><label>Stok awal / stok</label><input type="number" class="pf-stock" value="${p.stock ?? 0}"/></div>
         <div class="field"><label>Kategori</label><select class="pf-cat"><option value="">—</option>${cats}</select></div>
       </div>
+      ${apotekFields}
       <button type="button" class="btn btn-primary pf-save">Simpan</button>
     </div>`;
 }
@@ -594,6 +627,10 @@ function bindProductForm(container, id) {
       stock: parseInt(root.querySelector('.pf-stock').value, 10),
       category_id: root.querySelector('.pf-cat').value || null,
     };
+    if (isApotek) {
+      body.batch_number = root.querySelector('.pf-batch')?.value.trim() || null;
+      body.expiry_date = root.querySelector('.pf-expiry')?.value || null;
+    }
     try {
       if (id) await api(`/products/${id}`, { method: 'PUT', body });
       else await api('/products', { method: 'POST', body });
@@ -633,22 +670,38 @@ async function renderProd() {
     document.getElementById('prod-table-wrap').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
     return;
   }
+  const tableHead = isApotek 
+    ? '<thead><tr><th>Barcode / Reg</th><th>Nama Obat</th><th>Beli</th><th>Jual</th><th>Stok</th><th>No. Batch</th><th>Kadaluarsa</th><th></th></tr></thead>'
+    : '<thead><tr><th>Barcode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Stok</th><th></th></tr></thead>';
   const html = `
     <div class="table-wrap"><table class="data">
-      <thead><tr><th>Barcode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Stok</th><th></th></tr></thead>
+      ${tableHead}
       <tbody>
       ${rows
         .map(
-          (r) => `
-        <tr>
-          <td class="mono">${r.barcode}</td>
-          <td>${r.name}</td>
-          <td class="mono">${money(r.purchase_price)}</td>
-          <td class="mono">${money(r.sale_price)}</td>
-          <td>${r.stock}</td>
-          <td><button type="button" class="btn btn-secondary" data-edit="${r.id}">Edit</button>
-          <button type="button" class="btn btn-danger" data-del="${r.id}">Hapus</button></td>
-        </tr>`
+          (r) => {
+            let extraCells = '';
+            if (isApotek) {
+              const expStr = r.expiry_date ? new Date(r.expiry_date).toLocaleDateString('id-ID') : '—';
+              const isExpired = r.expiry_date && new Date(r.expiry_date) < new Date();
+              const expClass = isExpired ? 'style="color: var(--danger); font-weight: bold;"' : '';
+              extraCells = `
+                <td class="mono">${r.batch_number || '—'}</td>
+                <td ${expClass}>${expStr} ${isExpired ? '<span class="badge" style="margin-left:4px;background:var(--danger);color:#fff">EXPIRED</span>' : ''}</td>
+              `;
+            }
+            return `
+              <tr>
+                <td class="mono">${r.barcode}</td>
+                <td>${r.name}</td>
+                <td class="mono">${money(r.purchase_price)}</td>
+                <td class="mono">${money(r.sale_price)}</td>
+                <td>${r.stock}</td>
+                ${extraCells}
+                <td><button type="button" class="btn btn-secondary" data-edit="${r.id}">Edit</button>
+                <button type="button" class="btn btn-danger" data-del="${r.id}">Hapus</button></td>
+              </tr>`;
+          }
         )
         .join('')}
       </tbody>
@@ -941,17 +994,18 @@ async function loadUsersTable() {
 /* -------- Barang masuk (admin) -------- */
 async function loadIncomingPanel() {
   const el = document.getElementById('view-incoming');
-  el.innerHTML = `<p>Catat penerimaan barang hari ini (contoh: <em>Rokok filter 1 slof</em>). Jika memilih produk katalog, stok otomatis bertambah.</p>
+  const descPlaceholder = isApotek ? 'Mis. Paracetamol 500mg 1 box' : 'Mis. Rokok merk X 1 slof';
+  el.innerHTML = `<p>Catat penerimaan ${isApotek ? 'obat/produk' : 'barang'} hari ini (contoh: <em>${isApotek ? 'Paracetamol 500mg 1 box' : 'Rokok filter 1 slof'}</em>). Jika memilih produk katalog, stok otomatis bertambah.</p>
     <div class="grid-2">
       <div class="panel">
         <h4 style="margin-top:0">Ringkasan hari ini</h4>
         <p id="inc-summary">Memuat…</p>
         <h4 class="mt-1">Tambah entri</h4>
         <div class="field"><label>Tanggal</label><input type="date" id="inc-date"/></div>
-        <div class="field"><label>Deskripsi</label><input id="inc-desc" placeholder="Mis. Rokok merk X 1 slof"/></div>
+        <div class="field"><label>Deskripsi</label><input id="inc-desc" placeholder="${descPlaceholder}"/></div>
         <div class="grid-2">
           <div class="field"><label>Jumlah</label><input type="number" id="inc-qty" value="1" min="0.001" step="any"/></div>
-          <div class="field"><label>Satuan</label><input id="inc-unit" placeholder="slof, dus, pcs…"/></div>
+          <div class="field"><label>Satuan</label><input id="inc-unit" placeholder="slof, dus, pcs, box…"/></div>
         </div>
         <div class="field"><label>Hubungkan produk (opsional)</label><select id="inc-product"><option value="">— Tidak —</option></select></div>
         <button type="button" class="btn btn-primary" id="inc-save">Simpan</button>

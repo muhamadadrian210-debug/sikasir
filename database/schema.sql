@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS products (
   sale_price     DECIMAL(12,2) NOT NULL DEFAULT 0,
   stock          INT NOT NULL DEFAULT 0,
   category_id    INT NULL,
+  expiry_date    DATE NULL,
+  batch_number   VARCHAR(64) NULL,
   created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_products_tenant_barcode (tenant_id, barcode),

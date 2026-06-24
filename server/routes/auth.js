@@ -152,7 +152,7 @@ router.post('/register-tenant', async (req, res) => {
 
       res.status(201).json({
         token,
-        user: { id: userIns.insertId, username: u, role: 'admin', tenant_id: tenantId },
+        user: { id: userIns.insertId, username: u, role: 'admin', tenant_id: tenantId, tenant_name: sn },
       });
     } catch (e) {
       await conn.rollback();
@@ -188,7 +188,10 @@ router.post('/login', async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      'SELECT id, tenant_id, username, password_hash, role FROM users WHERE username = ? LIMIT 1',
+      `SELECT u.id, u.tenant_id, u.username, u.password_hash, u.role, t.name AS tenant_name 
+       FROM users u 
+       JOIN tenants t ON u.tenant_id = t.id 
+       WHERE u.username = ? LIMIT 1`,
       [String(username).trim()]
     );
 
@@ -224,7 +227,7 @@ router.post('/login', async (req, res) => {
     );
     res.json({
       token,
-      user: { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id },
+      user: { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id, tenant_name: user.tenant_name },
     });
   } catch (e) {
     console.error(e);
@@ -235,7 +238,10 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, tenant_id, username, role, created_at FROM users WHERE id = ? LIMIT 1',
+      `SELECT u.id, u.tenant_id, u.username, u.role, u.created_at, t.name AS tenant_name 
+       FROM users u 
+       JOIN tenants t ON u.tenant_id = t.id 
+       WHERE u.id = ? LIMIT 1`,
       [req.user.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
