@@ -8,7 +8,9 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "db:init": "node server/scripts/init-db.js",
-    "db:reset": "node server/scripts/reset-db.js"
+    "db:reset": "node server/scripts/reset-db.js",
+    "android:sync": "cap sync android",
+    "android:apk": "cap sync android && cd android && gradlew.bat assembleDebug"
   },
   "engines": {
     "node": ">=18"

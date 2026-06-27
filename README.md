@@ -94,7 +94,31 @@ Setiap toko memakai `tenant_id`, jadi admin Toko A hanya bisa melihat dan memblo
 - `npm run dev`: menjalankan server untuk pengembangan.
 - `npm run db:init`: membuat/memperbarui schema database.
 - `npm run db:reset`: mengosongkan dan membuat ulang database.
+- `npm run android:sync`: menyalin web app ke project Android Capacitor.
+- `npm run android:apk`: membuat APK debug dari project Android Capacitor.
 - `node server/scripts/run-migration.js`: menjalankan migrasi tabel keamanan jika diperlukan.
+
+## Web App dan APK Android
+
+SiKasir punya dua cara install:
+
+- **Install dari browser**: memakai PWA, cocok untuk pemasangan cepat dari Chrome/Edge.
+- **APK asli Android**: dibuat lewat Capacitor dan bisa diunduh dari tombol **Download APK** di sidebar aplikasi.
+
+File APK debug hasil build tersedia di:
+
+```text
+public/downloads/sikasir-debug.apk
+```
+
+Untuk membuat ulang APK:
+
+```bash
+npm run android:sync
+npm run android:apk
+```
+
+Build Android membutuhkan JDK 21 dan Android SDK.
 
 ## Alur Penggunaan
 

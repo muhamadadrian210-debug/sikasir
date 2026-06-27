@@ -89,6 +89,10 @@ a {
   border: 1px solid var(--border);
 }
 
+.login-card > .btn-block + .auth-tabs {
+  margin-top: 1rem;
+}
+
 .auth-tab {
   flex: 1;
   padding: 0.65rem 1rem;
@@ -232,6 +236,7 @@ a {
   font-weight: 600;
   cursor: pointer;
   font-size: 0.95rem;
+  text-decoration: none;
   transition: transform 0.05s, box-shadow 0.15s;
 }
 
