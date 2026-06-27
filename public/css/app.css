@@ -734,17 +734,96 @@ table.data th {
   color: #fff;
 }
 
-/* ==========================================================================
-   Cybersecurity & Firewall (11-Layer) CSS Style Blocks
-   ========================================================================== */
+/* Keamanan toko */
 #view-cybersecurity {
-  background: #080d1a !important;
-  color: #e2e8f0;
-  border: 1px solid #1e293b;
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  font-family: 'Inter', sans-serif;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: #f8fafc;
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+.cyber-page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cyber-page-head h3 {
+  margin: 0 0 0.35rem;
+  color: var(--heading);
+}
+
+.cyber-page-head p,
+.cyber-muted {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.cyber-section {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 > .cyber-section {
+  margin-top: 0;
+}
+
+.cyber-section h4 {
+  margin: 0 0 0.85rem;
+  color: var(--heading);
+  font-size: 1rem;
+}
+
+.cyber-section p {
+  color: var(--text);
+}
+
+.cyber-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--heading);
+  font-weight: 600;
+}
+
+.cyber-check-row input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.cyber-test-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+#cyber-summary p {
+  margin: 0.35rem 0;
+}
+
+#cyber-ip-list > p,
+#cyber-log-list > p {
+  margin: 0;
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .cyber-page-head {
+    flex-direction: column;
+  }
+
+  .cyber-page-head .btn,
+  .cyber-test-actions .btn {
+    width: 100%;
+  }
 }
 
 .cyber-header {

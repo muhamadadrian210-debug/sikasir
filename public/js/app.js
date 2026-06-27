@@ -1404,43 +1404,43 @@ function cyberTime(value) {
 async function loadCybersecurityPanel() {
   const el = document.getElementById('view-cybersecurity');
   el.innerHTML = `
-    <div class="actions-inline" style="justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+    <div class="cyber-page-head">
       <div>
-        <h3 style="margin:0 0 .35rem">Keamanan Toko</h3>
-        <p style="margin:0;color:#64748b;font-size:.9rem">Pantau akses mencurigakan khusus toko ini. Admin bisa langsung memblokir alamat yang mencoba membobol sistem.</p>
+        <h3>Keamanan Toko</h3>
+        <p>Pantau akses mencurigakan khusus toko ini. Admin bisa langsung memblokir alamat yang mencoba membobol sistem.</p>
       </div>
       <button type="button" class="btn btn-secondary" id="cyber-refresh">Muat ulang</button>
     </div>
 
     <div class="grid-2">
-      <div class="panel">
-        <h4 style="margin-top:0">Ringkasan</h4>
+      <div class="cyber-section">
+        <h4>Ringkasan</h4>
         <div id="cyber-summary">Memuat...</div>
       </div>
-      <div class="panel">
-        <h4 style="margin-top:0">Pengaturan</h4>
-        <label style="display:flex;gap:.6rem;align-items:center">
+      <div class="cyber-section">
+        <h4>Pengaturan</h4>
+        <label class="cyber-check-row">
           <input type="checkbox" id="cyber-auto-block" />
           <span>Blokir otomatis akses berbahaya</span>
         </label>
-        <p style="margin:.6rem 0 0;color:#64748b;font-size:.85rem">Jika aktif, sistem akan menahan akses yang berulang kali mencurigakan.</p>
+        <p class="cyber-muted">Jika aktif, sistem akan menahan akses yang berulang kali mencurigakan.</p>
       </div>
     </div>
 
-    <div class="panel mt-1">
-      <h4 style="margin-top:0">Akses mencurigakan</h4>
+    <div class="cyber-section">
+      <h4>Akses mencurigakan</h4>
       <div id="cyber-ip-list">Memuat...</div>
     </div>
 
-    <div class="panel mt-1">
-      <h4 style="margin-top:0">Catatan kejadian</h4>
+    <div class="cyber-section">
+      <h4>Catatan kejadian</h4>
       <div id="cyber-log-list">Memuat...</div>
     </div>
 
-    <div class="panel mt-1">
-      <h4 style="margin-top:0">Tes admin</h4>
-      <p style="margin-top:0;color:#64748b;font-size:.85rem">Gunakan tombol ini untuk memastikan dashboard keamanan toko berjalan. Data tes hanya masuk ke toko yang sedang login.</p>
-      <div class="actions-inline">
+    <div class="cyber-section">
+      <h4>Tes admin</h4>
+      <p class="cyber-muted">Gunakan tombol ini untuk memastikan dashboard keamanan toko berjalan. Data tes hanya masuk ke toko yang sedang login.</p>
+      <div class="cyber-test-actions">
         <button type="button" class="btn btn-secondary" data-cyber-test="sqli">Tes coba bobol data</button>
         <button type="button" class="btn btn-secondary" data-cyber-test="xss">Tes kirim kode jahat</button>
         <button type="button" class="btn btn-secondary" data-cyber-test="bot">Tes robot otomatis</button>
