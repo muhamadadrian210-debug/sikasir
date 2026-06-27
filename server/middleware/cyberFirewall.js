@@ -559,7 +559,14 @@ async function cyberFirewallMiddleware(req, res, next) {
 
   // 1. Signature Verification (Anti-Reverse Engineering / Client Authentication)
   const isSecurityOrWriteRequest = req.originalUrl.startsWith('/api/cybersecurity') || ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
-  const bypassPaths = ['/api/csrf-token', '/api/auth/login'];
+  const bypassPaths = [
+    '/api/csrf-token',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/register-tenant',
+    '/api/setup/status',
+    '/api/setup',
+  ];
   
   if (isSecurityOrWriteRequest && !bypassPaths.some(p => req.originalUrl.startsWith(p))) {
     if (!validateRequestSignature(req)) {

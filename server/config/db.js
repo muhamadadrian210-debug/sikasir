@@ -8,6 +8,7 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'sikasir',
   waitForConnections: true,
+  connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS) || 8000,
   connectionLimit: 10,
   queueLimit: 0,
 };

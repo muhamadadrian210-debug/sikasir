@@ -164,6 +164,10 @@ router.post('/register-tenant', async (req, res) => {
     if (e.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Username sudah dipakai' });
     }
+    if (['ENOTFOUND', 'ECONNREFUSED', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST'].includes(e.code)) {
+      console.error('[register-tenant] Database tidak tersambung:', e.message);
+      return res.status(503).json({ error: 'Database belum tersambung. Coba lagi sebentar atau periksa koneksi server.' });
+    }
     console.error(e);
     res.status(500).json({ error: 'Gagal mendaftar toko' });
   }
