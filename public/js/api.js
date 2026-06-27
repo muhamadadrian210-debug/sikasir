@@ -68,11 +68,12 @@ async function getCsrfToken() {
 export async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase();
   const token = getToken();
+  const hasBody = !['GET', 'HEAD'].includes(method) && opts.body != null;
 
   const timestamp = String(Date.now());
-  const bodyData = opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)
+  const bodyData = hasBody && typeof opts.body === 'object' && !(opts.body instanceof FormData)
     ? JSON.stringify(opts.body)
-    : (opts.body || '');
+    : (hasBody ? opts.body : '');
 
   // Cryptographic Request Signature using Web Crypto API
   let signature = '';
@@ -99,7 +100,7 @@ export async function api(path, opts = {}) {
       headers['X-CSRF-Token'] = csrf;
     }
 
-    if (opts.body && !(opts.body instanceof FormData) && !headers['Content-Type']) {
+    if (hasBody && !(opts.body instanceof FormData) && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
 
@@ -108,13 +109,16 @@ export async function api(path, opts = {}) {
       headers['X-Signature'] = signature;
     }
 
-    const res = await fetch(`${API_BASE}/api${path}`, {
+    const fetchOptions = {
       ...opts,
       method,
       headers,
       credentials: 'same-origin',
-      body: bodyData,
-    });
+    };
+    delete fetchOptions.body;
+    if (hasBody) fetchOptions.body = bodyData;
+
+    const res = await fetch(`${API_BASE}/api${path}`, fetchOptions);
     const text = await res.text();
     let data;
     try {
