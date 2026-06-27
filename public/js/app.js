@@ -220,7 +220,8 @@ const NAV_ADMIN = [
   { id: 'stock', label: 'Stok', title: 'Manajemen Stok', icon: '🗃️' },
   { id: 'users', label: 'Kasir', title: 'Manajemen Kasir', icon: '👥' },
   { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin', icon: '📝' },
-  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' }
+  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
+  { id: 'cybersecurity', label: 'Keamanan Toko', title: 'Keamanan Toko', icon: '🛡️' }
 ];
 
 const NAV_KASIR = [
@@ -351,6 +352,7 @@ function buildSidebar() {
       if (btn.dataset.view === 'scan') renderScanPanel();
       if (btn.dataset.view === 'incoming') loadIncomingPanel();
       if (btn.dataset.view === 'audit') loadAuditTable();
+      if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
     });
   });
   document.getElementById('user-badge').innerHTML = `
@@ -1387,6 +1389,148 @@ async function loadHistoryTable() {
   }
 }
 
+/* -------- Keamanan toko -------- */
+function cyberActionLabel(action) {
+  if (action === 'LOOP_TRAPPED') return 'Diblokir kuat';
+  if (action === 'HONEYPOT_TRAPPED') return 'Dialihkan';
+  return 'Diblokir';
+}
+
+function cyberTime(value) {
+  if (!value) return '-';
+  return new Date(value).toLocaleString('id-ID');
+}
+
+async function loadCybersecurityPanel() {
+  const el = document.getElementById('view-cybersecurity');
+  el.innerHTML = `
+    <div class="actions-inline" style="justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+      <div>
+        <h3 style="margin:0 0 .35rem">Keamanan Toko</h3>
+        <p style="margin:0;color:#64748b;font-size:.9rem">Pantau akses mencurigakan khusus toko ini. Admin bisa langsung memblokir alamat yang mencoba membobol sistem.</p>
+      </div>
+      <button type="button" class="btn btn-secondary" id="cyber-refresh">Muat ulang</button>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h4 style="margin-top:0">Ringkasan</h4>
+        <div id="cyber-summary">Memuat...</div>
+      </div>
+      <div class="panel">
+        <h4 style="margin-top:0">Pengaturan</h4>
+        <label style="display:flex;gap:.6rem;align-items:center">
+          <input type="checkbox" id="cyber-auto-block" />
+          <span>Blokir otomatis akses berbahaya</span>
+        </label>
+        <p style="margin:.6rem 0 0;color:#64748b;font-size:.85rem">Jika aktif, sistem akan menahan akses yang berulang kali mencurigakan.</p>
+      </div>
+    </div>
+
+    <div class="panel mt-1">
+      <h4 style="margin-top:0">Akses mencurigakan</h4>
+      <div id="cyber-ip-list">Memuat...</div>
+    </div>
+
+    <div class="panel mt-1">
+      <h4 style="margin-top:0">Catatan kejadian</h4>
+      <div id="cyber-log-list">Memuat...</div>
+    </div>
+
+    <div class="panel mt-1">
+      <h4 style="margin-top:0">Tes admin</h4>
+      <p style="margin-top:0;color:#64748b;font-size:.85rem">Gunakan tombol ini untuk memastikan dashboard keamanan toko berjalan. Data tes hanya masuk ke toko yang sedang login.</p>
+      <div class="actions-inline">
+        <button type="button" class="btn btn-secondary" data-cyber-test="sqli">Tes coba bobol data</button>
+        <button type="button" class="btn btn-secondary" data-cyber-test="xss">Tes kirim kode jahat</button>
+        <button type="button" class="btn btn-secondary" data-cyber-test="bot">Tes robot otomatis</button>
+        <button type="button" class="btn btn-secondary" data-cyber-test="api_abuse">Tes cari file rahasia</button>
+      </div>
+    </div>`;
+
+  async function refresh() {
+    try {
+      const [status, logs] = await Promise.all([
+        api('/cybersecurity/status'),
+        api('/cybersecurity/logs'),
+      ]);
+
+      const stats = status.stats || {};
+      const ipStats = (stats.ipStats || []).sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+      document.getElementById('cyber-auto-block').checked = Boolean(stats.loopEnabled);
+      document.getElementById('cyber-summary').innerHTML = `
+        <p>Total kejadian: <strong>${Number(stats.totalViolations || 0)}</strong></p>
+        <p>Alamat mencurigakan: <strong>${ipStats.length}</strong></p>
+        <p>Status: <strong style="color:${ipStats.length ? 'var(--danger)' : 'var(--success)'}">${ipStats.length ? 'Perlu dicek' : 'Aman'}</strong></p>`;
+
+      document.getElementById('cyber-ip-list').innerHTML = ipStats.length
+        ? `<div class="table-wrap"><table class="data">
+            <thead><tr><th>Alamat</th><th>Jumlah percobaan</th><th>Terakhir terlihat</th><th>Tindakan</th></tr></thead>
+            <tbody>
+              ${ipStats.map((item) => `
+                <tr>
+                  <td class="mono">${escapeHtml(item.ip)}</td>
+                  <td>${Number(item.count || 0)}</td>
+                  <td>${cyberTime(item.lastSeen)}</td>
+                  <td><button type="button" class="btn btn-danger" data-kick-ip="${escapeHtml(item.ip)}">Blokir akses</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table></div>`
+        : '<p>Belum ada akses mencurigakan untuk toko ini.</p>';
+
+      document.getElementById('cyber-log-list').innerHTML = logs.length
+        ? `<div class="table-wrap"><table class="data">
+            <thead><tr><th>Waktu</th><th>Alamat</th><th>Kejadian</th><th>Tindakan sistem</th><th>Yang dicoba</th></tr></thead>
+            <tbody>
+              ${logs.slice(0, 50).map((row) => `
+                <tr>
+                  <td>${cyberTime(row.created_at)}</td>
+                  <td class="mono">${escapeHtml(row.ip || '-')}</td>
+                  <td>${escapeHtml(row.branch_name || row.layer_name || 'Akses mencurigakan')}</td>
+                  <td>${cyberActionLabel(row.action_taken)}</td>
+                  <td style="max-width:260px;font-size:.85rem">${escapeHtml(row.payload || row.request_url || '-')}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table></div>`
+        : '<p>Belum ada catatan kejadian untuk toko ini.</p>';
+
+      el.querySelectorAll('[data-kick-ip]').forEach((btn) => {
+        btn.onclick = async () => {
+          if (!confirm(`Blokir akses dari ${btn.dataset.kickIp}?`)) return;
+          await api('/cybersecurity/kick', { method: 'POST', body: { ip: btn.dataset.kickIp } });
+          showAlert('Akses mencurigakan berhasil diblokir.', 'success');
+          await refresh();
+        };
+      });
+    } catch (e) {
+      document.getElementById('cyber-summary').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+    }
+  }
+
+  document.getElementById('cyber-refresh').onclick = refresh;
+  document.getElementById('cyber-auto-block').onchange = async (e) => {
+    await api('/cybersecurity/toggle-loop', { method: 'POST', body: { enabled: e.target.checked } });
+    showAlert(e.target.checked ? 'Blokir otomatis diaktifkan.' : 'Blokir otomatis dimatikan.', 'success');
+    await refresh();
+  };
+  el.querySelectorAll('[data-cyber-test]').forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await api('/cybersecurity/simulate', { method: 'POST', body: { type: btn.dataset.cyberTest } });
+        showAlert('Tes keamanan berhasil dibuat untuk toko ini.', 'success');
+        await refresh();
+      } catch (e) {
+        showAlert(e.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  });
+
+  await refresh();
+}
+
 /* -------- Init -------- */
 document.getElementById('menu-toggle').onclick = () => {
   document.getElementById('sidebar').classList.toggle('open');
@@ -1431,6 +1575,7 @@ async function init() {
   if (start === 'users') await loadUsersTable();
   if (start === 'audit') await loadAuditTable();
   if (start === 'history') await loadHistoryTable();
+  if (start === 'cybersecurity') await loadCybersecurityPanel();
 
   showView(start);
 

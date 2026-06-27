@@ -1,5 +1,5 @@
 const express = require('express');
-const { authMiddleware, requireRole } = require('../middleware/auth');
+const { authMiddleware, requireRole, requireTenant } = require('../middleware/auth');
 const { pool } = require('../config/db');
 const {
   firewallLayers,
@@ -18,7 +18,7 @@ const router = express.Router();
  * GET /api/cybersecurity/status
  * Get the layer topology structure, Redis stats, and loop settings filtered by tenant_id.
  */
-router.get('/status', authMiddleware, requireRole('admin'), async (req, res) => {
+router.get('/status', authMiddleware, requireTenant, requireRole('admin'), async (req, res) => {
   const tenantId = req.user.tenant_id;
   const tidKey = tenantId ? String(tenantId) : 'global';
 
@@ -68,8 +68,18 @@ router.get('/status', authMiddleware, requireRole('admin'), async (req, res) => 
     loopEnabled = loopVal !== undefined ? loopVal : true;
   }
 
-  // Filter local logs in memory by tenantId
-  const filteredViolationsCount = localLogs.filter(l => l.tenant_id === tenantId).length;
+  let filteredViolationsCount = localLogs.filter(l => l.tenant_id === tenantId).length;
+  try {
+    if (pool) {
+      const [rows] = await pool.execute(
+        'SELECT COUNT(*) AS total FROM cyber_firewall_logs WHERE tenant_id = ?',
+        [tenantId]
+      );
+      filteredViolationsCount = Number(rows[0]?.total || 0);
+    }
+  } catch (err) {
+    // Keep the memory fallback count when the table is not ready.
+  }
 
   const stats = {
     loopEnabled,
@@ -84,7 +94,7 @@ router.get('/status', authMiddleware, requireRole('admin'), async (req, res) => 
  * GET /api/cybersecurity/logs
  * Retrieve recent logs filtered by tenant_id.
  */
-router.get('/logs', authMiddleware, requireRole('admin'), async (req, res) => {
+router.get('/logs', authMiddleware, requireTenant, requireRole('admin'), async (req, res) => {
   const tenantId = req.user.tenant_id;
 
   try {
@@ -110,7 +120,7 @@ router.get('/logs', authMiddleware, requireRole('admin'), async (req, res) => {
  * POST /api/cybersecurity/toggle-loop
  * Toggles global looping trap flag for the current tenant.
  */
-router.post('/toggle-loop', authMiddleware, requireRole('admin'), async (req, res) => {
+router.post('/toggle-loop', authMiddleware, requireTenant, requireRole('admin'), async (req, res) => {
   const tenantId = req.user.tenant_id;
   const { enabled } = req.body;
   
@@ -125,7 +135,7 @@ router.post('/toggle-loop', authMiddleware, requireRole('admin'), async (req, re
  * POST /api/cybersecurity/kick
  * Kick out action: blacklists the target IP and forces it into the tarpit loop for this tenant.
  */
-router.post('/kick', authMiddleware, requireRole('admin'), async (req, res) => {
+router.post('/kick', authMiddleware, requireTenant, requireRole('admin'), async (req, res) => {
   const tenantId = req.user.tenant_id;
   const tidKey = tenantId ? String(tenantId) : 'global';
   const { ip } = req.body || {};
@@ -172,14 +182,14 @@ router.post('/kick', authMiddleware, requireRole('admin'), async (req, res) => {
     'LOOP_TRAPPED'
   );
 
-  res.json({ success: true, message: `IP ${ip} berhasil dikick dan diarahkan ke tarpit loop!` });
+  res.json({ success: true, message: `Akses dari ${ip} berhasil diblokir untuk toko ini.` });
 });
 
 /**
  * POST /api/cybersecurity/simulate
  * Simulates a request attack for the current tenant.
  */
-router.post('/simulate', authMiddleware, requireRole('admin'), async (req, res) => {
+router.post('/simulate', authMiddleware, requireTenant, requireRole('admin'), async (req, res) => {
   const tenantId = req.user.tenant_id;
   const { type, ip = '182.1.2.3' } = req.body || {};
   let targetLayerIndex = 0;
