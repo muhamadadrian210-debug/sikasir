@@ -1,4 +1,4 @@
-const CACHE_SHELL = 'sikasir-shell-v1';
+const CACHE_SHELL = 'sikasir-shell-v2';
 const CACHE_DATA = 'sikasir-data';
 
 const SHELL = ['/', '/index.html', '/app.html', '/css/app.css', '/js/app.js', '/js/api.js', '/js/scanner.js', '/manifest.json', '/icons/logo.svg'];
@@ -29,8 +29,13 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => caches.match(request).then((r) => r || caches.match('/offline-products.json'))))
+        .catch(() => caches.match(request).then((r) => r || caches.match('/offline-products.json')))
     );
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request));
     return;
   }
 

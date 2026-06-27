@@ -34,7 +34,7 @@ export function clearAuth() {
 async function getCsrfToken() {
   let res;
   try {
-    res = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'same-origin' });
+    res = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'same-origin', cache: 'no-store' });
   } catch {
     throw new Error(
       'Tidak terhubung ke server. Pastikan backend jalan (`npm start`) dan Anda membuka lewat http://localhost:PORT (bukan membuka file HTML langsung dari folder).'
@@ -67,18 +67,7 @@ async function getCsrfToken() {
 
 export async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase();
-  const headers = { ...(opts.headers || {}) };
   const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    const csrf = await getCsrfToken();
-    headers['X-CSRF-Token'] = csrf;
-  }
-
-  if (opts.body && !(opts.body instanceof FormData) && !headers['Content-Type']) {
-    headers['Content-Type'] = 'application/json';
-  }
 
   const timestamp = String(Date.now());
   const bodyData = opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)
@@ -101,28 +90,50 @@ export async function api(path, opts = {}) {
     // Fallback if crypto is not supported (unlikely in modern browsers)
   }
 
-  headers['X-Timestamp'] = timestamp;
-  if (signature) {
-    headers['X-Signature'] = signature;
+  const send = async () => {
+    const headers = { ...(opts.headers || {}) };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrf = await getCsrfToken();
+      headers['X-CSRF-Token'] = csrf;
+    }
+
+    if (opts.body && !(opts.body instanceof FormData) && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    headers['X-Timestamp'] = timestamp;
+    if (signature) {
+      headers['X-Signature'] = signature;
+    }
+
+    const res = await fetch(`${API_BASE}/api${path}`, {
+      ...opts,
+      method,
+      headers,
+      credentials: 'same-origin',
+      body: bodyData,
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = { error: text || 'Error' };
+    }
+    return { res, data };
+  };
+
+  let { res, data } = await send();
+  if (
+    res.status === 403 &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
+    String(data?.error || '').toLowerCase().includes('csrf')
+  ) {
+    ({ res, data } = await send());
   }
 
-  const res = await fetch(`${API_BASE}/api${path}`, {
-    ...opts,
-    method,
-    headers,
-    credentials: 'same-origin',
-    body:
-      opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)
-        ? JSON.stringify(opts.body)
-        : opts.body,
-  });
-  const text = await res.text();
-  let data;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = { error: text || 'Error' };
-  }
   if (!res.ok) {
     const err = new Error(data?.error || res.statusText);
     err.status = res.status;
