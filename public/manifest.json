@@ -1,7 +1,7 @@
 {
   "name": "SiKasir — Kasir UMKM",
   "short_name": "SiKasir",
-  "description": "Aplikasi kasir supermarket & UMKM — POS, stok, laporan, multi-toko",
+  "description": "Aplikasi kasir supermarket & UMKM untuk penjualan, stok, laporan, dan multi-toko",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -26,7 +26,7 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Kasir (POS)",
+      "name": "Kasir",
       "url": "/app.html",
       "description": "Buka halaman kasir"
     }
