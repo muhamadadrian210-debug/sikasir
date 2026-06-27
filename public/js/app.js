@@ -1484,9 +1484,9 @@ async function loadCybersecurityPanel() {
   const el = document.getElementById('view-cybersecurity');
   el.innerHTML = `
     <div class="cyber-header">
-      <h3>🛡️ Panel Keamanan Toko Anda</h3>
+      <h3>🛡️ Benteng Keamanan Toko Kasir</h3>
       <div class="cyber-toggle-container">
-        <span style="font-size: 0.85rem; color:#94a3b8">Honeypot Loop Trap:</span>
+        <span style="font-size: 0.85rem; color:#94a3b8">Kurung Penyusup Otomatis:</span>
         <label class="switch-toggle" style="position:relative;display:inline-block;width:44px;height:22px;">
           <input type="checkbox" id="cyber-loop-toggle" style="opacity:0;width:0;height:0">
           <span class="slider" style="position:absolute;cursor:pointer;inset:0;background-color:#475569;border-radius:34px;transition:.4s;"></span>
@@ -1497,15 +1497,15 @@ async function loadCybersecurityPanel() {
     
     <div class="cyber-metrics">
       <div class="cyber-card" id="card-system-status">
-        <h4>Status Keamanan</h4>
-        <div class="value" style="color: #10b981; font-size:1.4rem; padding: 0.25rem 0;">TOKO AMAN 🟢</div>
+        <h4>Kondisi Toko</h4>
+        <div class="value" style="color: #10b981; font-size:1.3rem; padding: 0.25rem 0;">Aman & Terjaga 🟢</div>
       </div>
       <div class="cyber-card" id="card-total-attacks">
-        <h4>Total Ancaman Terblokir</h4>
+        <h4>Penyusup Yang Ditangkap</h4>
         <div class="value">0</div>
       </div>
       <div class="cyber-card" id="card-trapped-loops">
-        <h4>Penyusup Terkunci Loop</h4>
+        <h4>Penyusup Yang Sedang Dikurung</h4>
         <div class="value">0</div>
       </div>
     </div>
@@ -1514,18 +1514,18 @@ async function loadCybersecurityPanel() {
       <!-- Left side: Intruder List (Kick Panel) -->
       <div class="cyber-panel-box">
         <h4 style="color:#f43f5e;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.8rem;">
-          🚨 Deteksi Alamat Penyusup (Kick Panel)
+          🚨 Daftar Penyusup Aktif
         </h4>
-        <p style="font-size:0.8rem;color:#64748b;margin:0 0 1rem;">IP di bawah ini terdeteksi menyerang sistem toko Anda. Klik Kick untuk memblokir dan mengunci mereka di Tarpit Loop selamanya.</p>
+        <p style="font-size:0.8rem;color:#64748b;margin:0 0 1rem;">Alamat internet di bawah ini terdeteksi mencoba mengutak-atik toko Anda. Anda bisa menendang mereka agar tidak bisa masuk lagi.</p>
         <div class="table-wrap">
           <table class="data" style="width:100%;background:none;border-color:#1e293b;">
             <thead>
               <tr style="background:#1e293b;">
-                <th style="color:#38bdf8;">IP Penyusup</th>
-                <th style="color:#38bdf8;text-align:center;">Pelanggaran</th>
-                <th style="color:#38bdf8;">Status Sinyal</th>
-                <th style="color:#38bdf8;">Waktu Deteksi</th>
-                <th style="color:#38bdf8;">Aksi Admin</th>
+                <th style="color:#38bdf8;">Alamat Penyusup (IP)</th>
+                <th style="color:#38bdf8;text-align:center;">Berapa Kali Menyerang</th>
+                <th style="color:#38bdf8;">Status Tindakan</th>
+                <th style="color:#38bdf8;">Waktu Kejadian</th>
+                <th style="color:#38bdf8;">Tindakan Anda</th>
               </tr>
             </thead>
             <tbody id="intruder-list-tbody">
@@ -1540,20 +1540,20 @@ async function loadCybersecurityPanel() {
       <!-- Right side: Simulator and logs -->
       <div class="cyber-controls">
         <div class="cyber-panel-box">
-          <h4 style="margin:0 0 0.5rem;color:#38bdf8">Uji Coba Keamanan (Simulator)</h4>
-          <p style="font-size:0.75rem;color:#64748b;margin-bottom:0.8rem">Luncurkan serangan tiruan untuk melihat bagaimana firewall toko menyaring ancaman.</p>
+          <h4 style="margin:0 0 0.5rem;color:#38bdf8">Tes Simulasi Keamanan</h4>
+          <p style="font-size:0.75rem;color:#64748b;margin-bottom:0.8rem">Coba jalankan serangan palsu di bawah ini untuk melihat bagaimana sistem benteng kita bekerja secara otomatis.</p>
           <div class="simulator-buttons">
-            <button class="simulator-btn" data-type="sqli">🗄️ SQL Injection</button>
-            <button class="simulator-btn" data-type="xss">💉 XSS Script</button>
-            <button class="simulator-btn" data-type="bot">🤖 Bot Scanner</button>
-            <button class="simulator-btn" data-type="rate_limit">⚡ DDoS Burst</button>
-            <button class="simulator-btn" data-type="idor">📂 IDOR Bypass</button>
-            <button class="simulator-btn" data-type="api_abuse">📡 File Probing</button>
+            <button class="simulator-btn" data-type="sqli">🗄️ Coba Bobol Database</button>
+            <button class="simulator-btn" data-type="xss">💉 Coba Kirim Kode Jahat</button>
+            <button class="simulator-btn" data-type="bot">🤖 Robot Pemindai Otomatis</button>
+            <button class="simulator-btn" data-type="rate_limit">⚡ Banjir Koneksi Palsu</button>
+            <button class="simulator-btn" data-type="idor">📂 Coba Intip Data Toko Lain</button>
+            <button class="simulator-btn" data-type="api_abuse">📡 Coba Cari File Rahasia</button>
           </div>
         </div>
 
         <div class="cyber-panel-box">
-          <h4>Live Log Aktivitas Toko</h4>
+          <h4>Catatan Aktivitas Otomatis</h4>
           <div class="cyber-terminal" id="cyber-log-terminal">
             <div class="terminal-line"><span class="info">[info] Menghubungkan ke log siber toko...</span></div>
           </div>
@@ -1564,10 +1564,10 @@ async function loadCybersecurityPanel() {
     <!-- Bottom: Collapsible 11-Layer topology -->
     <details style="margin-top:1.5rem;background:rgba(15,23,42,0.4);border:1px solid #1e293b;border-radius:8px;padding:1rem;">
       <summary style="cursor:pointer;color:#38bdf8;font-weight:700;font-size:0.9rem;user-select:none;">
-        👁️ Tampilkan Struktur Teknis Firewall & Honeypot (11 Layer)
+        👁️ Lihat Detail Benteng 11 Lapis (Hanya untuk Teknisi)
       </summary>
       <div style="margin-top:1rem;">
-        <p style="font-size:0.8rem;color:#64748b;margin-bottom:1rem;">Struktur 11 layer inspeksi dengan total 77 perangkap honeypot dinamis per toko.</p>
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:1rem;">Sistem benteng 11 lapis dengan total 77 jebakan otomatis untuk mengelabui peretas.</p>
         <div class="firewall-visualizer" id="firewall-layers-container"></div>
       </div>
     </details>
@@ -1593,17 +1593,15 @@ async function loadCybersecurityPanel() {
 
   // Define global kick function
   window.kickIntruder = async (ip) => {
-    const isAutomated = typeof navigator !== 'undefined' && navigator.webdriver;
-    if (!isAutomated && !confirm(`Apakah Anda yakin ingin menendang dan mengunci IP ${ip} ke dalam Tarpit Loop selamanya?`)) return;
     try {
       const res = await api('/cybersecurity/kick', {
         method: 'POST',
         body: { ip }
       });
-      showAlert(res.message, 'success');
+      showAlert('Penyusup berhasil ditendang dan dikurung!', 'success');
       loadCybersecurityPanel(); // Reload dashboard
     } catch (err) {
-      showAlert('Gagal menendang IP: ' + err.message, 'error');
+      showAlert('Gagal menendang penyusup: ' + err.message, 'error');
     }
   };
 
@@ -1618,15 +1616,15 @@ async function loadCybersecurityPanel() {
       const time = new Date(l.created_at).toLocaleTimeString('id-ID');
       const isLoop = l.action_taken === 'LOOP_TRAPPED';
       const actionClass = isLoop ? 'loop' : (l.action_taken === 'HONEYPOT_TRAPPED' ? 'violation' : 'info');
-      const actionLabel = isLoop ? 'LOOPED' : (l.action_taken === 'HONEYPOT_TRAPPED' ? 'HONEYPOT' : 'BLOCKED');
+      const actionLabel = isLoop ? 'DIKURUNG' : (l.action_taken === 'HONEYPOT_TRAPPED' ? 'DIJEBAK' : 'DIBLOKIR');
       
       return `
         <div class="terminal-line">
           <span class="timestamp">[${time}]</span>
           <span class="${actionClass}">[${actionLabel}]</span>
-          IP: ${l.ip} &rarr; Layer ${l.layer_level} [${l.layer_name}] &rarr;
-          Honeypot: <span class="violation">${l.honeypot_name}</span>
-          ${l.payload ? `<div style="padding-left:1.5rem;color:#64748b;font-size:0.75rem;">Payload: ${escapeHtml(l.payload)}</div>` : ''}
+          IP: ${l.ip} &rarr; Lapis ${l.layer_level} [${l.layer_name}] &rarr;
+          Lokasi Perangkap: <span class="violation">${l.honeypot_name}</span>
+          ${l.payload ? `<div style="padding-left:1.5rem;color:#64748b;font-size:0.75rem;">Data Serangan: ${escapeHtml(l.payload)}</div>` : ''}
         </div>`;
     }).join('');
   }
@@ -1649,10 +1647,10 @@ async function loadCybersecurityPanel() {
       // Update System Status card
       const statusValueEl = document.getElementById('card-system-status').querySelector('.value');
       if (res.stats.ipStats.length > 0) {
-        statusValueEl.textContent = 'ADA ANCAMAN 🚨';
+        statusValueEl.textContent = 'Ada Penyusup! 🚨';
         statusValueEl.style.color = '#ef4444';
       } else {
-        statusValueEl.textContent = 'TOKO AMAN 🟢';
+        statusValueEl.textContent = 'Aman & Terjaga 🟢';
         statusValueEl.style.color = '#10b981';
       }
 
@@ -1663,12 +1661,12 @@ async function loadCybersecurityPanel() {
         : res.stats.ipStats.map(it => {
             const isKicked = it.count >= 3;
             const statusBadge = isKicked
-              ? `<span class="badge" style="background:#ef4444;color:#fff;">TARPIED (LOOP)</span>`
-              : `<span class="badge" style="background:#f59e0b;color:#fff;">BLOCKED (WARNING)</span>`;
+              ? `<span class="badge" style="background:#ef4444;color:#fff;">DIKURUNG SELAMANYA</span>`
+              : `<span class="badge" style="background:#f59e0b;color:#fff;">PERINGATAN BLOKIR</span>`;
             
             const actionButton = isKicked
-              ? `<button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem;" disabled>🔒 Locked</button>`
-              : `<button class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.75rem;" onclick="window.kickIntruder('${it.ip}')">🛑 KICK & LOCK</button>`;
+              ? `<button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem;" disabled>🔒 Terkurung</button>`
+              : `<button class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.75rem;" onclick="window.kickIntruder('${it.ip}')">🛑 Tendang & Kurung</button>`;
 
             return `
               <tr>
@@ -1691,8 +1689,8 @@ async function loadCybersecurityPanel() {
         return `
           <div class="firewall-layer-node" id="layer-node-${l.level}">
             <div class="layer-info">
-              <span class="layer-title">Layer ${l.level}: ${escapeHtml(l.name)}</span>
-              <span class="layer-level-badge">${l.branches_count} Cabang · ${l.honeypots_count} Honeypot</span>
+              <span class="layer-title">Lapis ${l.level}: ${escapeHtml(l.name)}</span>
+              <span class="layer-level-badge">${l.branches_count} Cabang · ${l.honeypots_count} Jebakan</span>
             </div>
             <div class="layer-details">${escapeHtml(l.description)}</div>
             <div class="layer-subnodes">
@@ -1723,11 +1721,11 @@ async function loadCybersecurityPanel() {
       loopLabel.style.color = res.loopEnabled ? '#38bdf8' : '#ef4444';
       
       const term = document.getElementById('cyber-log-terminal');
-      term.innerHTML = `<div class="terminal-line"><span class="info">[info] Honeypot Loop Trap toggled: ${res.loopEnabled ? 'ENABLED' : 'DISABLED'}</span></div>` + term.innerHTML;
+      term.innerHTML = `<div class="terminal-line"><span class="info">[info] Pengurungan otomatis diubah menjadi: ${res.loopEnabled ? 'AKTIF' : 'NONAKTIF'}</span></div>` + term.innerHTML;
       
       refreshDashboard();
     } catch (err) {
-      showAlert('Gagal mengubah pengaturan loop trap: ' + err.message, 'error');
+      showAlert('Gagal mengubah pengaturan pengurungan: ' + err.message, 'error');
     }
   };
 
@@ -1757,7 +1755,7 @@ async function loadCybersecurityPanel() {
       });
 
       const term = document.getElementById('cyber-log-terminal');
-      term.innerHTML = `<div class="terminal-line"><span class="info">[sim] Menembakkan paket serangan ${type.toUpperCase()} dari client...</span></div>` + term.innerHTML;
+      term.innerHTML = `<div class="terminal-line"><span class="info">[sim] Menjalankan tes simulasi ${type.toUpperCase()}...</span></div>` + term.innerHTML;
 
       const detailsTag = el.querySelector('details');
       const layersContainer = document.getElementById('firewall-layers-container');
@@ -1775,7 +1773,7 @@ async function loadCybersecurityPanel() {
           const currNode = document.getElementById(`layer-node-${currentAnimate}`);
           if (currNode) currNode.classList.add('active-check');
           
-          term.innerHTML = `<div class="terminal-line"><span class="timestamp">[OK]</span> Layer ${currentAnimate-1} passed... checking Layer ${currentAnimate}</div>` + term.innerHTML;
+          term.innerHTML = `<div class="terminal-line"><span class="timestamp">[OK]</span> Lapis ${currentAnimate-1} terlewati... memindai Lapis ${currentAnimate}</div>` + term.innerHTML;
         } else {
           clearInterval(interval);
           
@@ -1789,10 +1787,11 @@ async function loadCybersecurityPanel() {
               finalNode.classList.add('failed-check');
             }
             
+            const actionText = res.incident.action_taken === 'LOOP_TRAPPED' ? 'DIKURUNG SELAMANYA' : 'DIJEBAK & DIBLOKIR';
             term.innerHTML = `
               <div class="terminal-line">
-                <span class="violation">[BLOCKED]</span> Serangan TERDETEKSI di Layer ${targetLayer}! 
-                Aksi: <span class="violation">${res.incident.action_taken}</span> &rarr; Honeypot: <span class="violation">${res.incident.honeypot_name}</span>
+                <span class="violation">[SISTEM BENTENG]</span> Upaya penyusupan terdeteksi di Lapis ${targetLayer}! 
+                Tindakan: <span class="violation">${actionText}</span> &rarr; Lokasi Jebakan: <span class="violation">${res.incident.honeypot_name}</span>
               </div>` + term.innerHTML;
 
             refreshDashboard();
