@@ -14,8 +14,8 @@ router.get('/status', async (req, res) => {
     const hasAdmin = rows[0].cnt > 0;
     res.json({ hasAdmin });
   } catch (e) {
-    console.warn('[setup] Database offline during status check, falling back to true:', e.message);
-    res.json({ hasAdmin: true });
+    console.error('[setup] Database tidak tersambung:', e.message);
+    res.status(503).json({ error: 'Database belum tersambung. Coba lagi sebentar atau periksa koneksi server.' });
   }
 });
 

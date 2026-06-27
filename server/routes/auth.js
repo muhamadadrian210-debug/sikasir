@@ -191,28 +191,19 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username dan password wajib diisi' });
     }
 
+    const [rows] = await pool.execute(
+      `SELECT u.id, u.tenant_id, u.username, u.password_hash, u.role, t.name AS tenant_name 
+       FROM users u 
+       JOIN tenants t ON u.tenant_id = t.id 
+       WHERE u.username = ? LIMIT 1`,
+      [String(username).trim()]
+    );
+
     let user = null;
     let ok = false;
-
-    try {
-      const [rows] = await pool.execute(
-        `SELECT u.id, u.tenant_id, u.username, u.password_hash, u.role, t.name AS tenant_name 
-         FROM users u 
-         JOIN tenants t ON u.tenant_id = t.id 
-         WHERE u.username = ? LIMIT 1`,
-        [String(username).trim()]
-      );
-      if (rows.length) {
-        user = rows[0];
-        ok = await bcrypt.compare(password, user.password_hash);
-      }
-    } catch (dbErr) {
-      console.warn('[auth] Database offline, checking fallback credentials:', dbErr.message);
-    }
-
-    if (!user && String(username).trim() === 'admin' && password === 'admin123') {
-      user = { id: 1, tenant_id: 1, username: 'admin', role: 'admin', tenant_name: 'SiKasir Store (Dev)' };
-      ok = true;
+    if (rows.length) {
+      user = rows[0];
+      ok = await bcrypt.compare(password, user.password_hash);
     }
 
     if (!user) {
@@ -248,6 +239,10 @@ router.post('/login', async (req, res) => {
       user: { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id, tenant_name: user.tenant_name },
     });
   } catch (e) {
+    if (['ENOTFOUND', 'ECONNREFUSED', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST'].includes(e.code)) {
+      console.error('[login] Database tidak tersambung:', e.message);
+      return res.status(503).json({ error: 'Database belum tersambung. Coba lagi sebentar atau periksa koneksi server.' });
+    }
     console.error(e);
     res.status(500).json({ error: 'Gagal login' });
   }
@@ -255,29 +250,22 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    let userRecord = null;
-    try {
-      const [rows] = await pool.execute(
-        `SELECT u.id, u.tenant_id, u.username, u.role, u.created_at, t.name AS tenant_name 
-         FROM users u 
-         JOIN tenants t ON u.tenant_id = t.id 
-         WHERE u.id = ? LIMIT 1`,
-        [req.user.id]
-      );
-      if (rows.length) {
-        userRecord = rows[0];
-      }
-    } catch (dbErr) {
-      console.warn('[auth] Database offline, getting user profile from token payload:', dbErr.message);
-    }
-
-    if (!userRecord && req.user && req.user.username === 'admin') {
-      userRecord = { id: 1, tenant_id: 1, username: 'admin', role: 'admin', tenant_name: 'SiKasir Store (Dev)' };
-    }
+    const [rows] = await pool.execute(
+      `SELECT u.id, u.tenant_id, u.username, u.role, u.created_at, t.name AS tenant_name 
+       FROM users u 
+       JOIN tenants t ON u.tenant_id = t.id 
+       WHERE u.id = ? LIMIT 1`,
+      [req.user.id]
+    );
+    const userRecord = rows[0] || null;
 
     if (!userRecord) return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     res.json(userRecord);
   } catch (e) {
+    if (['ENOTFOUND', 'ECONNREFUSED', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST'].includes(e.code)) {
+      console.error('[me] Database tidak tersambung:', e.message);
+      return res.status(503).json({ error: 'Database belum tersambung. Coba lagi sebentar atau periksa koneksi server.' });
+    }
     console.error(e);
     res.status(500).json({ error: 'Gagal memuat profil' });
   }
