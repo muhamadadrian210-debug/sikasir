@@ -98,6 +98,14 @@
         const btn = document.getElementById('btn-install-pwa');
         if (btn) btn.style.display = 'none';
       });
+      if ('serviceWorker' in navigator) {
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      }
       window.__installPWA = async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();

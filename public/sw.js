@@ -1,5 +1,6 @@
-const CACHE_SHELL = 'sikasir-shell-v2';
+const CACHE_SHELL = 'sikasir-shell-v3';
 const CACHE_DATA = 'sikasir-data';
+const ACTIVE_CACHES = [CACHE_SHELL, CACHE_DATA];
 
 const SHELL = ['/', '/index.html', '/app.html', '/css/app.css', '/js/app.js', '/js/api.js', '/js/scanner.js', '/manifest.json', '/icons/logo.svg'];
 
@@ -10,7 +11,12 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => !ACTIVE_CACHES.includes(key)).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -40,15 +46,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((res) => {
+    fetch(request)
+      .then((res) => {
         if (!res || res.status !== 200 || res.type !== 'basic') return res;
         const copy = res.clone();
         caches.open(CACHE_SHELL).then((cache) => cache.put(request, copy));
         return res;
-      });
-    })
+      })
+      .catch(() => caches.match(request))
   );
 });
 
