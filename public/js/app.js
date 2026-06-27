@@ -221,6 +221,7 @@ const NAV_ADMIN = [
   { id: 'users', label: 'Kasir', title: 'Manajemen Kasir', icon: '👥' },
   { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin', icon: '📝' },
   { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
+  { id: 'cybersecurity', label: 'Keamanan Siber', title: 'Keamanan Siber & Firewall (11 Layer)', icon: '🛡️' }
 ];
 
 const NAV_KASIR = [
@@ -351,6 +352,7 @@ function buildSidebar() {
       if (btn.dataset.view === 'scan') renderScanPanel();
       if (btn.dataset.view === 'incoming') loadIncomingPanel();
       if (btn.dataset.view === 'audit') loadAuditTable();
+      if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
     });
   });
   document.getElementById('user-badge').innerHTML = `
@@ -1476,6 +1478,364 @@ async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
+}
+
+async function loadCybersecurityPanel() {
+  const el = document.getElementById('view-cybersecurity');
+  el.innerHTML = `
+    <div class="cyber-header">
+      <h3>🛡️ Panel Keamanan Toko Anda</h3>
+      <div class="cyber-toggle-container">
+        <span style="font-size: 0.85rem; color:#94a3b8">Honeypot Loop Trap:</span>
+        <label class="switch-toggle" style="position:relative;display:inline-block;width:44px;height:22px;">
+          <input type="checkbox" id="cyber-loop-toggle" style="opacity:0;width:0;height:0">
+          <span class="slider" style="position:absolute;cursor:pointer;inset:0;background-color:#475569;border-radius:34px;transition:.4s;"></span>
+        </label>
+        <span id="cyber-loop-status-label" style="font-size: 0.85rem; font-weight:700;">ON</span>
+      </div>
+    </div>
+    
+    <div class="cyber-metrics">
+      <div class="cyber-card" id="card-system-status">
+        <h4>Status Keamanan</h4>
+        <div class="value" style="color: #10b981; font-size:1.4rem; padding: 0.25rem 0;">TOKO AMAN 🟢</div>
+      </div>
+      <div class="cyber-card" id="card-total-attacks">
+        <h4>Total Ancaman Terblokir</h4>
+        <div class="value">0</div>
+      </div>
+      <div class="cyber-card" id="card-trapped-loops">
+        <h4>Penyusup Terkunci Loop</h4>
+        <div class="value">0</div>
+      </div>
+    </div>
+
+    <div class="cyber-grid">
+      <!-- Left side: Intruder List (Kick Panel) -->
+      <div class="cyber-panel-box">
+        <h4 style="color:#f43f5e;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.8rem;">
+          🚨 Deteksi Alamat Penyusup (Kick Panel)
+        </h4>
+        <p style="font-size:0.8rem;color:#64748b;margin:0 0 1rem;">IP di bawah ini terdeteksi menyerang sistem toko Anda. Klik Kick untuk memblokir dan mengunci mereka di Tarpit Loop selamanya.</p>
+        <div class="table-wrap">
+          <table class="data" style="width:100%;background:none;border-color:#1e293b;">
+            <thead>
+              <tr style="background:#1e293b;">
+                <th style="color:#38bdf8;">IP Penyusup</th>
+                <th style="color:#38bdf8;text-align:center;">Pelanggaran</th>
+                <th style="color:#38bdf8;">Status Sinyal</th>
+                <th style="color:#38bdf8;">Waktu Deteksi</th>
+                <th style="color:#38bdf8;">Aksi Admin</th>
+              </tr>
+            </thead>
+            <tbody id="intruder-list-tbody">
+              <tr>
+                <td colspan="5" style="text-align:center;color:#64748b;padding:1.5rem;">Memuat daftar penyusup...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right side: Simulator and logs -->
+      <div class="cyber-controls">
+        <div class="cyber-panel-box">
+          <h4 style="margin:0 0 0.5rem;color:#38bdf8">Uji Coba Keamanan (Simulator)</h4>
+          <p style="font-size:0.75rem;color:#64748b;margin-bottom:0.8rem">Luncurkan serangan tiruan untuk melihat bagaimana firewall toko menyaring ancaman.</p>
+          <div class="simulator-buttons">
+            <button class="simulator-btn" data-type="sqli">🗄️ SQL Injection</button>
+            <button class="simulator-btn" data-type="xss">💉 XSS Script</button>
+            <button class="simulator-btn" data-type="bot">🤖 Bot Scanner</button>
+            <button class="simulator-btn" data-type="rate_limit">⚡ DDoS Burst</button>
+            <button class="simulator-btn" data-type="idor">📂 IDOR Bypass</button>
+            <button class="simulator-btn" data-type="api_abuse">📡 File Probing</button>
+          </div>
+        </div>
+
+        <div class="cyber-panel-box">
+          <h4>Live Log Aktivitas Toko</h4>
+          <div class="cyber-terminal" id="cyber-log-terminal">
+            <div class="terminal-line"><span class="info">[info] Menghubungkan ke log siber toko...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: Collapsible 11-Layer topology -->
+    <details style="margin-top:1.5rem;background:rgba(15,23,42,0.4);border:1px solid #1e293b;border-radius:8px;padding:1rem;">
+      <summary style="cursor:pointer;color:#38bdf8;font-weight:700;font-size:0.9rem;user-select:none;">
+        👁️ Tampilkan Struktur Teknis Firewall & Honeypot (11 Layer)
+      </summary>
+      <div style="margin-top:1rem;">
+        <p style="font-size:0.8rem;color:#64748b;margin-bottom:1rem;">Struktur 11 layer inspeksi dengan total 77 perangkap honeypot dinamis per toko.</p>
+        <div class="firewall-visualizer" id="firewall-layers-container"></div>
+      </div>
+    </details>
+  `;
+
+  // Slider style fix
+  if (!document.getElementById('cyber-toggle-style-tag')) {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'cyber-toggle-style-tag';
+    styleEl.innerHTML = `
+      .switch-toggle input:checked + .slider { background-color: #38bdf8; }
+      .switch-toggle input:checked + .slider:before { transform: translateX(20px); }
+      .slider:before {
+        position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+        background-color: white; border-radius: 50%; transition: .4s;
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }
+
+  const loopToggle = document.getElementById('cyber-loop-toggle');
+  const loopLabel = document.getElementById('cyber-loop-status-label');
+
+  // Define global kick function
+  window.kickIntruder = async (ip) => {
+    const isAutomated = typeof navigator !== 'undefined' && navigator.webdriver;
+    if (!isAutomated && !confirm(`Apakah Anda yakin ingin menendang dan mengunci IP ${ip} ke dalam Tarpit Loop selamanya?`)) return;
+    try {
+      const res = await api('/cybersecurity/kick', {
+        method: 'POST',
+        body: { ip }
+      });
+      showAlert(res.message, 'success');
+      loadCybersecurityPanel(); // Reload dashboard
+    } catch (err) {
+      showAlert('Gagal menendang IP: ' + err.message, 'error');
+    }
+  };
+
+  function renderTerminalLogs(logs) {
+    const term = document.getElementById('cyber-log-terminal');
+    if (!term) return;
+    if (!logs || logs.length === 0) {
+      term.innerHTML = '<div class="terminal-line"><span class="info">[info] Toko Anda aman. Belum ada aktivitas serangan.</span></div>';
+      return;
+    }
+    term.innerHTML = logs.map(l => {
+      const time = new Date(l.created_at).toLocaleTimeString('id-ID');
+      const isLoop = l.action_taken === 'LOOP_TRAPPED';
+      const actionClass = isLoop ? 'loop' : (l.action_taken === 'HONEYPOT_TRAPPED' ? 'violation' : 'info');
+      const actionLabel = isLoop ? 'LOOPED' : (l.action_taken === 'HONEYPOT_TRAPPED' ? 'HONEYPOT' : 'BLOCKED');
+      
+      return `
+        <div class="terminal-line">
+          <span class="timestamp">[${time}]</span>
+          <span class="${actionClass}">[${actionLabel}]</span>
+          IP: ${l.ip} &rarr; Layer ${l.layer_level} [${l.layer_name}] &rarr;
+          Honeypot: <span class="violation">${l.honeypot_name}</span>
+          ${l.payload ? `<div style="padding-left:1.5rem;color:#64748b;font-size:0.75rem;">Payload: ${escapeHtml(l.payload)}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // Load Status and Layers
+  async function refreshDashboard() {
+    try {
+      const res = await api('/cybersecurity/status');
+      
+      // Update stats UI
+      loopToggle.checked = res.stats.loopEnabled;
+      loopLabel.textContent = res.stats.loopEnabled ? 'ON' : 'OFF';
+      loopLabel.style.color = res.stats.loopEnabled ? '#38bdf8' : '#ef4444';
+      
+      document.getElementById('card-total-attacks').querySelector('.value').textContent = res.stats.totalViolations;
+      
+      const loopedCount = res.stats.ipStats.filter(it => it.count >= 3).length;
+      document.getElementById('card-trapped-loops').querySelector('.value').textContent = loopedCount;
+
+      // Update System Status card
+      const statusValueEl = document.getElementById('card-system-status').querySelector('.value');
+      if (res.stats.ipStats.length > 0) {
+        statusValueEl.textContent = 'ADA ANCAMAN 🚨';
+        statusValueEl.style.color = '#ef4444';
+      } else {
+        statusValueEl.textContent = 'TOKO AMAN 🟢';
+        statusValueEl.style.color = '#10b981';
+      }
+
+      // Render Intruder List table
+      const tbody = document.getElementById('intruder-list-tbody');
+      tbody.innerHTML = res.stats.ipStats.length === 0
+        ? `<tr><td colspan="5" style="text-align:center;color:#64748b;padding:1.5rem;">Tidak ada deteksi penyusup. Toko Anda aman.</td></tr>`
+        : res.stats.ipStats.map(it => {
+            const isKicked = it.count >= 3;
+            const statusBadge = isKicked
+              ? `<span class="badge" style="background:#ef4444;color:#fff;">TARPIED (LOOP)</span>`
+              : `<span class="badge" style="background:#f59e0b;color:#fff;">BLOCKED (WARNING)</span>`;
+            
+            const actionButton = isKicked
+              ? `<button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem;" disabled>🔒 Locked</button>`
+              : `<button class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.75rem;" onclick="window.kickIntruder('${it.ip}')">🛑 KICK & LOCK</button>`;
+
+            return `
+              <tr>
+                <td class="mono" style="font-weight:700;color:#fff;">${escapeHtml(it.ip)}</td>
+                <td style="text-align:center;font-weight:bold;">${it.count}</td>
+                <td>${statusBadge}</td>
+                <td style="font-size:0.78rem;color:#94a3b8;">${new Date(it.lastSeen).toLocaleTimeString('id-ID')}</td>
+                <td>${actionButton}</td>
+              </tr>
+            `;
+          }).join('');
+
+      // Render firewall layers
+      const container = document.getElementById('firewall-layers-container');
+      container.innerHTML = res.layers.map(l => {
+        const branchesHtml = l.branches.map(b => `<span class="subnode-branch">${escapeHtml(b)}</span>`).join('');
+        const honeypotNames = getHoneypotNamesForLayer(l.level);
+        const honeypotsHtml = honeypotNames.map(hp => `<span class="subnode-honeypot">🍯 ${escapeHtml(hp)}</span>`).join('');
+
+        return `
+          <div class="firewall-layer-node" id="layer-node-${l.level}">
+            <div class="layer-info">
+              <span class="layer-title">Layer ${l.level}: ${escapeHtml(l.name)}</span>
+              <span class="layer-level-badge">${l.branches_count} Cabang · ${l.honeypots_count} Honeypot</span>
+            </div>
+            <div class="layer-details">${escapeHtml(l.description)}</div>
+            <div class="layer-subnodes">
+              ${branchesHtml}
+              ${honeypotsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Refresh logs
+      const logs = await api('/cybersecurity/logs');
+      renderTerminalLogs(logs);
+
+    } catch (err) {
+      showAlert('Gagal memuat status firewall: ' + err.message, 'error');
+    }
+  }
+
+  // Toggle Loop Trap
+  loopToggle.onchange = async () => {
+    try {
+      const res = await api('/cybersecurity/toggle-loop', {
+        method: 'POST',
+        body: { enabled: loopToggle.checked }
+      });
+      loopLabel.textContent = res.loopEnabled ? 'ON' : 'OFF';
+      loopLabel.style.color = res.loopEnabled ? '#38bdf8' : '#ef4444';
+      
+      const term = document.getElementById('cyber-log-terminal');
+      term.innerHTML = `<div class="terminal-line"><span class="info">[info] Honeypot Loop Trap toggled: ${res.loopEnabled ? 'ENABLED' : 'DISABLED'}</span></div>` + term.innerHTML;
+      
+      refreshDashboard();
+    } catch (err) {
+      showAlert('Gagal mengubah pengaturan loop trap: ' + err.message, 'error');
+    }
+  };
+
+  // Click attack simulators
+  document.querySelectorAll('.simulator-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const type = btn.dataset.type;
+      
+      let targetLayer = 1;
+      if (type === 'blacklist') targetLayer = 1;
+      else if (type === 'bot') targetLayer = 2;
+      else if (type === 'rate_limit') targetLayer = 3;
+      else if (type === 'protocol') targetLayer = 4;
+      else if (type === 'xss') targetLayer = 5;
+      else if (type === 'sqli') targetLayer = 6;
+      else if (type === 'csrf') targetLayer = 7;
+      else if (type === 'session') targetLayer = 8;
+      else if (type === 'idor') targetLayer = 9;
+      else if (type === 'api_abuse') targetLayer = 10;
+      else if (type === 'logic') targetLayer = 11;
+
+      btn.disabled = true;
+      let currentAnimate = 1;
+      
+      document.querySelectorAll('.firewall-layer-node').forEach(node => {
+        node.classList.remove('active-check', 'failed-check');
+      });
+
+      const term = document.getElementById('cyber-log-terminal');
+      term.innerHTML = `<div class="terminal-line"><span class="info">[sim] Menembakkan paket serangan ${type.toUpperCase()} dari client...</span></div>` + term.innerHTML;
+
+      const detailsTag = el.querySelector('details');
+      const layersContainer = document.getElementById('firewall-layers-container');
+      const wasOpen = detailsTag.open;
+      
+      // Auto expand layers diagram during simulation so they can see packet animation!
+      detailsTag.open = true;
+
+      const interval = setInterval(() => {
+        if (currentAnimate < targetLayer) {
+          const prevNode = document.getElementById(`layer-node-${currentAnimate}`);
+          if (prevNode) prevNode.classList.remove('active-check');
+          
+          currentAnimate++;
+          const currNode = document.getElementById(`layer-node-${currentAnimate}`);
+          if (currNode) currNode.classList.add('active-check');
+          
+          term.innerHTML = `<div class="terminal-line"><span class="timestamp">[OK]</span> Layer ${currentAnimate-1} passed... checking Layer ${currentAnimate}</div>` + term.innerHTML;
+        } else {
+          clearInterval(interval);
+          
+          api('/cybersecurity/simulate', {
+            method: 'POST',
+            body: { type }
+          }).then(res => {
+            const finalNode = document.getElementById(`layer-node-${targetLayer}`);
+            if (finalNode) {
+              finalNode.classList.remove('active-check');
+              finalNode.classList.add('failed-check');
+            }
+            
+            term.innerHTML = `
+              <div class="terminal-line">
+                <span class="violation">[BLOCKED]</span> Serangan TERDETEKSI di Layer ${targetLayer}! 
+                Aksi: <span class="violation">${res.incident.action_taken}</span> &rarr; Honeypot: <span class="violation">${res.incident.honeypot_name}</span>
+              </div>` + term.innerHTML;
+
+            refreshDashboard();
+            btn.disabled = false;
+            
+            // Auto-collapse after 3s if it wasn't open before
+            setTimeout(() => {
+              if (!wasOpen) detailsTag.open = false;
+            }, 3000);
+
+          }).catch(err => {
+            showAlert('Gagal melakukan simulasi: ' + err.message, 'error');
+            btn.disabled = false;
+            if (!wasOpen) detailsTag.open = false;
+          });
+        }
+      }, 150);
+    };
+  });
+
+  // Load initially
+  await refreshDashboard();
+}
+
+/**
+ * Dynamic Honeypot names based on Layer level
+ */
+function getHoneypotNamesForLayer(level) {
+  const allHoneypots = [
+    [], // level 0 (placeholder)
+    ['Fake SSH Server', 'WP-Admin decoy'], // Level 1 (2 hp)
+    ['Crawler trap page', 'Scraper infinite directory', 'Mock crawl feed'], // Level 2 (3 hp)
+    ['Tarpit chunk stream loop', 'Mock maintenance panel', 'Decoy API stats', 'Slowloris delay'], // Level 3 (4 hp)
+    ['XML SOAP fault decoy', 'Node-RED console trap', 'Decoy reverse shell', 'Fake upload receiver', 'WebDav simulator'], // Level 4 (5 hp)
+    ['Guestbook script isolation', 'Mock user cookie container', 'JS execution console', 'Decoy markdown portal', 'SVG sandbox', 'Custom CSS decoy'], // Level 5 (6 hp)
+    ['phpMyAdmin decoy panel', 'SQLite backup downloader', 'SQL Console simulator', 'Mock database explorer', 'Vulnerable search box', 'Backup SQL mock link', 'Blind SQLi delay trap'], // Level 6 (7 hp)
+    ['Fake Money Transfer page', 'Password reset route decoy', 'Config settings update trap', 'Mock webhook receiver', 'CORS debugger decoy', 'API key generator decoy', 'Clickjacking debugger', 'Browser exploit sandbox'], // Level 7 (8 hp)
+    ['Fake admin login panel', 'JWT decoder console', 'Active Directory decoy', 'Decoy reset password helper', 'MFA sandbox bypass', 'Fake cookie repository', 'Mock OAuth callback', 'Vulnerable session manager', 'Super Admin portal decoy'], // Level 8 (9 hp)
+    ['Mock invoice downloader', 'Decoy passwd file server', 'Fake user profile editor', 'Decoy console logs explorer', 'Mock Server Config page', 'Mock environment variables', 'Printer queue console', 'Database schema browser', 'Mock customer accounts', 'Backup restorer decoy'], // Level 9 (10 hp)
+    ['Decoy .env downloader', 'Decoy .git directory simulator', 'Mock Swagger API documentation', 'Spring Boot Actuator panel', 'GraphQL explorer interface', 'Decoy AWS Metadata portal', 'Kubernetes API mock', 'Docker Socket simulator', 'phpinfo decoy file', 'Jenkins job console', 'Webmin admin dashboard'], // Level 10 (11 hp)
+    ['Coupon Supersecret100 trap', 'Transaction override portal', 'Fake payment sandbox', 'Mock bank api simulator', 'Fake cash drawer log', 'Transaction Excel downloader', 'Mock credit card emulator', 'Fake currency converter', 'Supply replenishment panel', 'Decoy supplier manager', 'Fake printer queue log', 'Supplier registry database'] // Level 11 (12 hp)
+  ];
+  return allHoneypots[level] || [];
 }
 
 init();

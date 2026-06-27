@@ -720,3 +720,284 @@ table.data th {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: #fff;
 }
+
+/* ==========================================================================
+   Cybersecurity & Firewall (11-Layer) CSS Style Blocks
+   ========================================================================== */
+#view-cybersecurity {
+  background: #080d1a !important;
+  color: #e2e8f0;
+  border: 1px solid #1e293b;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.cyber-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cyber-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.cyber-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .cyber-grid {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+/* Metrics Cards */
+.cyber-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cyber-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.cyber-card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.cyber-card .value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: #38bdf8;
+}
+
+.cyber-card.alert-pulse .value {
+  color: #f43f5e;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { text-shadow: 0 0 0px rgba(244, 63, 94, 0.7); }
+  50% { text-shadow: 0 0 15px rgba(244, 63, 94, 0.9); }
+  100% { text-shadow: 0 0 0px rgba(244, 63, 94, 0.7); }
+}
+
+/* Loop trap switch custom style */
+.cyber-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Firewall Topology Visualizer */
+.firewall-visualizer {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  max-height: 520px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.firewall-layer-node {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid #334155;
+  border-left: 4px solid #38bdf8;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.8rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.firewall-layer-node.active-check {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.firewall-layer-node.failed-check {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.layer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.layer-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.layer-level-badge {
+  background: #334155;
+  color: #38bdf8;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.layer-details {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+/* Branch & Honeypot Sub-structure layout */
+.layer-subnodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.subnode-branch {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px dashed rgba(56, 189, 248, 0.3);
+  color: #7dd3fc;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.subnode-honeypot {
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #fda4af;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* Control Panel and Terminal */
+.cyber-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cyber-panel-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.cyber-panel-box h4 {
+  margin-top: 0;
+  color: #38bdf8;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/* Attack simulator list */
+.simulator-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.simulator-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.simulator-btn:hover {
+  background: #38bdf8;
+  color: #0f172a;
+  border-color: #38bdf8;
+  font-weight: bold;
+}
+
+/* Live Terminal Log Viewer */
+.cyber-terminal {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 0.8rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  height: 250px;
+  overflow-y: auto;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.terminal-line {
+  margin-bottom: 0.3rem;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.terminal-line .timestamp {
+  color: #64748b;
+}
+
+.terminal-line .pass {
+  color: #10b981;
+}
+
+.terminal-line .violation {
+  color: #f43f5e;
+}
+
+.terminal-line .loop {
+  color: #a855f7;
+  animation: pulse-purple 1.5s infinite;
+}
+
+@keyframes pulse-purple {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.terminal-line .info {
+  color: #38bdf8;
+}
+

@@ -10,6 +10,8 @@ const { tempBanMiddleware } = require('./middleware/tempBan');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeBody } = require('./middleware/sanitize');
 const { issueCsrf, csrfProtection } = require('./middleware/csrf');
+const { cyberFirewallMiddleware } = require('./middleware/cyberFirewall');
+const cybersecurityRoutes = require('./routes/cybersecurity');
 
 const setupRoutes = require('./routes/setup');
 const authRoutes = require('./routes/auth');
@@ -34,6 +36,7 @@ app.use(botBlockMiddleware);
 app.use(tempBanMiddleware);
 
 app.use(express.json({ limit: '5mb' }));
+app.use(cyberFirewallMiddleware); // Master 11-Layer Cybersecurity Firewall
 app.use(sanitizeBody);
 
 /** CSRF harus di luar rate limit & tetap sebelum csrfProtection untuk mutasi lain */
@@ -58,6 +61,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/incoming-goods', incomingRoutes);
 app.use('/api/audit-logs', auditLogsRoutes);
+app.use('/api/cybersecurity', cybersecurityRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 

@@ -80,6 +80,32 @@ export async function api(path, opts = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
+  const timestamp = String(Date.now());
+  const bodyData = opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)
+    ? JSON.stringify(opts.body)
+    : (opts.body || '');
+
+  // Cryptographic Request Signature using Web Crypto API
+  let signature = '';
+  try {
+    const clientSalt = "sikasir_client_secure_salt_987654";
+    const message = `${method}:${path}:${bodyData}:${timestamp}:${token || ''}:${clientSalt}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    
+    // Perform synchronous-like web crypto call by waiting, but since api() is async, we can await it!
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    // Fallback if crypto is not supported (unlikely in modern browsers)
+  }
+
+  headers['X-Timestamp'] = timestamp;
+  if (signature) {
+    headers['X-Signature'] = signature;
+  }
+
   const res = await fetch(`${API_BASE}/api${path}`, {
     ...opts,
     method,

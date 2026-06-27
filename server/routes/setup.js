@@ -14,8 +14,8 @@ router.get('/status', async (req, res) => {
     const hasAdmin = rows[0].cnt > 0;
     res.json({ hasAdmin });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Gagal cek status' });
+    console.warn('[setup] Database offline during status check, falling back to true:', e.message);
+    res.json({ hasAdmin: true });
   }
 });
 
