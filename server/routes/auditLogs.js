@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
        WHERE tenant_id = ?
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
-      [tid, limit, offset]
+      [tid, limit.toString(), offset.toString()]
     );
     res.json(rows);
   } catch (e) {

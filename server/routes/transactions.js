@@ -110,7 +110,7 @@ router.get('/', async (req, res) => {
       params.push(req.user.id);
     }
     sql += ' ORDER BY t.created_at DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
+    params.push(limit.toString(), offset.toString());
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
   } catch (e) {
