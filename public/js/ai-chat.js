@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function appendMessage(text, className, id = '') {
     const div = document.createElement('div');
-    div.className = \`ai-msg \${className}\`;
+    div.className = `ai-msg ${className}`;
     div.textContent = text;
     if (id) div.id = id;
     messages.appendChild(div);
