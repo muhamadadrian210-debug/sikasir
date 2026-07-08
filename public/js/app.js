@@ -1624,3 +1624,55 @@ async function init() {
 }
 
 init();
+
+/* -------- Hardware Barcode Scanner Listener -------- */
+let hwBarcodeBuffer = '';
+let hwBarcodeTimeout = null;
+
+window.addEventListener('keydown', (e) => {
+  // Abaikan ketikan yang menggunakan modifier (Ctrl/Alt/Meta)
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  // Jika user sedang mengetik di dalam input atau textarea, abaikan.
+  // Pengecualian: jika mereka fokus di pos-barcode-input, kita biarkan logic jalan saat Enter.
+  const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+  
+  if (e.key === 'Enter') {
+    // Tangani manual input 'Enter' di text field barcode
+    if (e.target.id === 'pos-barcode-input') {
+      const code = e.target.value.trim();
+      if (code) {
+        onPosScan(code);
+        e.target.value = '';
+      }
+      hwBarcodeBuffer = '';
+      return;
+    }
+
+    // Jika ini adalah Enter dari hardware scanner (global)
+    if (!isInput && hwBarcodeBuffer.length > 2) {
+      const scannedCode = hwBarcodeBuffer;
+      hwBarcodeBuffer = '';
+      
+      // Memicu scan otomatis jika sedang di menu POS
+      if (currentView === 'pos') {
+        onPosScan(scannedCode);
+      } else {
+        showAlert('Barcode ditangkap: ' + scannedCode + ' (Otomatis masuk ke keranjang hanya di menu Kasir)', 'success');
+      }
+    }
+    return;
+  }
+
+  // Jika bukan Enter, tangkap karakternya jika bukan input box
+  if (!isInput && e.key.length === 1) {
+    hwBarcodeBuffer += e.key;
+    
+    // Clear buffer jika jeda antar ketikan lebih dari 40ms 
+    // (manusia mengetik lambat, hardware scanner sangat cepat)
+    clearTimeout(hwBarcodeTimeout);
+    hwBarcodeTimeout = setTimeout(() => {
+      hwBarcodeBuffer = '';
+    }, 40);
+  }
+});

@@ -1,133 +1,60 @@
-# SiKasir
+<div align="center">
+  <img src="public/icons/logo.svg" alt="SiKasir Logo" width="120" height="120">
+  <h1>SiKasir</h1>
+  <p><b>Sistem Point of Sales Cerdas Masa Depan</b></p>
+</div>
 
-SiKasir adalah aplikasi kasir web/PWA untuk toko, warung, minimarket, apotek, dan UMKM. Aplikasi ini mendukung penjualan, scan barcode, stok, barang masuk, laporan keuntungan, akun kasir, riwayat transaksi, dan panel keamanan toko untuk admin.
+---
 
-## Fitur Utama
+## 🚀 Apa itu SiKasir?
 
-- Kasir/POS untuk melayani pembeli dan mencetak struk PDF.
-- Scan barcode dari kamera atau input manual.
-- Manajemen produk, kategori, harga beli, harga jual, stok, dan data tambahan sesuai jenis toko.
-- Barang masuk untuk mencatat penerimaan barang dan menambah stok otomatis.
-- Laporan penjualan, modal barang, dan untung per barang.
-- Riwayat transaksi untuk admin dan kasir.
-- Manajemen akun kasir oleh admin.
-- PWA, bisa dipasang seperti aplikasi dan menyimpan katalog produk untuk mode offline.
-- Multi toko: data produk, transaksi, stok, pengguna, log audit, dan keamanan dipisahkan per toko.
-- Keamanan toko: admin bisa melihat akses mencurigakan khusus tokonya dan langsung memblokir alamat penyusup dari web/apk.
+**SiKasir** adalah sistem *Point of Sales* (POS) dan manajemen inventaris digital tingkat lanjut yang dirancang khusus untuk mempercepat, mempermudah, dan mengotomatisasi proses bisnis ritel modern. Dibekali dengan fitur **AI Assistant**, SiKasir tidak hanya mencatat transaksi, tetapi juga mampu diajak berkomunikasi untuk mengatur dan mengaudit stok secara instan, cerdas, dan efisien.
 
-## Keamanan Toko
+---
 
-Menu **Keamanan Toko** hanya muncul untuk admin. Panel ini dibuat untuk bahasa yang mudah dipahami:
+## 🏢 Bagian dari Sivilize Corp Indonesia
 
-- **Ringkasan**: total kejadian, jumlah alamat mencurigakan, dan status toko.
-- **Akses mencurigakan**: daftar alamat yang mencoba tindakan berbahaya.
-- **Blokir akses**: admin bisa langsung memblokir alamat yang mencurigakan.
-- **Catatan kejadian**: riwayat percobaan pembobolan atau akses berbahaya.
-- **Blokir otomatis**: sistem bisa menahan akses yang berulang kali mencurigakan.
-- **Tes admin**: tombol tes untuk memastikan dashboard keamanan berjalan.
+SiKasir bukanlah produk mandiri yang berdiri sendiri, melainkan sebuah mahakarya teknologi yang terintegrasi di dalam ekosistem **Sivilize Corp Indonesia**. Kami membangun teknologi untuk memberikan keunggulan kompetitif bagi setiap ekosistem bisnis yang mempercayakan operasionalnya kepada kami.
 
-Setiap toko memakai `tenant_id`, jadi admin Toko A hanya bisa melihat dan memblokir data keamanan milik Toko A. Admin Toko B tidak bisa melihat data keamanan Toko A, dan sebaliknya.
+---
 
-## Teknologi
+## 📖 Latar Belakang, Visi & Misi
 
-- Node.js dan Express untuk backend.
-- MySQL untuk database utama.
-- Redis opsional untuk penyimpanan status keamanan/rate limit yang lebih cepat.
-- JWT untuk login.
-- Service Worker dan manifest PWA untuk mode aplikasi.
-- Chart.js untuk grafik laporan.
-- jsPDF untuk struk dan laporan PDF.
-- ZXing untuk scan barcode.
+### Latar Belakang
+Diciptakan dari kesadaran akan lambatnya proses pencatatan stok dan kasir konvensional yang memicu tingginya *human error*. Bisnis ritel membutuhkan solusi yang bukan sekadar "pencatat", tapi juga "asisten" yang bisa diajak bekerja serba cepat—bahkan bisa dioperasikan hanya dengan obrolan (*AI-driven*).
 
-## Persyaratan
+### Visi
+Menjadi pilar utama dalam transformasi dan digitalisasi ritel modern di Indonesia, menghadirkan standar teknologi kelas dunia (Silicon Valley) ke setiap lini bisnis lokal.
 
-- Node.js `>=18`
-- MySQL
-- Redis opsional
+### Misi
+- Menyediakan sistem POS dan stok yang memiliki tingkat keamanan tinggi (*cyber-security ready*).
+- Memberantas inefisiensi operasional toko lewat otomatisasi AI.
+- Menghadirkan antarmuka pengguna yang premium, estetik, namun sangat mudah dipahami oleh kasir manapun.
 
-## Instalasi
+---
 
-1. Install dependency:
+## 👑 Profil Kepemimpinan
 
-   ```bash
-   npm install
-   ```
+SiKasir dibangun dan dikelola di bawah pengawasan ketat dan arahan dari:
 
-2. Salin konfigurasi environment:
+- **Nama**: Muhamad Adrian
+- **Jabatan**: Direktur Utama (PT Sivilize Corp Indonesia)
+- **Email Resmi**: muhamadadrian210@gmail.com
+- **WhatsApp**: 0813 3821 9957
 
-   ```bash
-   cp .env.example .env
-   ```
+*Kami selalu terbuka untuk mendiskusikan peluang kerja sama bisnis tingkat tinggi maupun pengadaan enterprise.*
 
-3. Isi `.env` sesuai database:
+---
 
-   ```env
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=
-   DB_NAME=sikasir
-   JWT_SECRET=ganti-dengan-secret-kuat
-   REDIS_URL=
-   ```
+## 📄 Lisensi Penggunaan
 
-4. Siapkan database:
+**Hak Cipta Dilindungi (All Rights Reserved)**
+Hak Cipta © 2026 SiKasir - Muhamad Adrian (PT Sivilize Corp Indonesia).
 
-   ```bash
-   npm run db:init
-   ```
+Perangkat lunak ini adalah **PROPERTI INTELEKTUAL MUTLAK** milik Sivilize Corp. 
+- 🚫 **DILARANG KERAS** menyalin, menggandakan, atau menggunakan *source code* ini untuk tujuan komersial di luar izin tertulis.
+- 🚫 **DILARANG KERAS** melakukan rekayasa balik (*reverse engineering*) atau mendistribusikan ulang produk ini secara sepihak.
 
-5. Jalankan aplikasi:
+Segala bentuk pelanggaran Hak Cipta akan ditindak tegas sesuai dengan hukum kekayaan intelektual yang berlaku di Republik Indonesia maupun hukum internasional.
 
-   ```bash
-   npm run dev
-   ```
-
-6. Buka:
-
-   ```text
-   http://localhost:3000
-   ```
-
-## Skrip
-
-- `npm start`: menjalankan server.
-- `npm run dev`: menjalankan server untuk pengembangan.
-- `npm run db:init`: membuat/memperbarui schema database.
-- `npm run db:reset`: mengosongkan dan membuat ulang database.
-- `npm run android:sync`: menyalin web app ke project Android Capacitor.
-- `npm run android:apk`: membuat APK debug dari project Android Capacitor.
-- `node server/scripts/run-migration.js`: menjalankan migrasi tabel keamanan jika diperlukan.
-
-## Web App dan APK Android
-
-SiKasir punya dua cara install:
-
-- **Install dari browser**: memakai PWA, cocok untuk pemasangan cepat dari Chrome/Edge.
-- **APK asli Android**: dibuat lewat Capacitor dan bisa diunduh dari tombol **Download APK** di sidebar aplikasi.
-
-File APK debug hasil build tersedia di:
-
-```text
-public/downloads/sikasir-debug.apk
-```
-
-Untuk membuat ulang APK:
-
-```bash
-npm run android:sync
-npm run android:apk
-```
-
-Build Android membutuhkan JDK 21 dan Android SDK.
-
-## Alur Penggunaan
-
-1. Daftarkan toko dan akun admin dari halaman awal.
-2. Admin memilih mode kasir, admin, atau keduanya.
-3. Admin mengisi produk, kategori, dan stok awal.
-4. Kasir melayani transaksi dari menu Kasir.
-5. Admin melihat laporan, barang masuk, riwayat, akun kasir, log audit, dan keamanan toko.
-
-## Catatan Multi Toko
-
-Semua data penting dipisahkan berdasarkan `tenant_id`. Query produk, transaksi, stok, pengguna, barang masuk, audit, dan keamanan memakai tenant dari token login. Ini menjaga agar satu toko tidak bisa membaca atau mengubah data toko lain.
+> *"Membangun peradaban dimulai dari sistem komputasi yang presisi."* - **Sivilize Corp**
