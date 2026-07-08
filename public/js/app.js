@@ -670,38 +670,20 @@ document.getElementById('modal-scan-close').addEventListener('click', () => {
 document.getElementById('modal-scan-upload').addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
-  const ZXing = window.ZXing;
-  if (!ZXing) { showAlert('ZXing belum dimuat', 'error'); return; }
 
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-
-    try {
-      const hints = new Map();
-      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-      const reader = new ZXing.MultiFormatReader();
-      reader.setHints(hints);
-      const luminance = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
-      const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminance));
-      const result = reader.decode(bitmap);
-      if (result) {
-        const code = result.getText();
-        closeScanModal();
-        scanCallback?.(code);
-        scanCallback = null;
-      }
-    } catch {
-      showAlert('Barcode tidak terbaca dari foto. Coba foto yang lebih jelas.', 'warn');
+  try {
+    const html5QrCode = new Html5Qrcode('scan-video-host');
+    const result = await html5QrCode.scanFileV2(file, false);
+    const code = result.decodedText;
+    if (code) {
+      closeScanModal();
+      scanCallback?.(code);
+      scanCallback = null;
     }
-  };
-  img.src = url;
+    html5QrCode.clear();
+  } catch {
+    showAlert('Barcode tidak terbaca dari foto. Coba foto yang lebih jelas.', 'warn');
+  }
   // reset input so same file can be re-selected
   e.target.value = '';
 });
