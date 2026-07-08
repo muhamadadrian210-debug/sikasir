@@ -121,7 +121,25 @@
       };
     </script>
 
+    <div id="ai-chat-widget">
+      <button id="ai-chat-btn" aria-label="Buka AI Assistant">✨ AI</button>
+      <div id="ai-chat-window" class="hidden">
+        <div class="ai-chat-header">
+          <span>SiKasir AI Assistant</span>
+          <button id="ai-chat-close">✕</button>
+        </div>
+        <div class="ai-chat-messages" id="ai-chat-messages">
+          <div class="ai-msg bot-msg">Halo Bos! Ada yang bisa gue bantu soal nambah atau ngurangin stok hari ini?</div>
+        </div>
+        <form class="ai-chat-input" id="ai-chat-form">
+          <input type="text" id="ai-chat-input" placeholder="Ketik perintah (misal: hoodie nambah 10)..." autocomplete="off" required />
+          <button type="submit">Kirim</button>
+        </form>
+      </div>
+    </div>
+
     <script src="/js/samsung-redirect.js"></script>
     <script type="module" src="/js/app.js"></script>
+    <script type="module" src="/js/ai-chat.js"></script>
   </body>
 </html>
