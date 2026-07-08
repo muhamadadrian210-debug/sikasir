@@ -124,4 +124,44 @@ Perintah pengguna: "${prompt}"
   }
 });
 
+router.post('/parse-product', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'Prompt kosong' });
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'API Key Gemini belum diset.' });
+    }
+
+    const instruction = `
+Kamu adalah asisten kasir cerdas. Tugasmu adalah mengekstrak informasi produk dari input pengguna ke dalam format JSON.
+Format JSON yang harus kamu kembalikan persis seperti ini (tanpa markdown atau karakter tambahan di luar JSON):
+{
+  "name": "string (nama produk, kapitalisasi yang rapi)",
+  "barcode": "string (jika disebutkan angka barcode/sku, jika tidak ada biarkan kosong '')",
+  "purchase_price": "number (harga modal/beli, wajib angka tanpa titik/koma. Jika tidak ada, isi 0)",
+  "sale_price": "number (harga jual, wajib angka tanpa titik/koma. Jika tidak ada, isi 0)",
+  "stock": "number (jumlah barang, jika tidak disebutkan isi 0)"
+}
+Jika pengguna mengetik angka seperti "20k" atau "20 ribu", terjemahkan menjadi 20000.
+`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        systemInstruction: instruction,
+        temperature: 0.1,
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const result = JSON.parse(response.text.trim());
+    return res.json(result);
+
+  } catch (err) {
+    console.error('AI Parse Product Error:', err);
+    res.status(500).json({ error: 'Gagal mengekstrak data dari AI' });
+  }
+});
+
 module.exports = router;
