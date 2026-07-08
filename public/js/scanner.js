@@ -1,293 +1,143 @@
-/**
- * SiKasir Advanced Barcode Scanner v5 — Full Resolution + Web Worker
- * - Decode di Web Worker (thread terpisah) = tidak blocking UI
- * - Resolusi penuh 1920x1080
- * - Scan instan seperti scanner kasir
- * - Flip kamera depan/belakang
- * - Torch support
- */
-
-let activeStream = null;
+let html5QrCode = null;
 let scanning = false;
 let torchOn = false;
-let activeTrack = null;
 let currentFacing = 'environment';
-let worker = null;
-let workerReady = false;
-let pendingDecode = false;
-let msgId = 0;
-
-function initWorker() {
-  try {
-    worker = new Worker('/js/scanner-worker.js');
-    worker.onmessage = null; // akan di-set per decode
-    workerReady = true;
-  } catch {
-    workerReady = false;
-  }
-}
-
-async function pickBestCamera(facing = 'environment') {
-  try {
-    const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } });
-    tempStream.getTracks().forEach(t => t.stop());
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoCams = devices.filter(d => d.kind === 'videoinput');
-
-    if (facing === 'user') {
-      const front = videoCams.find(d => /front|selfie|depan|user/i.test(d.label));
-      return front?.deviceId || null;
-    }
-
-    const backCams = videoCams.filter(d => {
-      const l = d.label.toLowerCase();
-      return l.includes('back') || l.includes('rear') || l.includes('environment') ||
-             l.includes('belakang') || !l.includes('front');
-    });
-    const candidates = backCams.length > 0 ? backCams : videoCams;
-    const unwanted = /ultrawide|ultra.wide|wide.angle|macro|depth|tele|front|selfie|depan/i;
-    const preferred = candidates.filter(d => !unwanted.test(d.label));
-    const main = preferred.find(d => /main|camera2 0|camera 0|\b0\b/.test(d.label.toLowerCase()));
-    return (main || preferred[0] || candidates[0])?.deviceId || null;
-  } catch {
-    return null;
-  }
-}
-
-async function openStream(facing) {
-  const deviceId = await pickBestCamera(facing);
-  const videoConstraints = deviceId
-    ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-    : { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
-  return navigator.mediaDevices.getUserMedia({ video: videoConstraints });
-}
-
-// Fallback decode di main thread jika worker tidak tersedia
-function decodeMainThread(canvas, ZXing) {
-  // Jika browser mendukung Native BarcodeDetector (lebih cepat 10x lipat)
-  if ('BarcodeDetector' in window) {
-    if (!decodeMainThread._nativeDetector) {
-      decodeMainThread._nativeDetector = new window.BarcodeDetector();
-    }
-    // Kita jalankan secara async, tidak mem-blokir frame
-    return decodeMainThread._nativeDetector.detect(canvas)
-      .then(barcodes => barcodes.length > 0 ? barcodes[0].rawValue : null)
-      .catch(() => null);
-  }
-
-  const reader = decodeMainThread._reader;
-  if (!reader) return null;
-  try {
-    const luminance = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
-    const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminance));
-    return reader.decode(bitmap).getText();
-  } catch {
-    return null;
-  }
-}
+let lastCode = '';
+let lastTime = 0;
 
 export async function startScanner(targetEl, onCode) {
-  const ZXing = window.ZXing;
-  if (!ZXing) throw new Error('ZXing belum dimuat. Coba refresh halaman.');
+  if (!window.Html5Qrcode) {
+    throw new Error('Library Html5Qrcode belum dimuat. Coba refresh halaman.');
+  }
 
-  // Init fallback reader untuk main thread
-  const fallbackReader = new ZXing.MultiFormatReader();
-  const hints = new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.UPC_A,
-    ZXing.BarcodeFormat.UPC_E, ZXing.BarcodeFormat.DATA_MATRIX,
-    ZXing.BarcodeFormat.ITF, ZXing.BarcodeFormat.CODABAR,
-  ]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-  fallbackReader.setHints(hints);
-  decodeMainThread._reader = fallbackReader;
+  scanning = true;
+  lastCode = '';
+  lastTime = 0;
 
-  // Init worker
-  initWorker();
+  // Html5Qrcode needs an ID for the target element
+  if (!targetEl.id) {
+    targetEl.id = 'scan-video-host-container';
+  }
 
-  currentFacing = 'environment';
-  scanning = false;
-  pendingDecode = false;
+  // Bersihkan isinya kalau-kalau ada
+  targetEl.innerHTML = '';
+  targetEl.style.position = 'relative';
 
-  // Container
-  const container = document.createElement('div');
-  container.style.cssText = 'position:relative;width:100%;';
-  targetEl.appendChild(container);
+  // Inisialisasi dengan format 1D dan QR
+  html5QrCode = new window.Html5Qrcode(targetEl.id, { 
+    formatsToSupport: [ 
+      window.Html5QrcodeSupportedFormats.EAN_13,
+      window.Html5QrcodeSupportedFormats.EAN_8,
+      window.Html5QrcodeSupportedFormats.CODE_128,
+      window.Html5QrcodeSupportedFormats.CODE_39,
+      window.Html5QrcodeSupportedFormats.UPC_A,
+      window.Html5QrcodeSupportedFormats.UPC_E,
+      window.Html5QrcodeSupportedFormats.QR_CODE
+    ]
+  });
 
-  // Video
-  const video = document.createElement('video');
-  video.style.cssText = 'width:100%;max-height:260px;border-radius:10px;background:#000;display:block;object-fit:cover;';
-  video.setAttribute('playsinline', '');
-  video.setAttribute('autoplay', '');
-  video.setAttribute('muted', '');
-  container.appendChild(video);
+  const handleCode = (decodedText) => {
+    if (!decodedText || !scanning) return;
+    const now = Date.now();
+    if (decodedText === lastCode && now - lastTime < 2000) return;
+    lastCode = decodedText;
+    lastTime = now;
+    onCode(decodedText);
+  };
 
-  // Viewfinder
+  // Konfigurasi performa tinggi untuk Android
+  const config = { 
+    fps: 15,
+    qrbox: { width: 280, height: 180 },
+    aspectRatio: 1.0,
+    disableFlip: false,
+    useBarCodeDetectorIfSupported: true // Native hardware acceleration! Sangat Cepat!
+  };
+
+  try {
+    await html5QrCode.start(
+      { facingMode: currentFacing },
+      config,
+      handleCode,
+      undefined // abaikan error (seperti tidak ada barcode terdeteksi)
+    );
+    
+    setupOverlay(targetEl);
+  } catch (err) {
+    // Jika kamera environment gagal, coba kamera user (kamera depan)
+    try {
+      await html5QrCode.start(
+        { facingMode: "user" },
+        config,
+        handleCode,
+        undefined
+      );
+      setupOverlay(targetEl);
+    } catch (fallbackErr) {
+      throw new Error('Kamera gagal diakses: ' + (fallbackErr.message || err.message));
+    }
+  }
+}
+
+function setupOverlay(targetEl) {
+  // Tambah garis biru scan
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;border-radius:10px;overflow:hidden;';
+  overlay.id = 'scan-overlay-custom';
+  overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;border-radius:10px;overflow:hidden;z-index:10;';
   overlay.innerHTML = `
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:50%;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4);">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:180px;border-radius:8px;">
       <div style="position:absolute;top:-2px;left:-2px;width:22px;height:22px;border-top:3px solid #3b82f6;border-left:3px solid #3b82f6;border-radius:3px 0 0 0;"></div>
       <div style="position:absolute;top:-2px;right:-2px;width:22px;height:22px;border-top:3px solid #3b82f6;border-right:3px solid #3b82f6;border-radius:0 3px 0 0;"></div>
       <div style="position:absolute;bottom:-2px;left:-2px;width:22px;height:22px;border-bottom:3px solid #3b82f6;border-left:3px solid #3b82f6;border-radius:0 0 0 3px;"></div>
       <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-bottom:3px solid #3b82f6;border-right:3px solid #3b82f6;border-radius:0 0 3px 0;"></div>
       <div style="position:absolute;top:0;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,#3b82f6,transparent);animation:scanline 1.5s ease-in-out infinite;"></div>
     </div>
-    <style>@keyframes scanline{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}</style>
+    <style>
+      @keyframes scanline{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
+      #scan-video-host-container video { border-radius: 10px; object-fit: cover; }
+    </style>
   `;
-  container.appendChild(overlay);
-
-  // Controls
+  
+  targetEl.appendChild(overlay);
+  
+  // Controls Button (Senter)
+  const existingControls = document.getElementById('scan-controls-custom');
+  if (existingControls) existingControls.remove();
+  
   const controls = document.createElement('div');
+  controls.id = 'scan-controls-custom';
   controls.style.cssText = 'display:flex;gap:0.5rem;margin-top:0.5rem;justify-content:center;flex-wrap:wrap;';
   controls.innerHTML = `
     <button id="btn-torch" type="button" style="padding:0.45rem 0.9rem;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:0.85rem;cursor:pointer;">🔦 Senter</button>
-    <button id="btn-flip" type="button" style="padding:0.45rem 0.9rem;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:0.85rem;cursor:pointer;">🔄 Balik Kamera</button>
   `;
-  targetEl.appendChild(controls);
+  targetEl.parentNode.insertBefore(controls, targetEl.nextSibling);
 
-  // Canvas untuk capture frame — resolusi penuh
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: false });
-
-  const applyStream = async (s) => {
-    activeStream = s;
-    activeTrack = s.getVideoTracks()[0];
-    video.srcObject = s;
-    await new Promise((res, rej) => {
-      video.onloadedmetadata = () => video.play().then(res).catch(rej);
-      video.onerror = rej;
-    });
-  };
-
-  let stream;
-  try {
-    stream = await openStream(currentFacing);
-  } catch {
-    try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); }
-    catch { throw new Error('Izin kamera ditolak atau kamera tidak tersedia.'); }
-  }
-  await applyStream(stream);
-  scanning = true;
-
-  let lastCode = '';
-  let lastTime = 0;
-
-  const handleCode = (code) => {
-    if (!code || !scanning) return;
-    const now = Date.now();
-    if (code === lastCode && now - lastTime < 2000) return;
-    lastCode = code;
-    lastTime = now;
-    onCode(code);
-  };
-
-  // Scan loop — rAF untuk sinkron dengan frame kamera
-  const scanLoop = () => {
-    if (!scanning) return;
-    if (pendingDecode || video.readyState < video.HAVE_ENOUGH_DATA || video.videoWidth === 0) {
-      requestAnimationFrame(scanLoop);
-      return;
-    }
-
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(video, 0, 0, w, h);
-
-    if (workerReady && worker) {
-      // Decode di worker — non-blocking
-      pendingDecode = true;
-      const id = ++msgId;
-      const imageData = ctx.getImageData(0, 0, w, h);
-
-      const handler = (e) => {
-        if (e.data.id !== id) return;
-        worker.removeEventListener('message', handler);
-        pendingDecode = false;
-        if (e.data.code) handleCode(e.data.code);
-        if (scanning) requestAnimationFrame(scanLoop);
-      };
-      worker.addEventListener('message', handler);
-      // Transfer imageData buffer untuk zero-copy
-      worker.postMessage({ imageData: imageData.data, width: w, height: h, id }, [imageData.data.buffer]);
-    } else {
-      // Fallback main thread
-      const result = decodeMainThread(canvas, ZXing);
-      if (result instanceof Promise) {
-        pendingDecode = true;
-        result.then(code => {
-          pendingDecode = false;
-          if (code) handleCode(code);
-          if (scanning) requestAnimationFrame(scanLoop);
-        });
-      } else {
-        if (result) handleCode(result);
-        requestAnimationFrame(scanLoop);
-      }
-    }
-  };
-
-  requestAnimationFrame(scanLoop);
-
-  // Torch
   const btnTorch = controls.querySelector('#btn-torch');
   btnTorch.addEventListener('click', async () => {
-    if (!activeTrack) return;
+    if (!html5QrCode) return;
     torchOn = !torchOn;
     try {
-      await activeTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+      await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchOn }] });
       btnTorch.style.background = torchOn ? '#fef3c7' : '#f8fafc';
       btnTorch.innerHTML = torchOn ? '🔦 ON' : '🔦 Senter';
-    } catch { torchOn = !torchOn; }
-  });
-
-  // Flip kamera
-  const btnFlip = controls.querySelector('#btn-flip');
-  let flipping = false;
-  btnFlip.addEventListener('click', async () => {
-    if (flipping) return;
-    flipping = true;
-    btnFlip.disabled = true;
-    btnFlip.innerHTML = '⏳';
-    scanning = false;
-    pendingDecode = false;
-    if (activeStream) activeStream.getTracks().forEach(t => t.stop());
-    torchOn = false;
-    btnTorch.style.background = '#f8fafc';
-    btnTorch.innerHTML = '🔦 Senter';
-
-    currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
-    try {
-      const newStream = await openStream(currentFacing);
-      await applyStream(newStream);
-      btnFlip.innerHTML = currentFacing === 'environment' ? '🔄 Balik Kamera' : '🤳 Kamera Depan';
-    } catch {
-      currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
-      btnFlip.innerHTML = '🔄 Gagal';
+    } catch { 
+      torchOn = !torchOn; 
     }
-    scanning = true;
-    requestAnimationFrame(scanLoop);
-    btnFlip.disabled = false;
-    flipping = false;
   });
 }
 
 export function stopScanner() {
   scanning = false;
-  pendingDecode = false;
-  torchOn = false;
-  if (worker) {
-    worker.terminate();
-    worker = null;
-    workerReady = false;
+  const controls = document.getElementById('scan-controls-custom');
+  if (controls) controls.remove();
+
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+    }).catch(() => {
+      // ignore
+      html5QrCode = null;
+    });
   }
-  if (activeStream) {
-    activeStream.getTracks().forEach(t => t.stop());
-    activeStream = null;
-  }
-  activeTrack = null;
 }
