@@ -641,6 +641,8 @@ function openScanModal(cb) {
             <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:0.75rem 1rem;margin-top:0.5rem;color:#b91c1c;font-size:0.9rem;animation: popIn 0.3s ease-out;">
               ⚠️ Barcode <strong>${escapeHtml(code)}</strong> belum terdaftar
             </div>`;
+          // Tetap panggil callback agar form pendaftaran terbuka dengan barcode terisi
+          scanCallback?.(code);
         }
       } else {
         scanCallback?.(code);
