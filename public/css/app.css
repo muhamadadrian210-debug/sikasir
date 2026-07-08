@@ -1208,3 +1208,8 @@ table.data th {
   padding: 0 12px;
   cursor: pointer;
 }
+
+@keyframes popIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}

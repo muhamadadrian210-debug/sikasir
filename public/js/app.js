@@ -476,7 +476,6 @@ function renderCart() {
 }
 
 async function onPosScan(code) {
-  closeScanModal();
   try {
     await fetchProductsCached();
   } catch {
@@ -625,6 +624,7 @@ function openScanModal(cb) {
               border:1px solid #93c5fd;border-radius:10px;
               padding:0.75rem 1rem;margin-top:0.5rem;
               display:flex;align-items:center;justify-content:space-between;gap:0.5rem;
+              animation: popIn 0.3s ease-out;
             ">
               <div>
                 <div style="font-weight:700;color:#1e3a5f;font-size:1rem;">✅ ${escapeHtml(p.name)}</div>
@@ -634,36 +634,19 @@ function openScanModal(cb) {
               </div>
               <div style="font-size:1.5rem;">🛒</div>
             </div>`;
-          // Auto-close setelah 600ms supaya user sempat lihat
-          setTimeout(() => {
-            stopScanner();
-            backdrop.classList.remove('open');
-            scanCallback?.(code);
-            scanCallback = null;
-          }, 600);
+          // Langsung callback tanpa tutup kamera!
+          scanCallback?.(code);
         } else {
           previewEl.innerHTML = `
-            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:0.75rem 1rem;margin-top:0.5rem;color:#b91c1c;font-size:0.9rem;">
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:0.75rem 1rem;margin-top:0.5rem;color:#b91c1c;font-size:0.9rem;animation: popIn 0.3s ease-out;">
               ⚠️ Barcode <strong>${escapeHtml(code)}</strong> belum terdaftar
             </div>`;
-          setTimeout(() => {
-            stopScanner();
-            backdrop.classList.remove('open');
-            scanCallback?.(code);
-            scanCallback = null;
-          }, 800);
         }
       } else {
-        stopScanner();
-        backdrop.classList.remove('open');
         scanCallback?.(code);
-        scanCallback = null;
       }
     } catch {
-      stopScanner();
-      backdrop.classList.remove('open');
       scanCallback?.(code);
-      scanCallback = null;
     }
   }).catch((err) => {
     showAlert(err.message || 'Kamera gagal', 'error');

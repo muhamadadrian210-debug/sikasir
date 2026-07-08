@@ -64,6 +64,17 @@ async function openStream(facing) {
 
 // Fallback decode di main thread jika worker tidak tersedia
 function decodeMainThread(canvas, ZXing) {
+  // Jika browser mendukung Native BarcodeDetector (lebih cepat 10x lipat)
+  if ('BarcodeDetector' in window) {
+    if (!decodeMainThread._nativeDetector) {
+      decodeMainThread._nativeDetector = new window.BarcodeDetector();
+    }
+    // Kita jalankan secara async, tidak mem-blokir frame
+    return decodeMainThread._nativeDetector.detect(canvas)
+      .then(barcodes => barcodes.length > 0 ? barcodes[0].rawValue : null)
+      .catch(() => null);
+  }
+
   const reader = decodeMainThread._reader;
   if (!reader) return null;
   try {
@@ -167,7 +178,7 @@ export async function startScanner(targetEl, onCode) {
   const handleCode = (code) => {
     if (!code || !scanning) return;
     const now = Date.now();
-    if (code === lastCode && now - lastTime < 150) return;
+    if (code === lastCode && now - lastTime < 2000) return;
     lastCode = code;
     lastTime = now;
     onCode(code);
@@ -205,9 +216,18 @@ export async function startScanner(targetEl, onCode) {
       worker.postMessage({ imageData: imageData.data, width: w, height: h, id }, [imageData.data.buffer]);
     } else {
       // Fallback main thread
-      const code = decodeMainThread(canvas, ZXing);
-      if (code) handleCode(code);
-      requestAnimationFrame(scanLoop);
+      const result = decodeMainThread(canvas, ZXing);
+      if (result instanceof Promise) {
+        pendingDecode = true;
+        result.then(code => {
+          pendingDecode = false;
+          if (code) handleCode(code);
+          if (scanning) requestAnimationFrame(scanLoop);
+        });
+      } else {
+        if (result) handleCode(result);
+        requestAnimationFrame(scanLoop);
+      }
     }
   };
 
