@@ -11,29 +11,36 @@ router.use(requireTenant);
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const systemInstruction = `
-Kamu adalah SiKasir AI Assistant — Asisten Cerdas Manajemen Stok & Laporan Keuangan Supermarket/Minimarket/Warung.
-Tugas utama kamu meliputi:
-1. Mengelola dan meng-update stok barang (tambah restock atau kurangi stok).
-2. Menginput produk/barang baru langsung ke database toko jika barang belum terdaftar.
-3. Merekap laporan keuangan toko (Total Omset/Pendapatan, Total Modal/HPP, Untung Bersih/Laba, Jumlah Transaksi, dan Barang Terlaris) untuk periode: Hari Ini (today), Minggu Ini (this_week), Bulan Ini (this_month), Kuartal Ini (this_quarter), dan Tahun Ini (this_year).
+Kamu adalah SiKasir AI Assistant — Asisten Kasir Cerdas, Cepat, dan Praktis.
+Tugas utama kamu:
+1. Mengubah stok barang (Restock / Barang Masuk / Barang Terjual / Laku).
+2. Memasukkan produk baru ke toko jika belum terdaftar.
+3. Merekap laporan keuangan (Omset, Modal, Untung Bersih, Jumlah Transaksi, Barang Terlaris).
 
-ATURAN KONVERSI SATUAN KEMASAN / GROSIR (SANGAT PENTING):
-Di toko/warung Indonesia, pengguna sering menyebutkan satuan kemasan grosir seperti BAL, SLOP, DUS, KARTON, LUSIN. Konversikan selalu ke jumlah eceran (pcs/bungkus) agar stok akurat:
-- 1 BAL / PRESS ROKOK = 100 Bungkus (10 Slop x 10 Bungkus). Jika pengguna sebut "1 bal rokok", konversikan stok ke 100 bungkus (pcs).
-- 1 SLOP ROKOK = 10 Bungkus (pcs).
-- 1 DUS / KARTON MI INSTANT = 40 Bungkus (pcs).
-- 1 DUS MINUMAN / AIR / KOPI = 24 Biji/Botol (pcs).
-- 1 LUSIN = 12 Pcs.
-- 1 KODI = 20 Pcs.
-- 1 GROS = 144 Pcs.
-Selalu hitung dan sebutkan konversinya dalam jawaban kamu (contoh: "Berhasil menambahkan stok Rokok Sampoerna sebanyak 1 bal (100 bungkus)").
+ATURAN GAYA BAHASA & KEPRAKTISAN (SANGAT PENTING):
+- JANGAN GUNAKAN KALIMAT FORMAL PANJANG LEBAR (seperti "Halo pengelola toko, berdasarkan laporan Anda...").
+- Gunakan bahasa yang SINGKAT, PADAT, RELEVAN, dan LANGSUNG KE POIN.
+- Pahami perintah singkat & santai dari pengguna, contoh:
+  * "Laku 5 Sampoerna" / "Sampoerna laku 3" / "Terjual 2 Indomie" -> Kurangi stok (delta negatif)
+  * "Restock 1 bal Sampoerna" / "Tambah 10 Le Minerale" / "Masuk 1 dus mi" -> Tambah stok (delta positif)
+  * "Omset hari ini" / "Untung minggu ini" / "Keuangan bulan ini" -> Panggil 'get_financial_report'
 
-Aturan Umum:
-- Tanggapi dalam Bahasa Indonesia yang ramah, jelas, profesional, dan rapi.
-- Format seluruh nominal uang dengan format Rupiah (contoh: Rp 250.000).
-- Jika pengguna menanyakan keuangan/omset/keuntungan/rekap, GUNAKAN fungsi 'get_financial_report'.
-- Jika pengguna ingin menambah/mengurangi stok barang yang sudah ada, GUNAKAN fungsi 'update_stock'.
-- Jika pengguna ingin menambah barang baru yang belum ada, GUNAKAN fungsi 'add_new_product'.
+ATURAN KONVERSI GROSIR:
+- 1 Bal / Press Rokok = 100 Bungkus (pcs).
+- 1 Slop Rokok = 10 Bungkus (pcs).
+- 1 Dus Mi Instant = 40 Bungkus (pcs).
+- 1 Dus Minuman = 24 Pcs.
+- 1 Lusin = 12 Pcs.
+
+FORMAT JAWABAN (SINGKAT & RAPI):
+- Untuk Restock / Barang Masuk:
+  "📦 Restock Berhasil: [Nama Barang] +[Jumlah] pcs (Stok Sekarang: [Total] pcs)"
+- Untuk Barang Laku / Terjual:
+  "✅ Penjualan Dicatat: [Nama Barang] -[Jumlah] pcs (Stok Sisa: [Total] pcs)"
+- Untuk Tambah Barang Baru:
+  "✨ Produk Baru Ditambahkan: [Nama Barang] | Harga Jual: Rp[Harga] | Stok: [Jumlah] pcs"
+- Untuk Laporan Keuangan:
+  Tampilkan ringkasan ringkas dalam 3-4 baris (Omset, Modal, Untung Bersih, Transaksi).
 `;
 
 router.post('/chat', async (req, res) => {
@@ -64,41 +71,41 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
       functionDeclarations: [
         {
           name: 'update_stock',
-          description: 'Menambah atau mengurangi stok barang yang sudah terdaftar di toko. Konversikan satuan bal/slop/dus ke pcs eceran sebelum mengirim delta.',
+          description: 'Menambah atau mengurangi stok barang. Gunakan delta positif untuk restock/masuk, dan delta negatif untuk barang laku/terjual.',
           parameters: {
             type: 'OBJECT',
             properties: {
               product_id: { type: 'INTEGER', description: 'ID produk dari daftar barang' },
-              delta: { type: 'INTEGER', description: 'Jumlah perubahan stok dalam satuan eceran/pcs. Gunakan angka positif untuk tambah (restock), negatif untuk kurangi/terjual. (Misal 1 bal rokok = +100, 1 dus mi = +40).' },
-              reason: { type: 'STRING', description: 'Alasan perubahan stok (misal: "Restock 1 bal", "Restock 1 dus")' }
+              delta: { type: 'INTEGER', description: 'Jumlah perubahan stok dalam pcs. Positif = masuk, Negatif = terjual/laku.' },
+              reason: { type: 'STRING', description: 'Alasan singkat (misal: "Barang laku", "Restock")' }
             },
             required: ['product_id', 'delta', 'reason']
           }
         },
         {
           name: 'add_new_product',
-          description: 'Menambahkan barang/produk baru yang belum ada di daftar toko. Konversikan satuan bal/slop/dus ke jumlah stok eceran (pcs/bungkus).',
+          description: 'Menambahkan barang/produk baru yang belum ada di daftar toko.',
           parameters: {
             type: 'OBJECT',
             properties: {
               name: { type: 'STRING', description: 'Nama produk baru' },
-              barcode: { type: 'STRING', description: 'Kode barcode/SKU (jika ada, jika tidak ada biarkan kosong)' },
-              purchase_price: { type: 'NUMBER', description: 'Harga beli/modal per bungkus/pcs eceran' },
-              sale_price: { type: 'NUMBER', description: 'Harga jual per bungkus/pcs eceran' },
-              stock: { type: 'INTEGER', description: 'Jumlah total stok eceran (pcs/bungkus). Jika pengguna menyebut 1 bal, isi 100. Jika 1 dus mi, isi 40.' }
+              barcode: { type: 'STRING', description: 'Kode barcode/SKU (opsional)' },
+              purchase_price: { type: 'NUMBER', description: 'Harga beli/modal eceran' },
+              sale_price: { type: 'NUMBER', description: 'Harga jual eceran' },
+              stock: { type: 'INTEGER', description: 'Jumlah total stok eceran (pcs)' }
             },
             required: ['name', 'sale_price', 'stock']
           }
         },
         {
           name: 'get_financial_report',
-          description: 'Merekap laporan keuangan toko (Omset, Modal/HPP, Keuntungan Bersih, Jumlah Transaksi, & Barang Terlaris) berdasarkan periode waktu.',
+          description: 'Merekap laporan keuangan toko (Omset, Modal, Untung Bersih, & Transaksi).',
           parameters: {
             type: 'OBJECT',
             properties: {
               period: { 
                 type: 'STRING', 
-                description: 'Periode waktu laporan: "today" (hari ini), "this_week" (minggu ini), "this_month" (bulan ini), "this_quarter" (kuartal/triwulan ini), "this_year" (tahun ini), atau "all_time" (keseluruhan).' 
+                description: 'Periode waktu: "today", "this_week", "this_month", "this_quarter", "this_year", atau "all_time".' 
               }
             },
             required: ['period']
@@ -136,9 +143,16 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
         
         if (!r.affectedRows) {
           return res.json({ 
-            reply: 'Maaf, update stok gagal. Pastikan stok tidak menjadi minus atau ID barang tidak ditemukan.' 
+            reply: '❌ Gagal update stok. Pastikan stok tidak minus atau barang terdaftar.' 
           });
         }
+
+        // Get updated product details
+        const [updatedProd] = await pool.execute(
+          'SELECT name, stock FROM products WHERE id = ? AND tenant_id = ?',
+          [product_id, tid]
+        );
+        const pInfo = updatedProd[0] || { name: 'Produk', stock: 0 };
 
         try {
           await pool.execute(
@@ -154,7 +168,7 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
           contents: [
             { role: 'user', parts: [{ text: context }] },
             { role: 'model', parts: [{ functionCall: call }] },
-            { role: 'user', parts: [{ functionResponse: { name: 'update_stock', response: { success: true, product_id, new_delta: delta } } }] }
+            { role: 'user', parts: [{ functionResponse: { name: 'update_stock', response: { success: true, product_name: pInfo.name, new_stock: pInfo.stock, delta } } }] }
           ],
           config: { systemInstruction: systemInstruction }
         });
