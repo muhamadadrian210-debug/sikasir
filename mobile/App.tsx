@@ -166,11 +166,12 @@ export default function App() {
         regStoreName.trim(),
         regOwnerName.trim(),
         regUsername.trim(),
-        regPassword
+        regPassword,
+        regStoreType
       );
       const newOwner: User = { id: Date.now(), username: regUsername.trim(), role: 'admin', tenant_id: Date.now() };
       setCurrentUserLocal(newOwner);
-      Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" berhasil didaftarkan sebagai Admin.`);
+      Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" (${regStoreType.toUpperCase()}) berhasil didaftarkan sebagai Admin.`);
       setRegisterModalVisible(false);
       setRegStoreName('');
       setRegOwnerName('');
@@ -435,8 +436,31 @@ export default function App() {
                 Buat toko baru dan otomatis menjadi Admin Toko.
               </Text>
 
-              <Text style={styles.label}>Nama Toko / Minimarket *</Text>
-              <TextInput style={styles.modalInput} placeholder="Toko Kelontong Berkah" placeholderTextColor="#64748b" value={regStoreName} onChangeText={setRegStoreName} />
+              <Text style={styles.label}>Nama Toko / Usaha *</Text>
+              <TextInput style={styles.modalInput} placeholder="Contoh: Apotek Kimia Medika" placeholderTextColor="#64748b" value={regStoreName} onChangeText={setRegStoreName} />
+
+              <Text style={[styles.label, { marginTop: 10 }]}>Jenis / Tipe Usaha Toko *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }}>
+                {[
+                  { type: 'minimarket', label: '🛒 Minimarket / Warung' },
+                  { type: 'apotek', label: '💊 Apotek & Obat' },
+                  { type: 'cafe', label: '☕ Cafe & F&B' },
+                  { type: 'counter', label: '📱 Counter HP & Pulsa' },
+                  { type: 'fashion', label: '👕 Fashion & Distro' },
+                  { type: 'bangunan', label: '🛠️ Toko Bangunan' },
+                  { type: 'umum', label: '🏬 Toko Umum' },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.type}
+                    style={[styles.chip, regStoreType === item.type && styles.chipActive]}
+                    onPress={() => setRegStoreType(item.type as StoreType)}
+                  >
+                    <Text style={[styles.chipText, regStoreType === item.type && styles.chipTextActive]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
               <Text style={[styles.label, { marginTop: 10 }]}>Nama Pemilik / Admin *</Text>
               <TextInput style={styles.modalInput} placeholder="Budi Santoso" placeholderTextColor="#64748b" value={regOwnerName} onChangeText={setRegOwnerName} />

@@ -22,10 +22,14 @@ export interface User {
   tenant_id: number;
 }
 
+export type StoreType = 'minimarket' | 'apotek' | 'cafe' | 'counter' | 'fashion' | 'bangunan' | 'umum';
+
 export interface Tenant {
   id: number;
   name: string;
   slug: string;
+  store_type?: StoreType;
+  icon?: string;
 }
 
 export interface FinancialReportData {

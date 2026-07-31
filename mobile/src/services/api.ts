@@ -1,4 +1,4 @@
-import { Product, CartItem, User, Tenant } from '../types';
+import { Product, CartItem, User, Tenant, StoreType } from '../types';
 
 // Primary local IP & fallback mode for Cellular Data
 let API_URL = 'http://192.168.100.184:3000/api';
@@ -6,16 +6,29 @@ let authToken = '';
 let currentUser: User | null = null;
 
 const MOCK_TENANTS: Tenant[] = [
-  { id: 1, name: 'Sivilize Corp Supermarket', slug: 'sivilize-corp' },
-  { id: 2, name: 'Warung Aegis Jaya', slug: 'aegis-jaya' },
+  { id: 1, name: 'Sivilize Supermarket & Mart', slug: 'sivilize-mart', store_type: 'minimarket', icon: 'cart-outline' },
+  { id: 2, name: 'Apotek Kimia Medika 24 Jam', slug: 'apotek-medika', store_type: 'apotek', icon: 'medical-outline' },
+  { id: 3, name: 'Kopi Senja & Resto F&B', slug: 'kopi-senja', store_type: 'cafe', icon: 'cafe-outline' },
+  { id: 4, name: 'Aegis Cell & Counter HP', slug: 'aegis-cell', store_type: 'counter', icon: 'phone-portrait-outline' },
+  { id: 5, name: 'Distro Fashion & Apparels', slug: 'distro-fashion', store_type: 'fashion', icon: 'shirt-outline' },
+  { id: 6, name: 'Toko Bangunan & Material Jaya', slug: 'tb-jaya', store_type: 'bangunan', icon: 'construct-outline' },
 ];
 
 const MOCK_PRODUCTS: Product[] = [
+  // Minimarket
   { id: 101, barcode: '8999999001', name: 'Rokok Sampoerna Mild 16', purchase_price: 28000, sale_price: 32000, stock: 100 },
   { id: 102, barcode: '8999999002', name: 'Indomie Goreng Spesial', purchase_price: 2500, sale_price: 3100, stock: 240 },
   { id: 103, barcode: '8999999003', name: 'Air Mineral Le Minerale 600ml', purchase_price: 2000, sale_price: 3500, stock: 48 },
-  { id: 104, barcode: '8999999004', name: 'Biskuit Khong Guan Red Can 1600g', purchase_price: 85000, sale_price: 98000, stock: 12 },
-  { id: 105, barcode: '8999999005', name: 'Kopi Kapal Api Spesial 165g', purchase_price: 11000, sale_price: 14000, stock: 35 },
+  // Apotek
+  { id: 201, barcode: '8998888001', name: 'Paracetamol 500mg (Strip 10 Kaplet)', purchase_price: 3500, sale_price: 6000, stock: 150 },
+  { id: 202, barcode: '8998888002', name: 'Vitamin C 1000mg Enervon-C Botol', purchase_price: 32000, sale_price: 40000, stock: 30 },
+  { id: 203, barcode: '8998888003', name: 'Betadine Antiseptik 30ml', purchase_price: 18000, sale_price: 23500, stock: 25 },
+  // Cafe / F&B
+  { id: 301, barcode: '8997777001', name: 'Es Kopi Susu Gula Aren 500ml', purchase_price: 10000, sale_price: 18000, stock: 50 },
+  { id: 302, barcode: '8997777002', name: 'Roti Bakar Cokelat Keju', purchase_price: 8000, sale_price: 15000, stock: 40 },
+  // Counter HP
+  { id: 401, barcode: '8996666001', name: 'Kabel Data Fast Charge Type-C 65W', purchase_price: 15000, sale_price: 35000, stock: 20 },
+  { id: 402, barcode: '8996666002', name: 'Voucher Telkomsel 10GB 30 Hari', purchase_price: 33000, sale_price: 38000, stock: 60 },
 ];
 
 export function setApiBaseUrl(url: string) {
@@ -106,11 +119,11 @@ export const apiService = {
     }
   },
 
-  async registerTenant(tenant_name: string, admin_name: string, username: string, password: string) {
+  async registerTenant(tenant_name: string, admin_name: string, username: string, password: string, store_type: StoreType = 'minimarket') {
     try {
       const res = await request('/auth/register-tenant', {
         method: 'POST',
-        body: { tenant_name, admin_name, username, password },
+        body: { tenant_name, admin_name, username, password, store_type },
       });
       if (res.token) setAuthToken(res.token);
       if (res.user) setCurrentUser(res.user);
@@ -118,7 +131,14 @@ export const apiService = {
     } catch (e: any) {
       // Demo / Cellular Fallback Tenant Registration
       const newId = MOCK_TENANTS.length + 1;
-      const newTenant: Tenant = { id: newId, name: tenant_name, slug: tenant_name.toLowerCase().replace(/\s+/g, '-') };
+      let icon = 'cart-outline';
+      if (store_type === 'apotek') icon = 'medical-outline';
+      else if (store_type === 'cafe') icon = 'cafe-outline';
+      else if (store_type === 'counter') icon = 'phone-portrait-outline';
+      else if (store_type === 'fashion') icon = 'shirt-outline';
+      else if (store_type === 'bangunan') icon = 'construct-outline';
+
+      const newTenant: Tenant = { id: newId, name: tenant_name, slug: tenant_name.toLowerCase().replace(/\s+/g, '-'), store_type, icon };
       MOCK_TENANTS.push(newTenant);
       const mockToken = 'mock_jwt_token_cellular_demo';
       const mockUser: User = { id: newId, username: username || 'admin', role: 'admin', tenant_id: newId };
