@@ -1,6 +1,4 @@
-import { NativeModules } from 'react-native';
-
-// Global Polyfill for TurboModuleRegistry in Expo Go
+// MUST BE AT THE VERY TOP BEFORE ANY IMPORT STATEMENTS
 if (typeof global !== 'undefined') {
   const PlatformConstantsMock = {
     isTesting: false,
@@ -11,34 +9,33 @@ if (typeof global !== 'undefined') {
     interfaceIdiom: 'handset',
   };
 
-  const getPlatformConstants = () => NativeModules.PlatformConstants || PlatformConstantsMock;
-
   if (!global.TurboModuleRegistry) {
     global.TurboModuleRegistry = {
-      get: (name: string) => (name === 'PlatformConstants' ? getPlatformConstants() : NativeModules[name]),
-      getEnforcing: (name: string) => (name === 'PlatformConstants' ? getPlatformConstants() : (NativeModules[name] || {})),
+      get: function (name: string) {
+        if (name === 'PlatformConstants') return PlatformConstantsMock;
+        return (global.nativeModuleProxy && (global.nativeModuleProxy as any)[name]) || {};
+      },
+      getEnforcing: function (name: string) {
+        if (name === 'PlatformConstants') return PlatformConstantsMock;
+        return (global.nativeModuleProxy && (global.nativeModuleProxy as any)[name]) || {};
+      },
     };
-  } else {
+  } else if (typeof global.TurboModuleRegistry.getEnforcing === 'function') {
     const origEnforcing = global.TurboModuleRegistry.getEnforcing;
     global.TurboModuleRegistry.getEnforcing = function (name: string) {
-      if (name === 'PlatformConstants') {
-        try {
-          const res = origEnforcing ? origEnforcing.call(global.TurboModuleRegistry, name) : null;
-          if (res) return res;
-        } catch (e) {
-          // Fallback if TurboModule is missing in native binary
-        }
-        return getPlatformConstants();
-      }
+      if (name === 'PlatformConstants') return PlatformConstantsMock;
       try {
-        return origEnforcing ? origEnforcing.call(global.TurboModuleRegistry, name) : (NativeModules[name] || {});
+        const res = origEnforcing.call(global.TurboModuleRegistry, name);
+        if (res) return res;
       } catch (e) {
-        return NativeModules[name] || {};
+        // Fallback for missing TurboModules
       }
+      return PlatformConstantsMock;
     };
   }
 }
 
+// NOW IMPORT EXPO AND APP
 import { registerRootComponent } from 'expo';
 import App from './App';
 
