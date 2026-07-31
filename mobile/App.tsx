@@ -81,6 +81,14 @@ export default function App() {
   const [newSalePrice, setNewSalePrice] = useState('');
   const [newStock, setNewStock] = useState('');
 
+  // Register Tenant Modal State
+  const [registerModalVisible, setRegisterModalVisible] = useState(false);
+  const [regStoreName, setRegStoreName] = useState('');
+  const [regOwnerName, setRegOwnerName] = useState('');
+  const [regUsername, setRegUsername] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
+
   useEffect(() => {
     fetchTenants();
     loadProducts();
@@ -90,6 +98,34 @@ export default function App() {
     const list = await apiService.getTenants();
     setTenants(list);
     if (list.length > 0) setSelectedTenantId(list[0].id);
+  };
+
+  const handleRegisterTenant = async () => {
+    if (!regStoreName.trim() || !regOwnerName.trim() || !regUsername.trim() || !regPassword) {
+      Alert.alert('Peringatan', 'Semua kolom pendaftaran wajib diisi.');
+      return;
+    }
+    setRegLoading(true);
+    try {
+      await apiService.registerTenant(
+        regStoreName.trim(),
+        regOwnerName.trim(),
+        regUsername.trim(),
+        regPassword
+      );
+      Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" berhasil didaftarkan.`);
+      setRegisterModalVisible(false);
+      setRegStoreName('');
+      setRegOwnerName('');
+      setRegUsername('');
+      setRegPassword('');
+      await fetchTenants();
+      setIsLoggedIn(true);
+    } catch (e: any) {
+      Alert.alert('Pendaftaran Gagal', e.message || 'Gagal merestorasi data toko.');
+    } finally {
+      setRegLoading(false);
+    }
   };
 
   const loadProducts = async (q: string = '') => {
@@ -285,9 +321,81 @@ export default function App() {
                   <Text style={styles.primaryBtnText}>MASUK KASIR POS</Text>
                 )}
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryRegBtn}
+                onPress={() => setRegisterModalVisible(true)}
+              >
+                <Ionicons name="storefront-outline" size={16} color="#00f2fe" style={{ marginRight: 6 }} />
+                <Text style={styles.secondaryRegBtnText}>+ DAFTAR TOKO / MINIMARKET BARU</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* REGISTER TENANT / DAFTAR TOKO BARU MODAL */}
+        <Modal visible={registerModalVisible} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={styles.modalTitle}>Daftarkan Toko Baru</Text>
+                <TouchableOpacity onPress={() => setRegisterModalVisible(false)}>
+                  <Ionicons name="close-circle" size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+              <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
+                Buat akun toko minimarket / warung baru dan dapatkan akses kasir langsung.
+              </Text>
+
+              <Text style={styles.label}>Nama Toko / Minimarket *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contoh: Toko Kelontong Berkah"
+                placeholderTextColor="#64748b"
+                value={regStoreName}
+                onChangeText={setRegStoreName}
+              />
+
+              <Text style={[styles.label, { marginTop: 10 }]}>Nama Pemilik / Admin *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contoh: Budi Santoso"
+                placeholderTextColor="#64748b"
+                value={regOwnerName}
+                onChangeText={setRegOwnerName}
+              />
+
+              <Text style={[styles.label, { marginTop: 10 }]}>Username *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Username untuk login"
+                placeholderTextColor="#64748b"
+                autoCapitalize="none"
+                value={regUsername}
+                onChangeText={setRegUsername}
+              />
+
+              <Text style={[styles.label, { marginTop: 10 }]}>Password *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Password akun"
+                placeholderTextColor="#64748b"
+                secureTextEntry
+                value={regPassword}
+                onChangeText={setRegPassword}
+              />
+
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setRegisterModalVisible(false)}>
+                  <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.primaryBtn} onPress={handleRegisterTenant} disabled={regLoading}>
+                  {regLoading ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryBtnText}>DAFTARKAN TOKO</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -899,5 +1007,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  secondaryRegBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#00f2fe66',
+    borderRadius: 12,
+    height: 44,
+    marginTop: 12,
+    backgroundColor: '#00f2fe10',
+  },
+  secondaryRegBtnText: {
+    color: '#00f2fe',
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

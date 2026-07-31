@@ -106,6 +106,28 @@ export const apiService = {
     }
   },
 
+  async registerTenant(tenant_name: string, admin_name: string, username: string, password: string) {
+    try {
+      const res = await request('/auth/register-tenant', {
+        method: 'POST',
+        body: { tenant_name, admin_name, username, password },
+      });
+      if (res.token) setAuthToken(res.token);
+      if (res.user) setCurrentUser(res.user);
+      return res;
+    } catch (e: any) {
+      // Demo / Cellular Fallback Tenant Registration
+      const newId = MOCK_TENANTS.length + 1;
+      const newTenant: Tenant = { id: newId, name: tenant_name, slug: tenant_name.toLowerCase().replace(/\s+/g, '-') };
+      MOCK_TENANTS.push(newTenant);
+      const mockToken = 'mock_jwt_token_cellular_demo';
+      const mockUser: User = { id: newId, username: username || 'admin', role: 'admin', tenant_id: newId };
+      setAuthToken(mockToken);
+      setCurrentUser(mockUser);
+      return { success: true, message: 'Toko berhasil didaftarkan!', tenant: newTenant, user: mockUser };
+    }
+  },
+
   // Setup / Tenants
   async getTenants(): Promise<Tenant[]> {
     try {
