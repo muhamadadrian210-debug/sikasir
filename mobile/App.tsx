@@ -54,7 +54,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser } from './src/services/api';
-import { Product, CartItem, Tenant, User } from './src/types';
+import { Product, CartItem, Tenant, User, StoreType } from './src/types';
 import { AiAssistantModal } from './src/components/AiAssistantModal';
 
 export default function App() {
@@ -77,6 +77,7 @@ export default function App() {
   const [regOwnerName, setRegOwnerName] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regStoreType, setRegStoreType] = useState<StoreType>('minimarket');
   const [regLoading, setRegLoading] = useState(false);
 
   // Products State
