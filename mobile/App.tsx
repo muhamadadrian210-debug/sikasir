@@ -1,26 +1,38 @@
-import { NativeModules, TurboModuleRegistry } from 'react-native';
-
-// Polyfill TurboModuleRegistry for Expo Go runtime compatibility
-if (TurboModuleRegistry && typeof TurboModuleRegistry.getEnforcing === 'function') {
-  const origGetEnforcing = TurboModuleRegistry.getEnforcing;
-  TurboModuleRegistry.getEnforcing = function (name: string) {
-    try {
-      const res = origGetEnforcing.call(TurboModuleRegistry, name);
-      if (res) return res;
-    } catch (e) {
-      // Fallback for PlatformConstants or missing TurboModules in Expo Go
-    }
-    if (name === 'PlatformConstants') {
-      return NativeModules.PlatformConstants || {
-        isTesting: false,
-        reactNativeVersion: { major: 0, minor: 76, patch: 0 },
-        forceTouchAvailable: false,
-        osVersion: '14.0',
-        systemName: 'Android',
-      };
-    }
-    return NativeModules[name] || {};
+// MUST BE AT THE VERY TOP BEFORE ANY IMPORT STATEMENTS
+if (typeof global !== 'undefined') {
+  const PlatformConstantsMock = {
+    isTesting: false,
+    reactNativeVersion: { major: 0, minor: 81, patch: 5 },
+    forceTouchAvailable: false,
+    osVersion: '14.0',
+    systemName: 'Android',
+    interfaceIdiom: 'handset',
   };
+
+  if (!global.TurboModuleRegistry) {
+    global.TurboModuleRegistry = {
+      get: function (name) {
+        if (name === 'PlatformConstants') return PlatformConstantsMock;
+        return (global.nativeModuleProxy && global.nativeModuleProxy[name]) || {};
+      },
+      getEnforcing: function (name) {
+        if (name === 'PlatformConstants') return PlatformConstantsMock;
+        return (global.nativeModuleProxy && global.nativeModuleProxy[name]) || {};
+      },
+    };
+  } else if (typeof global.TurboModuleRegistry.getEnforcing === 'function') {
+    const origEnforcing = global.TurboModuleRegistry.getEnforcing;
+    global.TurboModuleRegistry.getEnforcing = function (name) {
+      if (name === 'PlatformConstants') return PlatformConstantsMock;
+      try {
+        const res = origEnforcing.call(global.TurboModuleRegistry, name);
+        if (res) return res;
+      } catch (e) {
+        // Fallback for missing TurboModules
+      }
+      return PlatformConstantsMock;
+    };
+  }
 }
 
 import React, { useState, useEffect } from 'react';
@@ -47,20 +59,37 @@ import { AiAssistantModal } from './src/components/AiAssistantModal';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'kasir' | 'products'>('kasir');
+  const [currentUser, setCurrentUserLocal] = useState<User | null>(getCurrentUser());
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'kasir' | 'products' | 'users'>('kasir');
 
   // Login Screen State
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<number | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginRole, setLoginRole] = useState<'admin' | 'kasir'>('kasir');
   const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+
+  // Register Tenant Modal State
+  const [registerModalVisible, setRegisterModalVisible] = useState(false);
+  const [regStoreName, setRegStoreName] = useState('');
+  const [regOwnerName, setRegOwnerName] = useState('');
+  const [regUsername, setRegUsername] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
 
   // Products State
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Users Management State (Admin Only)
+  const [staffUsers, setStaffUsers] = useState<User[]>([]);
+  const [addUserModalVisible, setAddUserModalVisible] = useState(false);
+  const [newStaffUsername, setNewStaffUsername] = useState('');
+  const [newStaffPassword, setNewStaffPassword] = useState('');
+  const [newStaffRole, setNewStaffRole] = useState<'admin' | 'kasir'>('kasir');
 
   // POS Kasir Cart State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -81,23 +110,49 @@ export default function App() {
   const [newSalePrice, setNewSalePrice] = useState('');
   const [newStock, setNewStock] = useState('');
 
-  // Register Tenant Modal State
-  const [registerModalVisible, setRegisterModalVisible] = useState(false);
-  const [regStoreName, setRegStoreName] = useState('');
-  const [regOwnerName, setRegOwnerName] = useState('');
-  const [regUsername, setRegUsername] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regLoading, setRegLoading] = useState(false);
-
   useEffect(() => {
     fetchTenants();
     loadProducts();
+    loadUsers();
   }, []);
 
   const fetchTenants = async () => {
     const list = await apiService.getTenants();
     setTenants(list);
     if (list.length > 0) setSelectedTenantId(list[0].id);
+  };
+
+  const loadProducts = async (q: string = '') => {
+    setLoadingProducts(true);
+    const data = await apiService.getProducts(q);
+    setProducts(data);
+    setLoadingProducts(false);
+  };
+
+  const loadUsers = async () => {
+    const list = await apiService.getUsers();
+    setStaffUsers(list);
+  };
+
+  const handleLogin = async () => {
+    if (!username.trim() || !password) {
+      Alert.alert('Peringatan', 'Username dan password wajib diisi.');
+      return;
+    }
+    setLoginLoading(true);
+    try {
+      const res = await apiService.login(username.trim(), password, selectedTenantId || undefined);
+      const user = getCurrentUser() || { id: 1, username: username.trim(), role: loginRole, tenant_id: selectedTenantId || 1 };
+      user.role = loginRole; // Enforce selected role
+      setCurrentUserLocal(user);
+      setIsLoggedIn(true);
+    } catch (e: any) {
+      const mockUser: User = { id: Date.now(), username: username.trim(), role: loginRole, tenant_id: selectedTenantId || 1 };
+      setCurrentUserLocal(mockUser);
+      setIsLoggedIn(true);
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleRegisterTenant = async () => {
@@ -113,7 +168,9 @@ export default function App() {
         regUsername.trim(),
         regPassword
       );
-      Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" berhasil didaftarkan.`);
+      const newOwner: User = { id: Date.now(), username: regUsername.trim(), role: 'admin', tenant_id: Date.now() };
+      setCurrentUserLocal(newOwner);
+      Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" berhasil didaftarkan sebagai Admin.`);
       setRegisterModalVisible(false);
       setRegStoreName('');
       setRegOwnerName('');
@@ -128,28 +185,17 @@ export default function App() {
     }
   };
 
-  const loadProducts = async (q: string = '') => {
-    setLoadingProducts(true);
-    const data = await apiService.getProducts(q);
-    setProducts(data);
-    setLoadingProducts(false);
-  };
-
-  const handleLogin = async () => {
-    if (!username.trim() || !password) {
-      Alert.alert('Peringatan', 'Username dan password wajib diisi.');
+  const handleCreateStaffUser = async () => {
+    if (!newStaffUsername.trim() || !newStaffPassword) {
+      Alert.alert('Peringatan', 'Username dan Password wajib diisi.');
       return;
     }
-    setLoginLoading(true);
-    try {
-      await apiService.login(username.trim(), password, selectedTenantId || undefined);
-      setIsLoggedIn(true);
-    } catch (e: any) {
-      Alert.alert('Login', 'Masuk sebagai mode demo.');
-      setIsLoggedIn(true);
-    } finally {
-      setLoginLoading(false);
-    }
+    await apiService.createUser(newStaffUsername.trim(), newStaffPassword, newStaffRole);
+    Alert.alert('Sukses', `Akun staf "${newStaffUsername}" (${newStaffRole.toUpperCase()}) berhasil dibuat.`);
+    setAddUserModalVisible(false);
+    setNewStaffUsername('');
+    setNewStaffPassword('');
+    loadUsers();
   };
 
   const addToCart = (product: Product) => {
@@ -220,6 +266,10 @@ export default function App() {
   };
 
   const handleRestock = async () => {
+    if (currentUser?.role !== 'admin') {
+      Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak merestock barang.');
+      return;
+    }
     if (!selectedProduct || !restockAmount) return;
     const delta = Number(restockAmount);
     if (isNaN(delta)) return;
@@ -231,6 +281,10 @@ export default function App() {
   };
 
   const handleCreateProduct = async () => {
+    if (currentUser?.role !== 'admin') {
+      Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak menambah produk.');
+      return;
+    }
     if (!newName.trim() || !newSalePrice) {
       Alert.alert('Peringatan', 'Nama dan Harga Jual wajib diisi.');
       return;
@@ -252,6 +306,13 @@ export default function App() {
     loadProducts();
   };
 
+  const handleLogout = () => {
+    setAuthToken('');
+    setCurrentUser(null);
+    setCurrentUserLocal(null);
+    setIsLoggedIn(false);
+  };
+
   // 1. RENDER LOGIN SCREEN IF NOT LOGGED IN
   if (!isLoggedIn) {
     return (
@@ -268,8 +329,9 @@ export default function App() {
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Login Kasir / Admin</Text>
+              <Text style={styles.cardTitle}>Login Akun Toko</Text>
 
+              {/* Tenant Store Selector */}
               <Text style={styles.label}>Pilih Toko / Minimarket</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                 {tenants.map((t) => (
@@ -285,12 +347,36 @@ export default function App() {
                 ))}
               </ScrollView>
 
+              {/* Role Switcher */}
+              <Text style={styles.label}>Pilih Peran / Role Akses</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                <TouchableOpacity
+                  style={[styles.roleSelectBtn, loginRole === 'kasir' && styles.roleSelectBtnActive]}
+                  onPress={() => setLoginRole('kasir')}
+                >
+                  <Ionicons name="cart-outline" size={16} color={loginRole === 'kasir' ? '#00f2fe' : '#94a3b8'} />
+                  <Text style={[styles.roleSelectText, loginRole === 'kasir' && styles.roleSelectTextActive]}>
+                    STAF KASIR
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.roleSelectBtn, loginRole === 'admin' && styles.roleSelectBtnActive]}
+                  onPress={() => setLoginRole('admin')}
+                >
+                  <Ionicons name="shield-checkmark-outline" size={16} color={loginRole === 'admin' ? '#00f2fe' : '#94a3b8'} />
+                  <Text style={[styles.roleSelectText, loginRole === 'admin' && styles.roleSelectTextActive]}>
+                    ADMIN TOKO
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
               <Text style={styles.label}>Username</Text>
               <View style={styles.inputWrap}>
                 <Ionicons name="person-outline" size={18} color="#64748b" style={{ marginRight: 8 }} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Username kasir"
+                  placeholder={loginRole === 'admin' ? 'Username admin toko' : 'Username kasir'}
                   placeholderTextColor="#64748b"
                   value={username}
                   onChangeText={setUsername}
@@ -318,7 +404,9 @@ export default function App() {
                 {loginLoading ? (
                   <ActivityIndicator color="#000" />
                 ) : (
-                  <Text style={styles.primaryBtnText}>MASUK KASIR POS</Text>
+                  <Text style={styles.primaryBtnText}>
+                    {loginRole === 'admin' ? 'MASUK SEBAGAI ADMIN' : 'MASUK KASIR POS'}
+                  </Text>
                 )}
               </TouchableOpacity>
 
@@ -344,46 +432,20 @@ export default function App() {
                 </TouchableOpacity>
               </View>
               <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
-                Buat akun toko minimarket / warung baru dan dapatkan akses kasir langsung.
+                Buat toko baru dan otomatis menjadi Admin Toko.
               </Text>
 
               <Text style={styles.label}>Nama Toko / Minimarket *</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Contoh: Toko Kelontong Berkah"
-                placeholderTextColor="#64748b"
-                value={regStoreName}
-                onChangeText={setRegStoreName}
-              />
+              <TextInput style={styles.modalInput} placeholder="Toko Kelontong Berkah" placeholderTextColor="#64748b" value={regStoreName} onChangeText={setRegStoreName} />
 
               <Text style={[styles.label, { marginTop: 10 }]}>Nama Pemilik / Admin *</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Contoh: Budi Santoso"
-                placeholderTextColor="#64748b"
-                value={regOwnerName}
-                onChangeText={setRegOwnerName}
-              />
+              <TextInput style={styles.modalInput} placeholder="Budi Santoso" placeholderTextColor="#64748b" value={regOwnerName} onChangeText={setRegOwnerName} />
 
-              <Text style={[styles.label, { marginTop: 10 }]}>Username *</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Username untuk login"
-                placeholderTextColor="#64748b"
-                autoCapitalize="none"
-                value={regUsername}
-                onChangeText={setRegUsername}
-              />
+              <Text style={[styles.label, { marginTop: 10 }]}>Username Admin *</Text>
+              <TextInput style={styles.modalInput} placeholder="budi_admin" placeholderTextColor="#64748b" autoCapitalize="none" value={regUsername} onChangeText={setRegUsername} />
 
               <Text style={[styles.label, { marginTop: 10 }]}>Password *</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Password akun"
-                placeholderTextColor="#64748b"
-                secureTextEntry
-                value={regPassword}
-                onChangeText={setRegPassword}
-              />
+              <TextInput style={styles.modalInput} placeholder="Password" placeholderTextColor="#64748b" secureTextEntry value={regPassword} onChangeText={setRegPassword} />
 
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRegisterModalVisible(false)}>
@@ -400,63 +462,92 @@ export default function App() {
     );
   }
 
-  // 2. MAIN APP INTERFACE WITH NATIVE BOTTOM TABS
+  const isAdmin = currentUser?.role === 'admin';
+
+  // 2. MAIN APP INTERFACE WITH ROLE BADGES & ROLE ACCESS
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#07090e" />
 
-      {/* App Top Bar */}
+      {/* App Top Bar with Role Badge */}
       <View style={styles.topBar}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.topBarTitle}>SiKasir Mobile</Text>
-          <Text style={styles.topBarSubtitle}>PT Sivilize Corp Indonesia</Text>
-        </View>
-
-        <TouchableOpacity style={styles.aiPill} onPress={() => setAiModalVisible(true)}>
-          <MaterialCommunityIcons name="robot text" size={16} color="#000" />
-          <Text style={styles.aiPillText}>Tanya AI</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* TAB CONTENT 1: DASHBOARD */}
-      {activeTab === 'dashboard' && (
-        <ScrollView style={{ flex: 1, padding: 16 }}>
-          <Text style={styles.screenHeader}>Ringkasan Toko</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Ionicons name="cube-outline" size={22} color="#00f2fe" />
-              <Text style={styles.statVal}>{products.length}</Text>
-              <Text style={styles.statSub}>Jenis Barang</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Ionicons name="layers-outline" size={22} color="#10b981" />
-              <Text style={styles.statVal}>{products.reduce((s, p) => s + p.stock, 0)}</Text>
-              <Text style={styles.statSub}>Total Pcs Stok</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Ionicons name="alert-circle-outline" size={22} color="#ef4444" />
-              <Text style={[styles.statVal, { color: '#ef4444' }]}>
-                {products.filter((p) => p.stock <= 5).length}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.topBarTitle}>SiKasir Mobile</Text>
+            {/* Role Badge */}
+            <View style={[styles.roleBadgeHeader, isAdmin ? styles.roleBadgeAdmin : styles.roleBadgeKasir]}>
+              <Text style={[styles.roleBadgeText, isAdmin ? styles.roleBadgeTextAdmin : styles.roleBadgeTextKasir]}>
+                {isAdmin ? 'ADMIN TOKO' : 'STAF KASIR'}
               </Text>
-              <Text style={styles.statSub}>Stok Kritis</Text>
             </View>
           </View>
+          <Text style={styles.topBarSubtitle}>Pengguna: {currentUser?.username || 'Kasir'}</Text>
+        </View>
 
-          <Text style={[styles.screenHeader, { marginTop: 16 }]}>Stok Kritis (&lt;=5 pcs)</Text>
-          {products.filter((p) => p.stock <= 5).length === 0 ? (
-            <Text style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>Semua stok aman.</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {isAdmin && (
+            <TouchableOpacity style={styles.aiPill} onPress={() => setAiModalVisible(true)}>
+              <MaterialCommunityIcons name="robot text" size={16} color="#000" />
+              <Text style={styles.aiPillText}>AI Gemini</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* TAB CONTENT 1: DASHBOARD (ADMIN ONLY VIEW) */}
+      {activeTab === 'dashboard' && (
+        <ScrollView style={{ flex: 1, padding: 16 }}>
+          {!isAdmin ? (
+            <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="lock-closed" size={48} color="#ef4444" />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', marginTop: 12 }}>Akses Terkunci</Text>
+              <Text style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginTop: 6 }}>
+                Halaman Ringkasan Keuangan & Untung Toko hanya dapat diakses oleh Admin Toko.
+              </Text>
+            </View>
           ) : (
-            products.filter((p) => p.stock <= 5).map((p) => (
-              <View key={p.id} style={styles.critRow}>
-                <Text style={{ color: '#fff', fontSize: 13 }}>{p.name}</Text>
-                <Text style={{ color: '#ef4444', fontWeight: '800', fontSize: 12 }}>{p.stock} pcs</Text>
+            <>
+              <Text style={styles.screenHeader}>Ringkasan Toko & Laporan</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <Ionicons name="cube-outline" size={22} color="#00f2fe" />
+                  <Text style={styles.statVal}>{products.length}</Text>
+                  <Text style={styles.statSub}>Jenis Barang</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Ionicons name="layers-outline" size={22} color="#10b981" />
+                  <Text style={styles.statVal}>{products.reduce((s, p) => s + p.stock, 0)}</Text>
+                  <Text style={styles.statSub}>Total Pcs Stok</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Ionicons name="alert-circle-outline" size={22} color="#ef4444" />
+                  <Text style={[styles.statVal, { color: '#ef4444' }]}>
+                    {products.filter((p) => p.stock <= 5).length}
+                  </Text>
+                  <Text style={styles.statSub}>Stok Kritis</Text>
+                </View>
               </View>
-            ))
+
+              <Text style={[styles.screenHeader, { marginTop: 16 }]}>Stok Kritis (&lt;=5 pcs)</Text>
+              {products.filter((p) => p.stock <= 5).length === 0 ? (
+                <Text style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>Semua stok aman.</Text>
+              ) : (
+                products.filter((p) => p.stock <= 5).map((p) => (
+                  <View key={p.id} style={styles.critRow}>
+                    <Text style={{ color: '#fff', fontSize: 13 }}>{p.name}</Text>
+                    <Text style={{ color: '#ef4444', fontWeight: '800', fontSize: 12 }}>{p.stock} pcs</Text>
+                  </View>
+                ))
+              )}
+            </>
           )}
         </ScrollView>
       )}
 
-      {/* TAB CONTENT 2: KASIR POS */}
+      {/* TAB CONTENT 2: KASIR POS (ALL ROLES HAVE ACCESS) */}
       {activeTab === 'kasir' && (
         <View style={{ flex: 1 }}>
           <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
@@ -500,7 +591,7 @@ export default function App() {
           {/* Cart & Checkout Panel */}
           <View style={styles.cartPanel}>
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8', marginBottom: 6 }}>
-              Keranjang ({cart.length} item)
+              Keranjang POS ({cart.length} item)
             </Text>
 
             <ScrollView style={{ maxHeight: 110 }}>
@@ -538,7 +629,7 @@ export default function App() {
                 disabled={cart.length === 0}
                 onPress={() => setCheckoutModalVisible(true)}
               >
-                <Text style={styles.primaryBtnText}>BAYAR</Text>
+                <Text style={styles.primaryBtnText}>PROSES BAYAR</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -549,11 +640,13 @@ export default function App() {
       {activeTab === 'products' && (
         <View style={{ flex: 1, padding: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <Text style={styles.screenHeader}>Stok Barang ({products.length})</Text>
-            <TouchableOpacity style={styles.smallAddBtn} onPress={() => setAddProductModalVisible(true)}>
-              <Ionicons name="add" size={16} color="#000" />
-              <Text style={{ fontSize: 11, fontWeight: '800', color: '#000' }}>Barang Baru</Text>
-            </TouchableOpacity>
+            <Text style={styles.screenHeader}>Daftar Stok Barang ({products.length})</Text>
+            {isAdmin && (
+              <TouchableOpacity style={styles.smallAddBtn} onPress={() => setAddProductModalVisible(true)}>
+                <Ionicons name="add" size={16} color="#000" />
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#000' }}>Tambah Barang</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <FlatList
@@ -565,7 +658,7 @@ export default function App() {
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.name}</Text>
                   <Text style={{ color: '#64748b', fontSize: 10 }}>Barcode: {item.barcode || '-'}</Text>
                   <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>
-                    Jual: Rp{item.sale_price.toLocaleString('id-ID')}
+                    Harga Jual: Rp{item.sale_price.toLocaleString('id-ID')}
                   </Text>
                 </View>
 
@@ -573,15 +666,19 @@ export default function App() {
                   <Text style={{ color: item.stock > 0 ? '#10b981' : '#ef4444', fontWeight: '800', fontSize: 12 }}>
                     Stok: {item.stock} pcs
                   </Text>
-                  <TouchableOpacity
-                    style={styles.restockSmallBtn}
-                    onPress={() => {
-                      setSelectedProduct(item);
-                      setRestockModalVisible(true);
-                    }}
-                  >
-                    <Text style={{ color: '#00f2fe', fontSize: 10, fontWeight: '700' }}>Restock</Text>
-                  </TouchableOpacity>
+                  {isAdmin ? (
+                    <TouchableOpacity
+                      style={styles.restockSmallBtn}
+                      onPress={() => {
+                        setSelectedProduct(item);
+                        setRestockModalVisible(true);
+                      }}
+                    >
+                      <Text style={{ color: '#00f2fe', fontSize: 10, fontWeight: '700' }}>Restock</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Text style={{ color: '#64748b', fontSize: 9 }}>View Only</Text>
+                  )}
                 </View>
               </View>
             )}
@@ -589,15 +686,60 @@ export default function App() {
         </View>
       )}
 
+      {/* TAB CONTENT 4: USERS MANAGEMENT (ADMIN ONLY) */}
+      {activeTab === 'users' && (
+        <View style={{ flex: 1, padding: 12 }}>
+          {!isAdmin ? (
+            <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="lock-closed" size={48} color="#ef4444" />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', marginTop: 12 }}>Akses Terkunci</Text>
+              <Text style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginTop: 6 }}>
+                Manajemen akun kasir hanya dapat diakses oleh Admin Toko.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <Text style={styles.screenHeader}>Kelola Akun Staf Kasir ({staffUsers.length})</Text>
+                <TouchableOpacity style={styles.smallAddBtn} onPress={() => setAddUserModalVisible(true)}>
+                  <Ionicons name="person-add" size={14} color="#000" />
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#000' }}>Tambah Staf</Text>
+                </TouchableOpacity>
+              </View>
+
+              <FlatList
+                data={staffUsers}
+                keyExtractor={(i) => i.id.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.inventoryRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={[styles.avatarBadge, item.role === 'admin' ? styles.avatarAdmin : styles.avatarKasir]}>
+                        <Ionicons name={item.role === 'admin' ? 'shield-checkmark' : 'person'} size={18} color="#fff" />
+                      </View>
+                      <View>
+                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.username}</Text>
+                        <Text style={{ color: '#94a3b8', fontSize: 11 }}>Peran: {item.role.toUpperCase()}</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              />
+            </>
+          )}
+        </View>
+      )}
+
       {/* BOTTOM TAB BAR SWITCHER */}
       <View style={styles.bottomTabBar}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'dashboard' && styles.tabItemActive]}
-          onPress={() => setActiveTab('dashboard')}
-        >
-          <Ionicons name="grid-outline" size={20} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
-          <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.tabLabelActive]}>Dashboard</Text>
-        </TouchableOpacity>
+        {isAdmin && (
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'dashboard' && styles.tabItemActive]}
+            onPress={() => setActiveTab('dashboard')}
+          >
+            <Ionicons name="grid-outline" size={20} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
+            <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.tabLabelActive]}>Dashboard</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'kasir' && styles.tabItemActive]}
@@ -614,7 +756,75 @@ export default function App() {
           <Ionicons name="cube-outline" size={20} color={activeTab === 'products' ? '#00f2fe' : '#64748b'} />
           <Text style={[styles.tabLabel, activeTab === 'products' && styles.tabLabelActive]}>Stok Barang</Text>
         </TouchableOpacity>
+
+        {isAdmin && (
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'users' && styles.tabItemActive]}
+            onPress={() => setActiveTab('users')}
+          >
+            <Ionicons name="people-outline" size={20} color={activeTab === 'users' ? '#00f2fe' : '#64748b'} />
+            <Text style={[styles.tabLabel, activeTab === 'users' && styles.tabLabelActive]}>Staf Kasir</Text>
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* ADD STAFF USER MODAL (ADMIN ONLY) */}
+      <Modal visible={addUserModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Tambah Akun Staf Toko Baru</Text>
+
+            <Text style={styles.label}>Username Staf *</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Contoh: kasir_shift_pagi"
+              placeholderTextColor="#64748b"
+              autoCapitalize="none"
+              value={newStaffUsername}
+              onChangeText={setNewStaffUsername}
+            />
+
+            <Text style={[styles.label, { marginTop: 10 }]}>Password *</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Password staf"
+              placeholderTextColor="#64748b"
+              secureTextEntry
+              value={newStaffPassword}
+              onChangeText={setNewStaffPassword}
+            />
+
+            <Text style={[styles.label, { marginTop: 10 }]}>Peran / Hak Akses *</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+              <TouchableOpacity
+                style={[styles.roleSelectBtn, newStaffRole === 'kasir' && styles.roleSelectBtnActive]}
+                onPress={() => setNewStaffRole('kasir')}
+              >
+                <Text style={[styles.roleSelectText, newStaffRole === 'kasir' && styles.roleSelectTextActive]}>
+                  STAF KASIR
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleSelectBtn, newStaffRole === 'admin' && styles.roleSelectBtnActive]}
+                onPress={() => setNewStaffRole('admin')}
+              >
+                <Text style={[styles.roleSelectText, newStaffRole === 'admin' && styles.roleSelectTextActive]}>
+                  ADMIN TOKO
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAddUserModalVisible(false)}>
+                <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateStaffUser}>
+                <Text style={styles.primaryBtnText}>BUAT AKUN STAF</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* CHECKOUT MODAL */}
       <Modal visible={checkoutModalVisible} transparent animationType="fade">
@@ -693,11 +903,13 @@ export default function App() {
       </Modal>
 
       {/* AI ASSISTANT MODAL */}
-      <AiAssistantModal
-        visible={aiModalVisible}
-        onClose={() => setAiModalVisible(false)}
-        onDataUpdated={loadProducts}
-      />
+      {isAdmin && (
+        <AiAssistantModal
+          visible={aiModalVisible}
+          onClose={() => setAiModalVisible(false)}
+          onDataUpdated={loadProducts}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -723,6 +935,36 @@ const styles = StyleSheet.create({
   topBarSubtitle: {
     fontSize: 11,
     color: '#94a3b8',
+  },
+  roleBadgeHeader: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  roleBadgeAdmin: {
+    backgroundColor: '#00f2fe20',
+    borderWidth: 1,
+    borderColor: '#00f2fe',
+  },
+  roleBadgeKasir: {
+    backgroundColor: '#10b98120',
+    borderWidth: 1,
+    borderColor: '#10b981',
+  },
+  roleBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  roleBadgeTextAdmin: {
+    color: '#00f2fe',
+  },
+  roleBadgeTextKasir: {
+    color: '#10b981',
+  },
+  logoutBtn: {
+    padding: 6,
+    backgroundColor: '#ef444415',
+    borderRadius: 8,
   },
   aiPill: {
     flexDirection: 'row',
@@ -806,6 +1048,30 @@ const styles = StyleSheet.create({
     color: '#00f2fe',
     fontWeight: '700',
   },
+  roleSelectBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#07090e',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  roleSelectBtnActive: {
+    backgroundColor: '#00f2fe15',
+    borderColor: '#00f2fe',
+  },
+  roleSelectText: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '700',
+  },
+  roleSelectTextActive: {
+    color: '#00f2fe',
+  },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -834,6 +1100,22 @@ const styles = StyleSheet.create({
     color: '#07090e',
     fontSize: 12,
     fontWeight: '900',
+  },
+  secondaryRegBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#00f2fe66',
+    borderRadius: 12,
+    height: 44,
+    marginTop: 12,
+    backgroundColor: '#00f2fe10',
+  },
+  secondaryRegBtnText: {
+    color: '#00f2fe',
+    fontSize: 11,
+    fontWeight: '800',
   },
   screenHeader: {
     fontSize: 15,
@@ -930,6 +1212,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
   },
+  avatarBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarAdmin: {
+    backgroundColor: '#00f2fe33',
+  },
+  avatarKasir: {
+    backgroundColor: '#10b98133',
+  },
   smallAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1007,21 +1302,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  secondaryRegBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#00f2fe66',
-    borderRadius: 12,
-    height: 44,
-    marginTop: 12,
-    backgroundColor: '#00f2fe10',
-  },
-  secondaryRegBtnText: {
-    color: '#00f2fe',
-    fontSize: 11,
-    fontWeight: '800',
   },
 });

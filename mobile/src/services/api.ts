@@ -181,24 +181,50 @@ export const apiService = {
     }
   },
 
-  // Transactions
-  async checkout(items: CartItem[], paid: number) {
+  // Checkout POS
+  async checkout(items: CartItem[], paidAmount: number) {
     try {
       return await request('/transactions', {
         method: 'POST',
-        body: {
-          items: items.map(item => ({ product_id: item.product.id, qty: item.qty })),
-          paid,
-        },
+        body: { items, paid_amount: paidAmount, payment_method: 'CASH' },
       });
     } catch (e) {
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
-      // Reduce mock stock
       items.forEach(i => {
-        const p = MOCK_PRODUCTS.find(prod => prod.id === i.product.id);
+        const p = MOCK_PRODUCTS.find(mp => mp.id === i.product.id);
         if (p) p.stock = Math.max(0, p.stock - i.qty);
       });
-      return { success: true, change_amount: paid - total };
+      return {
+        success: true,
+        transaction_id: 'TX-DEMO-' + Date.now(),
+        total_amount: total,
+        paid_amount: paidAmount,
+        change_amount: Math.max(0, paidAmount - total),
+      };
+    }
+  },
+
+  // User Management (Admin Only)
+  async getUsers(): Promise<User[]> {
+    try {
+      return await request('/users');
+    } catch (e) {
+      return [
+        { id: 1, username: 'admin_toko', role: 'admin', tenant_id: 1 },
+        { id: 2, username: 'kasir_shift1', role: 'kasir', tenant_id: 1 },
+        { id: 3, username: 'kasir_shift2', role: 'kasir', tenant_id: 1 },
+      ];
+    }
+  },
+
+  async createUser(username: string, password: string, role: 'admin' | 'kasir'): Promise<User> {
+    try {
+      return await request('/users', {
+        method: 'POST',
+        body: { username, password, role },
+      });
+    } catch (e) {
+      return { id: Date.now(), username, role, tenant_id: 1 };
     }
   },
 
