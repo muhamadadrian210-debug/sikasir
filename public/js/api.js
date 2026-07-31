@@ -1,13 +1,16 @@
-const API_BASE = typeof window !== 'undefined' && window.Capacitor 
-  ? 'https://sikasir-alpha.vercel.app' 
-  : '';
+/**
+ * Helper client API SiKasir.
+ * Menangani token auth (JWT), auto-retry CSRF, dan Cryptographic Request Signature.
+ */
+
+const API_BASE = window.location.origin;
 
 export function getToken() {
-  return localStorage.getItem('sikasir_token');
+  return localStorage.getItem('sikasir_token') || '';
 }
 
-export function setToken(t) {
-  if (t) localStorage.setItem('sikasir_token', t);
+export function setToken(token) {
+  if (token) localStorage.setItem('sikasir_token', token);
   else localStorage.removeItem('sikasir_token');
 }
 
@@ -70,44 +73,42 @@ export async function api(path, opts = {}) {
   const token = getToken();
   const hasBody = !['GET', 'HEAD'].includes(method) && opts.body != null;
 
-  const timestamp = String(Date.now());
   const bodyData = hasBody && typeof opts.body === 'object' && !(opts.body instanceof FormData)
     ? JSON.stringify(opts.body)
     : (hasBody ? opts.body : '');
 
-  // Cryptographic Request Signature using Web Crypto API
-  let signature = '';
-  try {
-    const clientSalt = "sikasir_client_secure_salt_987654";
-    const message = `${method}:${path}:${bodyData}:${timestamp}:${token || ''}:${clientSalt}`;
-    const encoder = new TextEncoder();
-    const data = encoder.encode(message);
-    
-    // Perform synchronous-like web crypto call by waiting, but since api() is async, we can await it!
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  } catch (e) {
-    // Fallback if crypto is not supported (unlikely in modern browsers)
-  }
-
   const send = async () => {
+    const timestamp = String(Date.now());
     const headers = { ...(opts.headers || {}) };
     if (token) headers.Authorization = `Bearer ${token}`;
 
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-      const csrf = await getCsrfToken();
-      headers['X-CSRF-Token'] = csrf;
+      try {
+        const csrf = await getCsrfToken();
+        headers['X-CSRF-Token'] = csrf;
+      } catch (e) {
+        console.warn('[api] Gagal mengambil CSRF token:', e.message);
+      }
     }
 
     if (hasBody && !(opts.body instanceof FormData) && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
 
-    headers['X-Timestamp'] = timestamp;
-    if (signature) {
-      headers['X-Signature'] = signature;
+    // Cryptographic Request Signature (computed fresh per send attempt)
+    try {
+      const clientSalt = "sikasir_client_secure_salt_987654";
+      const message = `${method}:${path}:${bodyData}:${timestamp}:${token || ''}:${clientSalt}`;
+      const encoder = new TextEncoder();
+      const data = encoder.encode(message);
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      headers['X-Signature'] = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      // Signature fallback
     }
+
+    headers['X-Timestamp'] = timestamp;
 
     const fetchOptions = {
       ...opts,
@@ -135,6 +136,7 @@ export async function api(path, opts = {}) {
     ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
     String(data?.error || '').toLowerCase().includes('csrf')
   ) {
+    // Retry once with fresh token and fresh timestamp/signature
     ({ res, data } = await send());
   }
 
@@ -142,7 +144,6 @@ export async function api(path, opts = {}) {
     const err = new Error(data?.error || res.statusText);
     err.status = res.status;
     err.body = data;
-    // Auto-logout jika token tidak valid / expired / tidak punya tenant_id
     if (res.status === 401) {
       localStorage.removeItem('sikasir_token');
       localStorage.removeItem('sikasir_user');
