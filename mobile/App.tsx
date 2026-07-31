@@ -1,3 +1,28 @@
+import { NativeModules, TurboModuleRegistry } from 'react-native';
+
+// Polyfill TurboModuleRegistry for Expo Go runtime compatibility
+if (TurboModuleRegistry && typeof TurboModuleRegistry.getEnforcing === 'function') {
+  const origGetEnforcing = TurboModuleRegistry.getEnforcing;
+  TurboModuleRegistry.getEnforcing = function (name: string) {
+    try {
+      const res = origGetEnforcing.call(TurboModuleRegistry, name);
+      if (res) return res;
+    } catch (e) {
+      // Fallback for PlatformConstants or missing TurboModules in Expo Go
+    }
+    if (name === 'PlatformConstants') {
+      return NativeModules.PlatformConstants || {
+        isTesting: false,
+        reactNativeVersion: { major: 0, minor: 76, patch: 0 },
+        forceTouchAvailable: false,
+        osVersion: '14.0',
+        systemName: 'Android',
+      };
+    }
+    return NativeModules[name] || {};
+  };
+}
+
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
