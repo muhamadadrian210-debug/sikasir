@@ -1,6 +1,7 @@
 import { Product, CartItem, User, Tenant, FinancialReportData } from '../types';
 
-let API_URL = 'http://localhost:3000/api';
+// Default to Laptop Wi-Fi IP so physical Android/iOS phones can reach the server
+let API_URL = 'http://192.168.100.184:3000/api';
 let authToken = '';
 let currentUser: User | null = null;
 
@@ -44,20 +45,25 @@ export async function request(endpoint: string, options: any = {}) {
     fetchOptions.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
-  const text = await response.text();
-  let data: any = {};
   try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { error: text || 'Error parsing response' };
-  }
+    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+    const text = await response.text();
+    let data: any = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { error: text || 'Error parsing response' };
+    }
 
-  if (!response.ok) {
-    throw new Error(data?.error || `HTTP ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(data?.error || `HTTP ${response.status}`);
+    }
 
-  return data;
+    return data;
+  } catch (err: any) {
+    console.warn('[API Network Error]:', err.message);
+    throw err;
+  }
 }
 
 export const apiService = {
@@ -74,13 +80,21 @@ export const apiService = {
 
   // Setup / Tenants
   async getTenants(): Promise<Tenant[]> {
-    return await request('/setup/tenants');
+    try {
+      return await request('/setup/tenants');
+    } catch (e) {
+      return [];
+    }
   },
 
   // Products
   async getProducts(query: string = ''): Promise<Product[]> {
-    const path = query ? `/products?q=${encodeURIComponent(query)}` : '/products';
-    return await request(path);
+    try {
+      const path = query ? `/products?q=${encodeURIComponent(query)}` : '/products';
+      return await request(path);
+    } catch (e) {
+      return [];
+    }
   },
 
   async addProduct(productData: Partial<Product>): Promise<Product> {
