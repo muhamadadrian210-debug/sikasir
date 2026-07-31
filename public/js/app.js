@@ -804,6 +804,17 @@ function bindProductForm(container, id) {
 }
 
 /* -------- Products table -------- */
+window.reloadProductsTable = async () => {
+  const prodTableWrap = document.getElementById('prod-table-wrap');
+  if (prodTableWrap) {
+    await renderProd();
+  }
+};
+
+window.addEventListener('sikasir:product-updated', () => {
+  window.reloadProductsTable();
+});
+
 async function loadProductsTable() {
   const el = document.getElementById('view-products');
   el.innerHTML = `<div class="actions-inline" style="margin-bottom:1rem">

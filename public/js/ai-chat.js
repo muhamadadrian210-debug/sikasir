@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Munculin animasi loading
     const loadingId = 'loading-' + Date.now();
-    appendMessage('Sedang memproses...', 'bot-msg', loadingId);
+    appendMessage('Memproses perintah AI...', 'bot-msg', loadingId);
 
     try {
       // Gunakan fungsi api() yang sudah handle CSRF & Signature di SiKasir
@@ -45,6 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data && data.reply) {
         appendMessage(data.reply, 'bot-msg');
+
+        // Jika AI melakukan aksi update_stock atau add_new_product, trigger refresh realtime ke UI!
+        if (data.actionPerformed === 'update_stock' || data.actionPerformed === 'add_new_product') {
+          console.log('[SiKasir AI] Stock/Product modified by AI. Triggering realtime UI refresh...');
+          
+          // Trigger global event untuk memperbarui tabel produk & dashboard
+          window.dispatchEvent(new CustomEvent('sikasir:product-updated', { detail: data }));
+          
+          // Jika ada fungsi reload tabel di window, panggil langsung
+          if (typeof window.reloadProductsTable === 'function') {
+            window.reloadProductsTable();
+          }
+        }
       } else if (data && data.error) {
         appendMessage('Error: ' + data.error, 'bot-msg text-error');
       }
