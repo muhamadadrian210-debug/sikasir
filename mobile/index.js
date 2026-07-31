@@ -2,7 +2,7 @@
 if (typeof global !== 'undefined') {
   const PlatformConstantsMock = {
     isTesting: false,
-    reactNativeVersion: { major: 0, minor: 76, patch: 0 },
+    reactNativeVersion: { major: 0, minor: 81, patch: 5 },
     forceTouchAvailable: false,
     osVersion: '14.0',
     systemName: 'Android',
@@ -11,18 +11,18 @@ if (typeof global !== 'undefined') {
 
   if (!global.TurboModuleRegistry) {
     global.TurboModuleRegistry = {
-      get: function (name: string) {
+      get: function (name) {
         if (name === 'PlatformConstants') return PlatformConstantsMock;
-        return (global.nativeModuleProxy && (global.nativeModuleProxy as any)[name]) || {};
+        return (global.nativeModuleProxy && global.nativeModuleProxy[name]) || {};
       },
-      getEnforcing: function (name: string) {
+      getEnforcing: function (name) {
         if (name === 'PlatformConstants') return PlatformConstantsMock;
-        return (global.nativeModuleProxy && (global.nativeModuleProxy as any)[name]) || {};
+        return (global.nativeModuleProxy && global.nativeModuleProxy[name]) || {};
       },
     };
   } else if (typeof global.TurboModuleRegistry.getEnforcing === 'function') {
     const origEnforcing = global.TurboModuleRegistry.getEnforcing;
-    global.TurboModuleRegistry.getEnforcing = function (name: string) {
+    global.TurboModuleRegistry.getEnforcing = function (name) {
       if (name === 'PlatformConstants') return PlatformConstantsMock;
       try {
         const res = origEnforcing.call(global.TurboModuleRegistry, name);
