@@ -11,17 +11,28 @@ router.use(requireTenant);
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const systemInstruction = `
-Kamu adalah SiKasir AI Assistant — Asisten Cerdas Manajemen Stok & Laporan Keuangan Supermarket/Minimarket.
+Kamu adalah SiKasir AI Assistant — Asisten Cerdas Manajemen Stok & Laporan Keuangan Supermarket/Minimarket/Warung.
 Tugas utama kamu meliputi:
 1. Mengelola dan meng-update stok barang (tambah restock atau kurangi stok).
 2. Menginput produk/barang baru langsung ke database toko jika barang belum terdaftar.
 3. Merekap laporan keuangan toko (Total Omset/Pendapatan, Total Modal/HPP, Untung Bersih/Laba, Jumlah Transaksi, dan Barang Terlaris) untuk periode: Hari Ini (today), Minggu Ini (this_week), Bulan Ini (this_month), Kuartal Ini (this_quarter), dan Tahun Ini (this_year).
 
-Aturan Wajib:
+ATURAN KONVERSI SATUAN KEMASAN / GROSIR (SANGAT PENTING):
+Di toko/warung Indonesia, pengguna sering menyebutkan satuan kemasan grosir seperti BAL, SLOP, DUS, KARTON, LUSIN. Konversikan selalu ke jumlah eceran (pcs/bungkus) agar stok akurat:
+- 1 BAL / PRESS ROKOK = 100 Bungkus (10 Slop x 10 Bungkus). Jika pengguna sebut "1 bal rokok", konversikan stok ke 100 bungkus (pcs).
+- 1 SLOP ROKOK = 10 Bungkus (pcs).
+- 1 DUS / KARTON MI INSTANT = 40 Bungkus (pcs).
+- 1 DUS MINUMAN / AIR / KOPI = 24 Biji/Botol (pcs).
+- 1 LUSIN = 12 Pcs.
+- 1 KODI = 20 Pcs.
+- 1 GROS = 144 Pcs.
+Selalu hitung dan sebutkan konversinya dalam jawaban kamu (contoh: "Berhasil menambahkan stok Rokok Sampoerna sebanyak 1 bal (100 bungkus)").
+
+Aturan Umum:
 - Tanggapi dalam Bahasa Indonesia yang ramah, jelas, profesional, dan rapi.
-- Format seluruh nominal uang dengan format Rupiah yang rapi (contoh: Rp 250.000).
-- Jika pengguna menanyakan seputar keuangan/penjualan/omset/keuntungan/rekap/laporan, GUNAKAN fungsi 'get_financial_report' dengan periode yang relevan.
-- Jika pengguna ingin menambah stok barang yang sudah ada, GUNAKAN fungsi 'update_stock'.
+- Format seluruh nominal uang dengan format Rupiah (contoh: Rp 250.000).
+- Jika pengguna menanyakan keuangan/omset/keuntungan/rekap, GUNAKAN fungsi 'get_financial_report'.
+- Jika pengguna ingin menambah/mengurangi stok barang yang sudah ada, GUNAKAN fungsi 'update_stock'.
 - Jika pengguna ingin menambah barang baru yang belum ada, GUNAKAN fungsi 'add_new_product'.
 `;
 
@@ -42,8 +53,8 @@ router.post('/chat', async (req, res) => {
     );
 
     const context = `
-Daftar produk di toko saat ini (ID, Barcode, Nama, Harga Beli, Harga Jual, Stok):
-${products.map(p => `- ID: ${p.id} | Barcode: ${p.barcode} | Nama: ${p.name} | Beli: Rp${p.purchase_price} | Jual: Rp${p.sale_price} | Stok: ${p.stock}`).join('\n')}
+Daftar produk di toko saat ini (ID, Barcode, Nama, Harga Beli, Harga Jual, Stok Eceran):
+${products.map(p => `- ID: ${p.id} | Barcode: ${p.barcode} | Nama: ${p.name} | Beli: Rp${p.purchase_price} | Jual: Rp${p.sale_price} | Stok: ${p.stock} pcs`).join('\n')}
 
 Perintah/Pertanyaan Pengguna: "${prompt}"
 `;
@@ -53,28 +64,28 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
       functionDeclarations: [
         {
           name: 'update_stock',
-          description: 'Menambah atau mengurangi stok barang yang sudah terdaftar di toko.',
+          description: 'Menambah atau mengurangi stok barang yang sudah terdaftar di toko. Konversikan satuan bal/slop/dus ke pcs eceran sebelum mengirim delta.',
           parameters: {
             type: 'OBJECT',
             properties: {
               product_id: { type: 'INTEGER', description: 'ID produk dari daftar barang' },
-              delta: { type: 'INTEGER', description: 'Jumlah perubahan. Angka positif untuk restock/tambah, negatif untuk keluar/terjual.' },
-              reason: { type: 'STRING', description: 'Alasan perubahan stok (misal: "Restock stok baru", "Penyesuaian barang laku")' }
+              delta: { type: 'INTEGER', description: 'Jumlah perubahan stok dalam satuan eceran/pcs. Gunakan angka positif untuk tambah (restock), negatif untuk kurangi/terjual. (Misal 1 bal rokok = +100, 1 dus mi = +40).' },
+              reason: { type: 'STRING', description: 'Alasan perubahan stok (misal: "Restock 1 bal", "Restock 1 dus")' }
             },
             required: ['product_id', 'delta', 'reason']
           }
         },
         {
           name: 'add_new_product',
-          description: 'Menambahkan barang/produk baru yang belum ada di daftar toko.',
+          description: 'Menambahkan barang/produk baru yang belum ada di daftar toko. Konversikan satuan bal/slop/dus ke jumlah stok eceran (pcs/bungkus).',
           parameters: {
             type: 'OBJECT',
             properties: {
               name: { type: 'STRING', description: 'Nama produk baru' },
-              barcode: { type: 'STRING', description: 'Kode barcode/SKU (jika ada, jika tidak ada generate otomatis)' },
-              purchase_price: { type: 'NUMBER', description: 'Harga beli/modal' },
-              sale_price: { type: 'NUMBER', description: 'Harga jual ke konsumen' },
-              stock: { type: 'INTEGER', description: 'Jumlah stok awal' }
+              barcode: { type: 'STRING', description: 'Kode barcode/SKU (jika ada, jika tidak ada biarkan kosong)' },
+              purchase_price: { type: 'NUMBER', description: 'Harga beli/modal per bungkus/pcs eceran' },
+              sale_price: { type: 'NUMBER', description: 'Harga jual per bungkus/pcs eceran' },
+              stock: { type: 'INTEGER', description: 'Jumlah total stok eceran (pcs/bungkus). Jika pengguna menyebut 1 bal, isi 100. Jika 1 dus mi, isi 40.' }
             },
             required: ['name', 'sale_price', 'stock']
           }
@@ -114,7 +125,9 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
       
       // 1. UPDATE STOCK FUNCTION
       if (call.name === 'update_stock') {
-        const { product_id, delta, reason } = call.args;
+        let { product_id, delta, reason } = call.args;
+        product_id = Number(product_id);
+        delta = isNaN(Number(delta)) ? 1 : Number(delta);
         
         const [r] = await pool.execute(
           'UPDATE products SET stock = stock + ? WHERE id = ? AND tenant_id = ? AND stock + ? >= 0',
@@ -159,9 +172,9 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
         if (!barcode) {
           barcode = '899' + Math.floor(100000000 + Math.random() * 900000000);
         }
-        purchase_price = Number(purchase_price || 0);
-        sale_price = Number(sale_price || 0);
-        stock = Number(stock || 0);
+        purchase_price = isNaN(Number(purchase_price)) ? 0 : Number(purchase_price);
+        sale_price = isNaN(Number(sale_price)) ? 0 : Number(sale_price);
+        stock = isNaN(Number(stock)) ? 1 : Number(stock);
 
         const [ins] = await pool.execute(
           'INSERT INTO products (tenant_id, barcode, name, purchase_price, sale_price, stock) VALUES (?, ?, ?, ?, ?, ?)',
@@ -209,7 +222,6 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
           periodLabel = 'Tahun Ini (' + new Date().getFullYear() + ')';
         }
 
-        // Summary query
         const [txRows] = await pool.execute(`
           SELECT 
             COUNT(t.id) as total_tx,
@@ -230,7 +242,6 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
         const summary = txRows[0] || { total_tx: 0, total_omset: 0, total_cogs: 0 };
         const totalProfit = Number(summary.total_omset) - Number(summary.total_cogs);
 
-        // Top 5 items query
         const [topProducts] = await pool.execute(`
           SELECT 
             p.name,
@@ -294,9 +305,9 @@ Format JSON yang harus kamu kembalikan persis seperti ini (tanpa markdown atau k
 {
   "name": "string (nama produk, kapitalisasi yang rapi)",
   "barcode": "string (jika disebutkan angka barcode/sku, jika tidak ada biarkan kosong '')",
-  "purchase_price": "number (harga modal/beli, wajib angka tanpa titik/koma. Jika tidak ada, isi 0)",
-  "sale_price": "number (harga jual, wajib angka tanpa titik/koma. Jika tidak ada, isi 0)",
-  "stock": "number (jumlah barang, jika tidak disebutkan isi 0)"
+  "purchase_price": "number (harga modal/beli eceran, wajib angka tanpa titik/koma. Jika tidak ada, isi 0)",
+  "sale_price": "number (harga jual eceran, wajib angka tanpa titik/koma. Jika tidak ada, isi 0)",
+  "stock": "number (jumlah total stok eceran/pcs. Jika 1 bal rokok isi 100, jika 1 dus mi isi 40, jika 1 slop isi 10, jika 1 lusin isi 12)"
 }
 Jika pengguna mengetik angka seperti "20k" atau "20 ribu", terjemahkan menjadi 20000.
 `;
