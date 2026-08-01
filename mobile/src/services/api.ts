@@ -255,6 +255,44 @@ export const apiService = {
     } catch (e) {
       // Local AI Fallback responses for offline/cellular mode
       const lower = prompt.toLowerCase();
+
+      if (
+        lower.includes('tutor') ||
+        lower.includes('panduan') ||
+        lower.includes('cara') ||
+        lower.includes('tur') ||
+        lower.includes('help') ||
+        lower.includes('bantuan') ||
+        lower.includes('fitur')
+      ) {
+        return {
+          reply: `🎓 *MODE TUR & TUTORIAL INTERAKTIF SIKASIR* 🚀
+
+Selamat datang Bos! Berikut adalah 4 fitur utama SiKasir Mobile:
+
+1️⃣ *KASIR POS (Workstation Transaksi)*:
+• Tap produk atau cari barcode di atas.
+• Produk otomatis masuk keranjang di bawah.
+• Tekan PROSES BAYAR & masukkan jumlah uang tunai.
+
+2️⃣ *STOK BARANG (Inventaris)*:
+• Lihat semua list stok & harga jual.
+• Tekan "+ Tambah Barang" untuk produk baru.
+• Tekan "Restock" jika stok barang datang lagi.
+
+3️⃣ *DASHBOARD (Laporan Keuangan)*:
+• Pantau Total Jenis Barang & Total Stok.
+• Peringatan Otomatis untuk Stok Kritis (<= 5 pcs).
+
+4️⃣ *STAF KASIR (Akses Multi-User)*:
+• Tambahkan akun kasir shift 1 / shift 2.
+• Kasir hanya bisa transaksi, tidak bisa ubah modal/laporan.
+
+💡 *Tips AI*: Lo juga bisa ketik perintah suara/teks seperti "Laku 5 Sampoerna" atau "Restock 1 bal Indomie" langsung ke gue!`,
+          actionPerformed: 'start_tutorial',
+        };
+      }
+
       if (lower.includes('omset') || lower.includes('keuangan') || lower.includes('untung')) {
         return {
           reply: '📊 Omset Hari Ini: Rp 1.450.000 (Untung Bersih: Rp 380.000 | 18 Transaksi)',

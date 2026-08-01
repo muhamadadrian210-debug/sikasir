@@ -18,20 +18,22 @@ interface AiAssistantModalProps {
   visible: boolean;
   onClose: () => void;
   onDataUpdated?: () => void;
+  onSwitchTab?: (tab: 'dashboard' | 'kasir' | 'products' | 'users') => void;
 }
 
 interface Message {
   id: string;
   sender: 'user' | 'ai';
   text: string;
+  isTutorial?: boolean;
 }
 
-export function AiAssistantModal({ visible, onClose, onDataUpdated }: AiAssistantModalProps) {
+export function AiAssistantModal({ visible, onClose, onDataUpdated, onSwitchTab }: AiAssistantModalProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       sender: 'ai',
-      text: 'Halo Bos! Ada yang bisa gue bantu soal nambah/kurangin stok atau rekapan keuangan hari ini?',
+      text: 'Halo Bos! Gue SiKasir AI Assistant. Ketik "tutor" atau tekan "🎓 Tur & Tutorial" di bawah untuk panduan lengkap aplikasi ini!',
     },
   ]);
   const [prompt, setPrompt] = useState('');
@@ -49,7 +51,12 @@ export function AiAssistantModal({ visible, onClose, onDataUpdated }: AiAssistan
     try {
       const res = await apiService.sendAiChat(input);
       if (res && res.reply) {
-        const aiMsg: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: res.reply };
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: 'ai',
+          text: res.reply,
+          isTutorial: res.actionPerformed === 'start_tutorial' || input.toLowerCase().includes('tutor'),
+        };
         setMessages((prev) => [...prev, aiMsg]);
 
         // If stock/product modified, trigger refresh in parent
@@ -69,6 +76,13 @@ export function AiAssistantModal({ visible, onClose, onDataUpdated }: AiAssistan
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTourNavigate = (tab: 'dashboard' | 'kasir' | 'products' | 'users') => {
+    if (onSwitchTab) {
+      onSwitchTab(tab);
+      onClose();
     }
   };
 
@@ -92,6 +106,13 @@ export function AiAssistantModal({ visible, onClose, onDataUpdated }: AiAssistan
 
           {/* Prompt Quick Pills */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll}>
+            <TouchableOpacity
+              style={[styles.pill, { backgroundColor: '#00f2fe22', borderColor: '#00f2fe' }]}
+              onPress={() => handleSend('Tunjukkan tutorial & tur fitur')}
+            >
+              <Text style={[styles.pillText, { color: '#00f2fe', fontWeight: '800' }]}>🎓 Tur & Tutorial Fitur</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.pill}
               onPress={() => handleSend('Omset hari ini')}
@@ -139,6 +160,28 @@ export function AiAssistantModal({ visible, onClose, onDataUpdated }: AiAssistan
                 >
                   {m.text}
                 </Text>
+
+                {m.isTutorial && (
+                  <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 8 }}>
+                    <Text style={{ fontSize: 11, color: '#00f2fe', fontWeight: '800', marginBottom: 6 }}>
+                      👇 Tekan tombol di bawah untuk langsung mencoba fiturnya:
+                    </Text>
+                    <View style={{ gap: 6 }}>
+                      <TouchableOpacity style={styles.tourBtn} onPress={() => handleTourNavigate('kasir')}>
+                        <Text style={styles.tourBtnText}>📱 1. Buka Workstation Kasir POS</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.tourBtn} onPress={() => handleTourNavigate('products')}>
+                        <Text style={styles.tourBtnText}>📦 2. Buka Kelola Stok Barang</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.tourBtn} onPress={() => handleTourNavigate('dashboard')}>
+                        <Text style={styles.tourBtnText}>📊 3. Buka Laporan Dashboard</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.tourBtn} onPress={() => handleTourNavigate('users')}>
+                        <Text style={styles.tourBtnText}>👥 4. Buka Akun Staf Kasir</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
             ))}
 
@@ -260,6 +303,19 @@ const styles = StyleSheet.create({
   },
   aiMsgText: {
     color: '#f8fafc',
+  },
+  tourBtn: {
+    backgroundColor: '#07090e',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#00f2fe',
+  },
+  tourBtnText: {
+    color: '#00f2fe',
+    fontSize: 12,
+    fontWeight: '700',
   },
   inputBar: {
     flexDirection: 'row',

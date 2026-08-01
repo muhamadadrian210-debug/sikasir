@@ -957,6 +957,7 @@ export default function App() {
           visible={aiModalVisible}
           onClose={() => setAiModalVisible(false)}
           onDataUpdated={loadProducts}
+          onSwitchTab={setActiveTab}
         />
       )}
     </SafeAreaView>
