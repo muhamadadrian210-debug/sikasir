@@ -51,7 +51,10 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser } from './src/services/api';
 import { Product, CartItem, Tenant, User, StoreType } from './src/types';
@@ -575,43 +578,59 @@ export default function App() {
       {/* TAB CONTENT 2: KASIR POS (ALL ROLES HAVE ACCESS) */}
       {activeTab === 'kasir' && (
         <View style={{ flex: 1 }}>
-          <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-            <View style={styles.inputWrap}>
-              <Ionicons name="search" size={16} color="#64748b" style={{ marginRight: 6 }} />
-              <TextInput
-                style={styles.input}
-                placeholder="Cari nama barang atau barcode..."
-                placeholderTextColor="#64748b"
-                value={searchQuery}
-                onChangeText={(t) => {
-                  setSearchQuery(t);
-                  loadProducts(t);
-                }}
-              />
-            </View>
-          </View>
-
-          {/* Product Grid */}
-          <FlatList
-            data={products}
-            keyExtractor={(i) => i.id.toString()}
-            numColumns={2}
-            style={{ flex: 1, paddingHorizontal: 8 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.gridProdCard, item.stock <= 0 && { opacity: 0.4 }]}
-                onPress={() => addToCart(item)}
-              >
-                <Text style={styles.gridProdName} numberOfLines={2}>{item.name}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-                  <Text style={styles.gridProdPrice}>Rp{item.sale_price.toLocaleString('id-ID')}</Text>
-                  <Text style={{ fontSize: 10, color: item.stock > 0 ? '#10b981' : '#ef4444' }}>
-                    {item.stock} pcs
-                  </Text>
-                </View>
+          {/* Search bar */}
+          <View style={styles.searchBarWrap}>
+            <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.input}
+              placeholder="Cari nama barang atau barcode..."
+              placeholderTextColor="#64748b"
+              value={searchQuery}
+              onChangeText={(t) => {
+                setSearchQuery(t);
+                loadProducts(t);
+              }}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => { setSearchQuery(''); loadProducts(''); }}>
+                <Ionicons name="close-circle" size={18} color="#64748b" />
               </TouchableOpacity>
             )}
-          />
+          </View>
+
+          {/* Product Grid — show empty state if no products */}
+          {products.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons name="package-variant" size={72} color="#1e293b" />
+              <Text style={styles.emptyStateTitle}>Katalog Barang Kosong</Text>
+              <Text style={styles.emptyStateDesc}>
+                Toko ini belum memiliki produk.{isAdmin ? '\nTekan tab Stok Barang → Tambah Barang untuk mulai mengisi.' : '\nHubungi Admin Toko untuk menambah produk.'}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={products}
+              keyExtractor={(i) => i.id.toString()}
+              numColumns={2}
+              contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
+              style={{ flex: 1 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.gridProdCard, item.stock <= 0 && { opacity: 0.4 }]}
+                  onPress={() => addToCart(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.gridProdStockBadge}>
+                    <Text style={{ fontSize: 9, color: item.stock > 5 ? '#10b981' : item.stock > 0 ? '#f59e0b' : '#ef4444', fontWeight: '700' }}>
+                      {item.stock > 0 ? `${item.stock} pcs` : 'HABIS'}
+                    </Text>
+                  </View>
+                  <Text style={styles.gridProdName} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.gridProdPrice}>Rp{item.sale_price.toLocaleString('id-ID')}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
 
           {/* Cart & Checkout Panel */}
           <View style={styles.cartPanel}>
@@ -754,14 +773,15 @@ export default function App() {
         </View>
       )}
 
-      {/* BOTTOM TAB BAR SWITCHER */}
+      {/* BOTTOM TAB BAR SWITCHER — fixed with proper touch area */}
       <View style={styles.bottomTabBar}>
         {isAdmin && (
           <TouchableOpacity
             style={[styles.tabItem, activeTab === 'dashboard' && styles.tabItemActive]}
             onPress={() => setActiveTab('dashboard')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="grid-outline" size={20} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
+            <Ionicons name="grid-outline" size={24} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
             <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.tabLabelActive]}>Dashboard</Text>
           </TouchableOpacity>
         )}
@@ -769,26 +789,29 @@ export default function App() {
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'kasir' && styles.tabItemActive]}
           onPress={() => setActiveTab('kasir')}
+          activeOpacity={0.7}
         >
-          <MaterialCommunityIcons name="cash-register" size={22} color={activeTab === 'kasir' ? '#00f2fe' : '#64748b'} />
-          <Text style={[styles.tabLabel, activeTab === 'kasir' && styles.tabLabelActive]}>Kasir POS</Text>
+          <MaterialCommunityIcons name="cash-register" size={24} color={activeTab === 'kasir' ? '#00f2fe' : '#64748b'} />
+          <Text style={[styles.tabLabel, activeTab === 'kasir' && styles.tabLabelActive]}>Kasir</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'products' && styles.tabItemActive]}
           onPress={() => setActiveTab('products')}
+          activeOpacity={0.7}
         >
-          <Ionicons name="cube-outline" size={20} color={activeTab === 'products' ? '#00f2fe' : '#64748b'} />
-          <Text style={[styles.tabLabel, activeTab === 'products' && styles.tabLabelActive]}>Stok Barang</Text>
+          <Ionicons name="cube-outline" size={24} color={activeTab === 'products' ? '#00f2fe' : '#64748b'} />
+          <Text style={[styles.tabLabel, activeTab === 'products' && styles.tabLabelActive]}>Stok</Text>
         </TouchableOpacity>
 
         {isAdmin && (
           <TouchableOpacity
             style={[styles.tabItem, activeTab === 'users' && styles.tabItemActive]}
             onPress={() => setActiveTab('users')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="people-outline" size={20} color={activeTab === 'users' ? '#00f2fe' : '#64748b'} />
-            <Text style={[styles.tabLabel, activeTab === 'users' && styles.tabLabelActive]}>Staf Kasir</Text>
+            <Ionicons name="people-outline" size={24} color={activeTab === 'users' ? '#00f2fe' : '#64748b'} />
+            <Text style={[styles.tabLabel, activeTab === 'users' && styles.tabLabelActive]}>Staf</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -1180,29 +1203,72 @@ const styles = StyleSheet.create({
   gridProdCard: {
     flex: 1,
     backgroundColor: '#0f172a',
-    borderRadius: 12,
-    padding: 10,
-    margin: 4,
+    borderRadius: 14,
+    padding: 12,
+    margin: 5,
     borderWidth: 1,
     borderColor: '#1e293b',
-    minHeight: 76,
+    minHeight: 100,
     justifyContent: 'space-between',
+  },
+  gridProdStockBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1e293b',
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginBottom: 6,
   },
   gridProdName: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#ffffff',
+    lineHeight: 17,
+    flex: 1,
   },
   gridProdPrice: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '900',
     color: '#00f2fe',
+    marginTop: 6,
+  },
+  searchBarWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingHorizontal: 14,
+    height: 48,
+    margin: 12,
+    marginBottom: 8,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#475569',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  emptyStateDesc: {
+    fontSize: 13,
+    color: '#334155',
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 20,
   },
   cartPanel: {
     backgroundColor: '#0a0e17',
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: '#1e293b',
-    padding: 12,
+    padding: 14,
   },
   cartRow: {
     flexDirection: 'row',
@@ -1268,28 +1334,34 @@ const styles = StyleSheet.create({
   },
   bottomTabBar: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#0d1117',
     borderTopWidth: 1,
     borderTopColor: '#1e293b',
-    height: 56,
+    // Tall enough to be tappable + extra for Android nav bar
+    paddingBottom: Platform.OS === 'android' ? 8 : 20,
+    paddingTop: 6,
+    minHeight: 64,
   },
   tabItem: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 6,
+    minHeight: 52,
   },
   tabItemActive: {
-    borderTopWidth: 2,
+    borderTopWidth: 2.5,
     borderTopColor: '#00f2fe',
   },
   tabLabel: {
     fontSize: 10,
     color: '#64748b',
-    marginTop: 2,
+    marginTop: 3,
+    fontWeight: '600',
   },
   tabLabelActive: {
     color: '#00f2fe',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   modalOverlay: {
     flex: 1,
