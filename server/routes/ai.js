@@ -11,36 +11,16 @@ router.use(requireTenant);
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const systemInstruction = `
-Kamu adalah SiKasir AI Assistant — Asisten Kasir Cerdas, Cepat, dan Praktis.
-Tugas utama kamu:
-1. Mengubah stok barang (Restock / Barang Masuk / Barang Terjual / Laku).
-2. Memasukkan produk baru ke toko jika belum terdaftar.
-3. Merekap laporan keuangan (Omset, Modal, Untung Bersih, Jumlah Transaksi, Barang Terlaris).
+Kamu: SiKasir AI Assistant — Asisten Kasir Cerdas & Hemat.
+Tugas:
+1. Ubah stok barang (Restock delta > 0, Laku/Terjual delta < 0).
+2. Tambah produk baru.
+3. Rekap keuangan (Omset, Untung, Transaksi).
 
-ATURAN GAYA BAHASA & KEPRAKTISAN (SANGAT PENTING):
-- JANGAN GUNAKAN KALIMAT FORMAL PANJANG LEBAR (seperti "Halo pengelola toko, berdasarkan laporan Anda...").
-- Gunakan bahasa yang SINGKAT, PADAT, RELEVAN, dan LANGSUNG KE POIN.
-- Pahami perintah singkat & santai dari pengguna, contoh:
-  * "Laku 5 Sampoerna" / "Sampoerna laku 3" / "Terjual 2 Indomie" -> Kurangi stok (delta negatif)
-  * "Restock 1 bal Sampoerna" / "Tambah 10 Le Minerale" / "Masuk 1 dus mi" -> Tambah stok (delta positif)
-  * "Omset hari ini" / "Untung minggu ini" / "Keuangan bulan ini" -> Panggil 'get_financial_report'
-
-ATURAN KONVERSI GROSIR:
-- 1 Bal / Press Rokok = 100 Bungkus (pcs).
-- 1 Slop Rokok = 10 Bungkus (pcs).
-- 1 Dus Mi Instant = 40 Bungkus (pcs).
-- 1 Dus Minuman = 24 Pcs.
-- 1 Lusin = 12 Pcs.
-
-FORMAT JAWABAN (SINGKAT & RAPI):
-- Untuk Restock / Barang Masuk:
-  "📦 Restock Berhasil: [Nama Barang] +[Jumlah] pcs (Stok Sekarang: [Total] pcs)"
-- Untuk Barang Laku / Terjual:
-  "✅ Penjualan Dicatat: [Nama Barang] -[Jumlah] pcs (Stok Sisa: [Total] pcs)"
-- Untuk Tambah Barang Baru:
-  "✨ Produk Baru Ditambahkan: [Nama Barang] | Harga Jual: Rp[Harga] | Stok: [Jumlah] pcs"
-- Untuk Laporan Keuangan:
-  Tampilkan ringkasan ringkas dalam 3-4 baris (Omset, Modal, Untung Bersih, Transaksi).
+ATURAN RESPON (SANGAT SINGKAT & HEBAT TOKEN):
+- JANGAN GUNAKAN KALIMAT FORMAL MAUPUN BASA-BASI.
+- Tampilkan jawaban maksimal 2-3 baris ringkas.
+- Konversi Grosir: 1 Bal/Press=100pcs, 1 Slop=10pcs, 1 Dus Mi=40pcs, 1 Dus Minuman=24pcs, 1 Lusin=12pcs.
 `;
 
 router.post('/chat', async (req, res) => {
@@ -53,59 +33,62 @@ router.post('/chat', async (req, res) => {
       return res.status(500).json({ error: 'API Key Gemini belum diset di server.' });
     }
 
-    // Fetch existing products for context
-    const [products] = await pool.execute(
-      'SELECT id, barcode, name, purchase_price, sale_price, stock FROM products WHERE tenant_id = ?',
-      [tid]
-    );
+    const lower = prompt.toLowerCase();
+    let productContext = '';
 
-    const context = `
-Daftar produk di toko saat ini (ID, Barcode, Nama, Harga Beli, Harga Jual, Stok Eceran):
-${products.map(p => `- ID: ${p.id} | Barcode: ${p.barcode} | Nama: ${p.name} | Beli: Rp${p.purchase_price} | Jual: Rp${p.sale_price} | Stok: ${p.stock} pcs`).join('\n')}
+    // Smart Token Saver: Only load product context if user asks about products/stock
+    if (!lower.includes('omset') && !lower.includes('keuangan') && !lower.includes('tutor')) {
+      const [products] = await pool.execute(
+        'SELECT id, barcode, name, purchase_price, sale_price, stock FROM products WHERE tenant_id = ? LIMIT 30',
+        [tid]
+      );
+      if (products.length > 0) {
+        productContext = `Produk Toko:\n` + products.map(p => `#${p.id} ${p.name} (Stok:${p.stock},Jual:${p.sale_price},Beli:${p.purchase_price})`).join('\n');
+      }
+    }
 
-Perintah/Pertanyaan Pengguna: "${prompt}"
-`;
+    const context = `${productContext}\nPerintah: "${prompt}"`;
 
     // Tool Declarations
     const tools = [{
       functionDeclarations: [
         {
           name: 'update_stock',
-          description: 'Menambah atau mengurangi stok barang. Gunakan delta positif untuk restock/masuk, dan delta negatif untuk barang laku/terjual.',
+          description: 'Ubah stok barang (delta positif=restock, negatif=laku/terjual).',
           parameters: {
             type: 'OBJECT',
             properties: {
-              product_id: { type: 'INTEGER', description: 'ID produk dari daftar barang' },
-              delta: { type: 'INTEGER', description: 'Jumlah perubahan stok dalam pcs. Positif = masuk, Negatif = terjual/laku.' },
-              reason: { type: 'STRING', description: 'Alasan singkat (misal: "Barang laku", "Restock")' }
+              product_id: { type: 'INTEGER', description: 'ID produk' },
+              delta: { type: 'INTEGER', description: 'Delta stok (+/- pcs)' },
+              reason: { type: 'STRING', description: 'Alasan singkat' }
             },
             required: ['product_id', 'delta', 'reason']
           }
         },
         {
           name: 'add_new_product',
-          description: 'Menambahkan barang/produk baru yang belum ada di daftar toko.',
+          description: 'Tambah produk baru yang belum ada di toko.',
           parameters: {
             type: 'OBJECT',
             properties: {
               name: { type: 'STRING', description: 'Nama produk baru' },
-              barcode: { type: 'STRING', description: 'Kode barcode/SKU (opsional)' },
-              purchase_price: { type: 'NUMBER', description: 'Harga beli/modal eceran' },
-              sale_price: { type: 'NUMBER', description: 'Harga jual eceran' },
-              stock: { type: 'INTEGER', description: 'Jumlah total stok eceran (pcs)' }
+              barcode: { type: 'STRING', description: 'Barcode SKU' },
+              purchase_price: { type: 'NUMBER', description: 'Harga beli' },
+              sale_price: { type: 'NUMBER', description: 'Harga jual' },
+              stock: { type: 'INTEGER', description: 'Stok eceran' }
             },
             required: ['name', 'sale_price', 'stock']
           }
         },
         {
           name: 'get_financial_report',
-          description: 'Merekap laporan keuangan toko (Omset, Modal, Untung Bersih, & Transaksi).',
+          description: 'Rekap keuangan toko (Omset, Untung, Transaksi).',
           parameters: {
             type: 'OBJECT',
             properties: {
               period: { 
                 type: 'STRING', 
-                description: 'Periode waktu: "today", "this_week", "this_month", "this_quarter", "this_year", atau "all_time".' 
+                description: 'Periode: "today", "this_week", "this_month", "this_year", "all_time".' 
               }
             },
             required: ['period']
@@ -114,14 +97,15 @@ Perintah/Pertanyaan Pengguna: "${prompt}"
       ]
     }];
 
-    // Call Gemini
+    // Call Gemini with Token Savers (maxOutputTokens: 256)
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: context,
       config: {
         systemInstruction: systemInstruction,
         tools: tools,
-        temperature: 0.1
+        temperature: 0.1,
+        maxOutputTokens: 256
       }
     });
 
