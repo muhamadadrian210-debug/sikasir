@@ -1,7 +1,7 @@
 import { Product, CartItem, User, Tenant, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from '../types';
 
-// Primary local IP & fallback mode for Cellular Data
-let API_URL = 'http://192.168.100.184:3000/api';
+// Dynamic API URL for Vercel/Online Cloud Server or Local Dev
+let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.184:3000/api';
 let authToken = '';
 let currentUser: User | null = null;
 
