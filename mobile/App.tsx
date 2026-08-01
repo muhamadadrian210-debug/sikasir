@@ -885,9 +885,10 @@ export default function App() {
                       </View>
                     </View>
                   </View>
-                )}
-              />
             </>
+          )}
+        </View>
+      )}
                 {/* TAB CONTENT 5: RIWAYAT TRANSAKSI PENJUALAN */}
       {activeTab === 'history' && (
         <View style={{ flex: 1, padding: 12 }}>

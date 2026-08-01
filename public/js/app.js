@@ -1,5 +1,5 @@
 import { api, getToken, getUser, setToken, setUser } from './api.js';
-import { startScanner, stopScanner } from './scanner.js';
+import { startScanner, stopScanner, scanFile } from './scanner.js';
 
 const MODE_KEY = 'sikasir_app_mode';
 
@@ -403,6 +403,10 @@ function renderPOS() {
     document.getElementById('pos-change').textContent = money(Math.max(0, paid - total));
   };
   paidEl.addEventListener('input', updateChange);
+
+  function openScanModal(onCode) {
+    openWebBarcodeScanner(onCode);
+  }
 
   document.getElementById('pos-btn-scan').onclick = () => openScanModal(onPosScan);
   document.getElementById('pos-add-manual').onclick = () => {
@@ -1785,3 +1789,50 @@ function openAiProductModal() {
   
   modal.classList.add('open');
 }
+
+// Web Heavy-Duty Barcode Scanner Integration
+const modalScan = document.getElementById('modal-scan');
+const modalScanClose = document.getElementById('modal-scan-close');
+const modalScanUpload = document.getElementById('modal-scan-upload');
+
+export function openWebBarcodeScanner(onCodeScanned) {
+  if (!modalScan) return;
+  modalScan.classList.add('open');
+  const videoHost = document.getElementById('scan-video-host');
+  
+  startScanner(videoHost, (barcode) => {
+    if (onCodeScanned) onCodeScanned(barcode);
+    else addToCartByBarcode(barcode);
+  }).catch((err) => {
+    alert(err.message || 'Gagal menyalakan kamera scanner.');
+  });
+}
+
+export function closeWebBarcodeScanner() {
+  if (!modalScan) return;
+  modalScan.classList.remove('open');
+  stopScanner();
+}
+
+if (modalScanClose) {
+  modalScanClose.addEventListener('click', closeWebBarcodeScanner);
+}
+
+if (modalScanUpload) {
+  modalScanUpload.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const code = await scanFile(file);
+      if (code) {
+        alert(`✅ Barcode terdeteksi dari foto: ${code}`);
+        addToCartByBarcode(code);
+        closeWebBarcodeScanner();
+      }
+    } catch (err) {
+      alert(err.message || 'Gagal membaca barcode dari gambar.');
+    }
+  });
+}
+
+window.__openWebBarcodeScanner = openWebBarcodeScanner;
