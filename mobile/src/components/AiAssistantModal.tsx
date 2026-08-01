@@ -82,7 +82,7 @@ export function AiAssistantModal({ visible, onClose, onDataUpdated }: AiAssistan
           {/* Modal Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <MaterialCommunityIcons name="robot text" size={24} color="#00f2fe" />
+              <MaterialCommunityIcons name="robot-outline" size={24} color="#00f2fe" />
               <Text style={styles.headerTitle}>SiKasir AI Assistant</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
