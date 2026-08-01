@@ -141,7 +141,18 @@ export default function App() {
     loadIncoming();
     loadAudit();
     loadCyberStatus();
-  }, []);
+
+    // 3-second real-time auto-sync background timer with Web server
+    const syncInterval = setInterval(() => {
+      if (isLoggedIn) {
+        loadProducts();
+        loadTransactions();
+        loadIncoming();
+      }
+    }, 3000);
+
+    return () => clearInterval(syncInterval);
+  }, [isLoggedIn]);
 
   const loadTransactions = async () => {
     const list = await apiService.getTransactions();
@@ -193,6 +204,14 @@ export default function App() {
       user.role = loginRole; // Enforce selected role
       setCurrentUserLocal(user);
       setIsLoggedIn(true);
+
+      // Trigger 100% Data Sync on login
+      loadProducts();
+      loadTransactions();
+      loadIncoming();
+      loadUsers();
+      loadAudit();
+      loadCyberStatus();
     } catch (e: any) {
       const mockUser: User = { id: Date.now(), username: username.trim(), role: loginRole, tenant_id: selectedTenantId || 1 };
       setCurrentUserLocal(mockUser);
