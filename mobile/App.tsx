@@ -60,11 +60,15 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser } from './src/services/api';
 import { Product, CartItem, Tenant, User, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from './src/types';
 import { AiAssistantModal } from './src/components/AiAssistantModal';
+import { HeavyDutyBarcodeScannerModal } from './src/components/HeavyDutyBarcodeScannerModal';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
   const [currentUser, setCurrentUserLocal] = useState<User | null>(getCurrentUser());
   const [activeTab, setActiveTab] = useState<'kasir' | 'history' | 'products' | 'incoming' | 'dashboard' | 'users' | 'audit' | 'cybersecurity'>('kasir');
+
+  // Heavy Duty Camera Barcode Scanner State
+  const [scannerModalVisible, setScannerModalVisible] = useState(false);
 
   // Parity State: History, Incoming, Audit, CyberSecurity
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
@@ -551,6 +555,18 @@ export default function App() {
     await loadIncoming();
   };
 
+  const handleBarcodeScanned = (barcode: string) => {
+    setSearchQuery(barcode);
+    const found = products.find(p => p.barcode === barcode || p.name.toLowerCase().includes(barcode.toLowerCase()));
+    if (found) {
+      addToCart(found);
+      Alert.alert('✅ Barcode Terdeteksi!', `"${found.name}" ditambahkan ke keranjang (+1 pcs).`);
+    } else {
+      loadProducts(barcode);
+      Alert.alert('🔍 Barcode Terbaca', `Mencari barang dengan barcode: ${barcode}`);
+    }
+  };
+
   const isAdmin = currentUser?.role === 'admin';
 
   // 2. MAIN APP INTERFACE WITH ROLE BADGES & ROLE ACCESS
@@ -639,24 +655,47 @@ export default function App() {
       {/* TAB CONTENT 2: KASIR POS (ALL ROLES HAVE ACCESS) */}
       {activeTab === 'kasir' && (
         <View style={{ flex: 1 }}>
-          {/* Search bar */}
-          <View style={styles.searchBarWrap}>
-            <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
-            <TextInput
-              style={styles.input}
-              placeholder="Cari nama barang atau barcode..."
-              placeholderTextColor="#64748b"
-              value={searchQuery}
-              onChangeText={(t) => {
-                setSearchQuery(t);
-                loadProducts(t);
+          {/* Search bar & Heavy Duty Camera Scanner Button */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, marginTop: 12, marginBottom: 8, gap: 8 }}>
+            <View style={[styles.searchBarWrap, { flex: 1, margin: 0 }]}>
+              <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="Cari nama barang atau barcode..."
+                placeholderTextColor="#64748b"
+                value={searchQuery}
+                onChangeText={(t) => {
+                  setSearchQuery(t);
+                  loadProducts(t);
+                }}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => { setSearchQuery(''); loadProducts(''); }}>
+                  <Ionicons name="close-circle" size={18} color="#64748b" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: '#10b981',
+                paddingHorizontal: 14,
+                height: 48,
+                borderRadius: 14,
+                elevation: 3,
+                shadowColor: '#10b981',
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
               }}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => { setSearchQuery(''); loadProducts(''); }}>
-                <Ionicons name="close-circle" size={18} color="#64748b" />
-              </TouchableOpacity>
-            )}
+              onPress={() => setScannerModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="camera" size={20} color="#ffffff" />
+              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 12 }}>SCAN</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Product Grid — show empty state if no products */}
@@ -1230,6 +1269,13 @@ export default function App() {
           onSwitchTab={setActiveTab}
         />
       )}
+
+      {/* HEAVY DUTY CAMERA BARCODE SCANNER MODAL */}
+      <HeavyDutyBarcodeScannerModal
+        visible={scannerModalVisible}
+        onClose={() => setScannerModalVisible(false)}
+        onScanResult={handleBarcodeScanned}
+      />
     </SafeAreaView>
   );
 }
