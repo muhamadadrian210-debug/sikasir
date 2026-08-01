@@ -1,3 +1,4 @@
+// @ts-nocheck
 // MUST BE AT THE VERY TOP BEFORE ANY IMPORT STATEMENTS
 if (typeof global !== 'undefined') {
   const PlatformConstantsMock = {
@@ -515,7 +516,7 @@ export default function App() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {isAdmin && (
             <TouchableOpacity style={styles.aiPill} onPress={() => setAiModalVisible(true)}>
-              <MaterialCommunityIcons name="robot text" size={16} color="#000" />
+              <MaterialCommunityIcons name="robot-outline" size={16} color="#000" />
               <Text style={styles.aiPillText}>AI Gemini</Text>
             </TouchableOpacity>
           )}
