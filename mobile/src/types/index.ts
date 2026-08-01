@@ -40,3 +40,42 @@ export interface FinancialReportData {
   keuntungan_bersih: number;
   produk_terlaris: string[];
 }
+
+export interface TransactionRecord {
+  id: string;
+  created_at: string;
+  total_amount: number;
+  paid_amount: number;
+  change_amount: number;
+  payment_method: string;
+  items_count: number;
+  cashier_name?: string;
+}
+
+export interface IncomingLog {
+  id: number;
+  created_at: string;
+  supplier_name: string;
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+  notes?: string;
+}
+
+export interface AuditLog {
+  id: number;
+  created_at: string;
+  username: string;
+  action: string;
+  details: string;
+  ip_address: string;
+}
+
+export interface CyberSecurityStatus {
+  firewall_status: 'ACTIVE' | 'WARNING' | 'ATTACK_BLOCKED';
+  ssl_active: boolean;
+  rate_limit_protection: boolean;
+  blocked_attempts_24h: number;
+  last_scan_time: string;
+  threat_level: 'LOW' | 'MEDIUM' | 'HIGH';
+}

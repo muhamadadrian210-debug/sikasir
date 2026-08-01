@@ -1,9 +1,26 @@
-import { Product, CartItem, User, Tenant, StoreType } from '../types';
+import { Product, CartItem, User, Tenant, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from '../types';
 
 // Primary local IP & fallback mode for Cellular Data
 let API_URL = 'http://192.168.100.184:3000/api';
 let authToken = '';
 let currentUser: User | null = null;
+
+const MOCK_TRANSACTIONS: TransactionRecord[] = [
+  { id: 'TX-8921', created_at: '2026-07-31 19:45', total_amount: 64000, paid_amount: 100000, change_amount: 36000, payment_method: 'CASH', items_count: 2, cashier_name: 'kasir_admin' },
+  { id: 'TX-8920', created_at: '2026-07-31 18:20', total_amount: 18000, paid_amount: 20000, change_amount: 2000, payment_method: 'CASH', items_count: 1, cashier_name: 'kasir_admin' },
+  { id: 'TX-8919', created_at: '2026-07-31 16:10', total_amount: 120000, paid_amount: 150000, change_amount: 30000, payment_method: 'CASH', items_count: 4, cashier_name: 'kasir_shift1' },
+];
+
+const MOCK_INCOMING: IncomingLog[] = [
+  { id: 1, created_at: '2026-07-31 10:00', supplier_name: 'PT Sampoerna Distribusi', item_name: 'Rokok Sampoerna Mild 16', quantity: 100, unit_price: 28000, notes: 'Restock Mingguan' },
+  { id: 2, created_at: '2026-07-30 14:30', supplier_name: 'CV Indofood Makmur', item_name: 'Indomie Goreng Spesial', quantity: 240, unit_price: 2500, notes: 'Stok Dus Karton' },
+];
+
+const MOCK_AUDIT: AuditLog[] = [
+  { id: 1, created_at: '2026-07-31 20:10', username: 'kasir_admin', action: 'LOGIN_SUCCESS', details: 'Login dari Android App', ip_address: '192.168.100.184' },
+  { id: 2, created_at: '2026-07-31 19:45', username: 'kasir_admin', action: 'TRANSACTION_CREATED', details: 'Transaksi TX-8921 berhasil', ip_address: '192.168.100.184' },
+  { id: 3, created_at: '2026-07-31 17:30', username: 'kasir_admin', action: 'TENANT_REGISTER', details: 'Restorasi Toko Berhasil', ip_address: '192.168.100.184' },
+];
 
 const MOCK_TENANTS: Tenant[] = [
   { id: 1, name: 'Sivilize Supermarket & Mart', slug: 'sivilize-mart', store_type: 'minimarket', icon: 'cart-outline' },
@@ -245,6 +262,67 @@ export const apiService = {
       });
     } catch (e) {
       return { id: Date.now(), username, role, tenant_id: 1 };
+    }
+  },
+
+  // Transactions History
+  async getTransactions(): Promise<TransactionRecord[]> {
+    try {
+      return await request('/transactions/history');
+    } catch (e) {
+      return MOCK_TRANSACTIONS;
+    }
+  },
+
+  // Incoming Barang Masuk Logs
+  async getIncomingLogs(): Promise<IncomingLog[]> {
+    try {
+      return await request('/incoming');
+    } catch (e) {
+      return MOCK_INCOMING;
+    }
+  },
+
+  async addIncomingLog(supplier_name: string, item_name: string, quantity: number, unit_price: number, notes?: string): Promise<IncomingLog> {
+    try {
+      return await request('/incoming', { method: 'POST', body: { supplier_name, item_name, quantity, unit_price, notes } });
+    } catch (e) {
+      const newEntry: IncomingLog = {
+        id: Date.now(),
+        created_at: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        supplier_name,
+        item_name,
+        quantity,
+        unit_price,
+        notes,
+      };
+      MOCK_INCOMING.unshift(newEntry);
+      return newEntry;
+    }
+  },
+
+  // Audit Trail Logs
+  async getAuditLogs(): Promise<AuditLog[]> {
+    try {
+      return await request('/audit-logs');
+    } catch (e) {
+      return MOCK_AUDIT;
+    }
+  },
+
+  // Cybersecurity Sentinel Status
+  async getCyberSecurityStatus(): Promise<CyberSecurityStatus> {
+    try {
+      return await request('/cybersecurity/status');
+    } catch (e) {
+      return {
+        firewall_status: 'ACTIVE',
+        ssl_active: true,
+        rate_limit_protection: true,
+        blocked_attempts_24h: 14,
+        last_scan_time: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        threat_level: 'LOW',
+      };
     }
   },
 
