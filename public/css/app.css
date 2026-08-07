@@ -524,6 +524,11 @@ a {
   .grid-2 {
     grid-template-columns: 1fr 1fr;
   }
+  
+  #view-pos .grid-2 {
+    grid-template-columns: 1.8fr 1fr;
+    align-items: start;
+  }
 }
 
 .table-wrap {

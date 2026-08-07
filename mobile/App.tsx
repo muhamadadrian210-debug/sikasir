@@ -53,6 +53,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Image,
+  useWindowDimensions,
 } from 'react-native';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -64,6 +66,9 @@ import { HeavyDutyBarcodeScannerModal } from './src/components/HeavyDutyBarcodeS
 import * as ImagePicker from 'expo-image-picker';
 
 export default function App() {
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
+  const isTablet = SCREEN_W >= 768;
+
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
   const [currentUser, setCurrentUserLocal] = useState<User | null>(getCurrentUser());
   const [activeTab, setActiveTab] = useState<'kasir' | 'history' | 'products' | 'incoming' | 'dashboard' | 'users' | 'audit' | 'cybersecurity'>('kasir');
@@ -117,8 +122,10 @@ export default function App() {
 
   // POS Kasir Cart State
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [heldBills, setHeldBills] = useState<CartItem[][]>([]);
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QRIS' | 'KASBON'>('CASH');
 
   // AI Assistant Modal State
   const [aiModalVisible, setAiModalVisible] = useState(false);
@@ -267,6 +274,17 @@ export default function App() {
     loadUsers();
   };
 
+  const holdBill = () => {
+    if (cart.length === 0) return;
+    setHeldBills((prev) => [...prev, cart]);
+    setCart([]);
+  };
+
+  const loadBill = (index: number) => {
+    setCart(heldBills[index]);
+    setHeldBills((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const addToCart = (product: Product) => {
     if (product.stock <= 0) {
       Alert.alert('Stok Habis', `Stok ${product.name} saat ini 0.`);
@@ -312,20 +330,22 @@ export default function App() {
 
   const handleCheckout = async () => {
     const paid = Number(paidAmount);
-    if (isNaN(paid) || paid < totalAmount) {
+    if (paymentMethod !== 'KASBON' && (isNaN(paid) || paid < totalAmount)) {
       Alert.alert('Pembayaran', `Nominal kurang dari total Rp ${totalAmount.toLocaleString('id-ID')}`);
       return;
     }
-    const res = await apiService.checkout(cart, paid);
+    const finalPaid = paymentMethod === 'KASBON' ? 0 : paid;
+    const res = await apiService.checkout(cart, finalPaid, paymentMethod);
     Alert.alert(
       'Transaksi Berhasil!',
-      `Kembalian: Rp ${Number(res.change_amount || paid - totalAmount).toLocaleString('id-ID')}`,
+      paymentMethod === 'KASBON' ? 'Tagihan berhasil dicatat ke buku Kasbon (Hutang).' : `Kembalian: Rp ${Number(res.change_amount || finalPaid - totalAmount).toLocaleString('id-ID')}`,
       [
         {
           text: 'Selesai / Cetak Struk',
           onPress: () => {
             setCart([]);
             setPaidAmount('');
+            setPaymentMethod('CASH');
             setCheckoutModalVisible(false);
             loadProducts();
           },
@@ -421,6 +441,7 @@ export default function App() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.loginContent}>
             <View style={styles.loginHeader}>
+              <Image source={require('./assets/icon.png')} style={{ width: 80, height: 80, alignSelf: 'center', marginBottom: 10, borderRadius: 20 }} />
               <View style={styles.logoBadge}>
                 <MaterialCommunityIcons name="cash-register" size={36} color="#00f2fe" />
               </View>
@@ -526,7 +547,10 @@ export default function App() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={styles.modalTitle}>Daftarkan Toko Baru</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Image source={require('./assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />
+                  <Text style={styles.modalTitle}>Daftarkan Toko Baru</Text>
+                </View>
                 <TouchableOpacity onPress={() => setRegisterModalVisible(false)}>
                   <Ionicons name="close-circle" size={24} color="#64748b" />
                 </TouchableOpacity>
@@ -706,8 +730,9 @@ export default function App() {
 
       {/* TAB CONTENT 2: KASIR POS (ALL ROLES HAVE ACCESS) */}
       {activeTab === 'kasir' && (
-        <View style={{ flex: 1 }}>
-          {/* Search bar & Heavy Duty Camera Scanner Button */}
+        <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
+          <View style={{ flex: isTablet ? 2 : 1 }}>
+            {/* Search bar & Heavy Duty Camera Scanner Button */}
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, marginTop: 12, marginBottom: 8, gap: 8 }}>
             <View style={[styles.searchBarWrap, { flex: 1, margin: 0 }]}>
               <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
@@ -763,7 +788,8 @@ export default function App() {
             <FlatList
               data={products}
               keyExtractor={(i) => i.id.toString()}
-              numColumns={2}
+              numColumns={isTablet ? 3 : 2}
+              key={isTablet ? 'tablet-grid' : 'mobile-grid'}
               contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
               style={{ flex: 1 }}
               renderItem={({ item }) => (
@@ -783,14 +809,27 @@ export default function App() {
               )}
             />
           )}
+          </View>
 
           {/* Cart & Checkout Panel */}
-          <View style={styles.cartPanel}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8', marginBottom: 6 }}>
-              Keranjang POS ({cart.length} item)
-            </Text>
+          <View style={[styles.cartPanel, isTablet && { flex: 1, height: '100%', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 1, borderLeftColor: '#1e293b' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8' }}>
+                Keranjang POS ({cart.length} item)
+              </Text>
+              {cart.length > 0 && (
+                <TouchableOpacity onPress={holdBill} style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Hold Bill</Text>
+                </TouchableOpacity>
+              )}
+              {cart.length === 0 && heldBills.length > 0 && (
+                <TouchableOpacity onPress={() => loadBill(0)} style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Load Bill ({heldBills.length})</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-            <ScrollView style={{ maxHeight: 110 }}>
+            <ScrollView style={isTablet ? { flex: 1 } : { maxHeight: 110 }}>
               {cart.map((item) => (
                 <View key={item.product.id} style={styles.cartRow}>
                   <Text style={{ flex: 1, color: '#fff', fontSize: 12 }} numberOfLines={1}>
@@ -953,9 +992,13 @@ export default function App() {
                   <Text style={{ color: '#00f2fe', fontWeight: '900', fontSize: 14 }}>
                     Rp{item.total_amount.toLocaleString('id-ID')}
                   </Text>
-                  <Text style={{ color: '#10b981', fontSize: 10, marginTop: 2 }}>
-                    Bayar: Rp{item.paid_amount.toLocaleString('id-ID')}
-                  </Text>
+                  {item.payment_method === 'KASBON' ? (
+                    <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 2, fontWeight: '700' }}>BELUM LUNAS (KASBON)</Text>
+                  ) : (
+                    <Text style={{ color: '#10b981', fontSize: 10, marginTop: 2 }}>
+                      Bayar: Rp{item.paid_amount.toLocaleString('id-ID')}
+                    </Text>
+                  )}
                 </View>
               </View>
             )}
@@ -1222,16 +1265,37 @@ export default function App() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Proses Pembayaran</Text>
-            <Text style={{ color: '#94a3b8', fontSize: 12 }}>Total: Rp {totalAmount.toLocaleString('id-ID')}</Text>
-            <Text style={[styles.label, { marginTop: 12 }]}>Jumlah Uang Diterima (Rp)</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Masukkan nominal..."
-              placeholderTextColor="#64748b"
-              keyboardType="numeric"
-              value={paidAmount}
-              onChangeText={setPaidAmount}
-            />
+            <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>Total: Rp {totalAmount.toLocaleString('id-ID')}</Text>
+
+            <Text style={styles.label}>Metode Pembayaran</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {(['CASH', 'QRIS', 'KASBON'] as const).map(method => (
+                <TouchableOpacity
+                  key={method}
+                  style={[styles.chip, paymentMethod === method && styles.chipActive, { flex: 1, paddingHorizontal: 0, justifyContent: 'center' }]}
+                  onPress={() => setPaymentMethod(method)}
+                >
+                  <Text style={[styles.chipText, paymentMethod === method && styles.chipTextActive, { textAlign: 'center' }]}>
+                    {method}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {paymentMethod !== 'KASBON' && (
+              <>
+                <Text style={styles.label}>Jumlah Uang Diterima (Rp)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Masukkan nominal..."
+                  placeholderTextColor="#64748b"
+                  keyboardType="numeric"
+                  value={paidAmount}
+                  onChangeText={setPaidAmount}
+                />
+              </>
+            )}
+
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setCheckoutModalVisible(false)}>
                 <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>

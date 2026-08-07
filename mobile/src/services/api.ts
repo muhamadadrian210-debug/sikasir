@@ -179,8 +179,14 @@ export const apiService = {
     try {
       return await request(query ? `/products?q=${encodeURIComponent(query)}` : '/products');
     } catch (e) {
-      if (!query) return MOCK_PRODUCTS;
-      return MOCK_PRODUCTS.filter(p =>
+      const user = getCurrentUser();
+      let mockList = MOCK_PRODUCTS;
+      if (user && user.tenant_id > 6) {
+        // Hanya tampilkan produk yang baru ditambahkan (id berupa timestamp) untuk toko mock baru
+        mockList = MOCK_PRODUCTS.filter(p => p.id > 1000000000000);
+      }
+      if (!query) return mockList;
+      return mockList.filter(p =>
         p.name.toLowerCase().includes(query.toLowerCase()) || p.barcode.includes(query)
       );
     }
@@ -219,11 +225,11 @@ export const apiService = {
   },
 
   // Checkout POS
-  async checkout(items: CartItem[], paidAmount: number) {
+  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH') {
     try {
       return await request('/transactions', {
         method: 'POST',
-        body: { items, paid_amount: paidAmount, payment_method: 'CASH' },
+        body: { items, paid_amount: paidAmount, payment_method: paymentMethod },
       });
     } catch (e) {
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
@@ -237,6 +243,7 @@ export const apiService = {
         total_amount: total,
         paid_amount: paidAmount,
         change_amount: Math.max(0, paidAmount - total),
+        payment_method: paymentMethod,
       };
     }
   },
@@ -270,7 +277,8 @@ export const apiService = {
     try {
       return await request('/transactions/history');
     } catch (e) {
-      return MOCK_TRANSACTIONS;
+      const user = getCurrentUser();
+      return (user && user.tenant_id > 6) ? MOCK_TRANSACTIONS.filter(t => t.id.startsWith('TX-DEMO-')) : MOCK_TRANSACTIONS;
     }
   },
 
@@ -279,7 +287,8 @@ export const apiService = {
     try {
       return await request('/incoming');
     } catch (e) {
-      return MOCK_INCOMING;
+      const user = getCurrentUser();
+      return (user && user.tenant_id > 6) ? MOCK_INCOMING.filter(i => i.id > 1000000000000) : MOCK_INCOMING;
     }
   },
 
@@ -306,7 +315,8 @@ export const apiService = {
     try {
       return await request('/audit-logs');
     } catch (e) {
-      return MOCK_AUDIT;
+      const user = getCurrentUser();
+      return (user && user.tenant_id > 6) ? MOCK_AUDIT.filter(a => a.id > 1000000000000) : MOCK_AUDIT;
     }
   },
 

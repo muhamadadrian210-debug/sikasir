@@ -47,7 +47,7 @@ export interface TransactionRecord {
   total_amount: number;
   paid_amount: number;
   change_amount: number;
-  payment_method: string;
+  payment_method: 'CASH' | 'QRIS' | 'KASBON';
   items_count: number;
   cashier_name?: string;
 }
