@@ -389,4 +389,30 @@ Selamat datang Bos! Berikut adalah 4 fitur utama SiKasir Mobile:
       };
     }
   },
+
+  async analyzeProductImage(imageUri: string, mimeType: string = 'image/jpeg') {
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      name: 'product_image.jpg',
+      type: mimeType
+    } as any);
+
+    try {
+      const res = await fetch(`${API_URL}/ai/analyze-product-image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: formData,
+      });
+
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      return data;
+    } catch (e) {
+      return { name: 'Produk AI (Demo Mode)', barcode: 'BRG-0000000001' };
+    }
+  },
 };

@@ -1,4 +1,9 @@
 const express = require('express');
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 const { pool } = require('../config/db');
 const { authMiddleware, requireTenant } = require('../middleware/auth');
 const { tenantId } = require('../middleware/tenant');
@@ -326,6 +331,58 @@ Jika pengguna mengetik angka seperti "20k" atau "20 ribu", terjemahkan menjadi 2
   } catch (err) {
     console.error('AI Parse Product Error:', err);
     res.status(500).json({ error: 'Gagal mengekstrak data dari AI' });
+  }
+});
+
+router.post('/analyze-product-image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Tidak ada gambar yang diunggah' });
+    }
+
+    const base64Data = req.file.buffer.toString('base64');
+    const defaultBarcode = `BRG-${new Date().toISOString().replace(/[-:T.]/g, '').slice(0,14)}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: req.file.mimetype,
+              },
+            },
+            {
+              text: 'Analisis gambar produk retail/F&B ini. Kembalikan data dalam format JSON berisi "name" (nama barang, singkat dan jelas, contoh: "Kecap Bango 520ml" atau "Kopi Susu Aren"). Jika ada barcode fisik yang terbaca, kembalikan di field "barcode". Jika tidak terbaca, jangan berikan field barcode. Jangan tulis format markdown tambahan, hanya kirim raw JSON.',
+            }
+          ]
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const aiText = response.text || '{}';
+    let data = {};
+    try {
+      data = JSON.parse(aiText);
+    } catch(e) {
+      const cleaned = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+      data = JSON.parse(cleaned);
+    }
+
+    res.json({
+      name: data.name || 'Barang Tidak Dikenali',
+      barcode: data.barcode || defaultBarcode
+    });
+
+  } catch (error) {
+    console.error('AI Analysis Error:', error);
+    res.status(500).json({ error: 'Gagal menganalisis gambar' });
   }
 });
 

@@ -61,6 +61,7 @@ import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser 
 import { Product, CartItem, Tenant, User, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from './src/types';
 import { AiAssistantModal } from './src/components/AiAssistantModal';
 import { HeavyDutyBarcodeScannerModal } from './src/components/HeavyDutyBarcodeScannerModal';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
@@ -132,6 +133,7 @@ export default function App() {
   const [newPurchasePrice, setNewPurchasePrice] = useState('');
   const [newSalePrice, setNewSalePrice] = useState('');
   const [newStock, setNewStock] = useState('');
+  const [aiProcessing, setAiProcessing] = useState(false);
 
   useEffect(() => {
     fetchTenants();
@@ -371,6 +373,37 @@ export default function App() {
     setNewSalePrice('');
     setNewStock('');
     loadProducts();
+  };
+
+  const handleAiCamera = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert('Izin Kamera', 'Tolong berikan izin kamera untuk menggunakan fitur ini.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setAiProcessing(true);
+        try {
+          const imageUri = result.assets[0].uri;
+          const aiData = await apiService.analyzeProductImage(imageUri, 'image/jpeg');
+          setNewName(aiData.name || '');
+          setNewBarcode(aiData.barcode || '');
+          setAddProductModalVisible(true);
+        } catch (err: any) {
+          Alert.alert('AI Error', err.message || 'Gagal memproses gambar');
+        } finally {
+          setAiProcessing(false);
+        }
+      }
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const handleLogout = () => {
@@ -805,10 +838,16 @@ export default function App() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <Text style={styles.screenHeader}>Daftar Stok Barang ({products.length})</Text>
             {isAdmin && (
-              <TouchableOpacity style={styles.smallAddBtn} onPress={() => setAddProductModalVisible(true)}>
-                <Ionicons name="add" size={16} color="#000" />
-                <Text style={{ fontSize: 11, fontWeight: '800', color: '#000' }}>Tambah Barang</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <TouchableOpacity style={[styles.smallAddBtn, { backgroundColor: '#8b5cf6' }]} onPress={handleAiCamera} disabled={aiProcessing}>
+                  {aiProcessing ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="camera" size={16} color="#fff" />}
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{aiProcessing ? 'Proses AI...' : 'Foto AI'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.smallAddBtn} onPress={() => setAddProductModalVisible(true)}>
+                  <Ionicons name="add" size={16} color="#000" />
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#000' }}>Manual</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
