@@ -56,6 +56,8 @@ export interface TransactionRecord {
   customer_name?: string;
   customer_phone?: string;
   is_refunded?: boolean;
+  pb1_applied?: boolean;
+  split_bill_ways?: number;
 }
 
 export interface IncomingLog {

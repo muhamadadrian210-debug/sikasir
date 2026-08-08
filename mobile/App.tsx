@@ -129,6 +129,8 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QRIS' | 'KASBON'>('CASH');
   const [kasbonCustomerName, setKasbonCustomerName] = useState('');
   const [kasbonCustomerPhone, setKasbonCustomerPhone] = useState('');
+  const [applyPB1, setApplyPB1] = useState(false);
+  const [splitBillWays, setSplitBillWays] = useState(1);
 
   // Shift Management State
   const [shiftStatus, setShiftStatus] = useState<'closed' | 'open'>('closed');
@@ -353,7 +355,8 @@ export default function App() {
     );
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + item.subtotal, 0);
+  const subtotalAmount = cart.reduce((sum, item) => sum + item.subtotal, 0);
+  const totalAmount = applyPB1 ? subtotalAmount * 1.1 : subtotalAmount;
 
   const handleCheckout = async () => {
     const paid = Number(paidAmount);
@@ -366,7 +369,7 @@ export default function App() {
       return;
     }
     const finalPaid = paymentMethod === 'KASBON' ? 0 : paid;
-    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone);
+    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone, applyPB1, splitBillWays);
     Alert.alert(
       'Transaksi Berhasil!',
       paymentMethod === 'KASBON' ? 'Tagihan berhasil dicatat ke buku Kasbon (Hutang).' : `Kembalian: Rp ${Number(res.change_amount || finalPaid - totalAmount).toLocaleString('id-ID')}`,
@@ -379,6 +382,8 @@ export default function App() {
             setPaymentMethod('CASH');
             setKasbonCustomerName('');
             setKasbonCustomerPhone('');
+            setApplyPB1(false);
+            setSplitBillWays(1);
             setCheckoutModalVisible(false);
             loadProducts();
           },
@@ -1080,12 +1085,18 @@ export default function App() {
                   <Text style={{ color: '#64748b', fontSize: 10, marginTop: 2 }}>Tanggal: {item.created_at}</Text>
                   <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>
                     Kasir: {item.cashier_name || 'Admin'} • {item.items_count} item • Metoda: {item.payment_method}
+                    {item.pb1_applied && ' • (PB1 10%)'}
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={{ color: '#00f2fe', fontWeight: '900', fontSize: 14 }}>
                     Rp{item.total_amount.toLocaleString('id-ID')}
                   </Text>
+                  {item.split_bill_ways && item.split_bill_ways > 1 && (
+                    <Text style={{ color: '#f59e0b', fontSize: 10, marginTop: 2, fontWeight: '700' }}>
+                      Split {item.split_bill_ways}x: Rp{(item.total_amount / item.split_bill_ways).toLocaleString('id-ID')}/org
+                    </Text>
+                  )}
                   {item.payment_method === 'KASBON' ? (
                     <>
                       <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 2, fontWeight: '700' }}>BELUM LUNAS (KASBON)</Text>
@@ -1402,6 +1413,34 @@ export default function App() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={styles.label}>Pajak PB1 (10%)</Text>
+              <TouchableOpacity
+                style={[styles.chip, applyPB1 && styles.chipActive]}
+                onPress={() => setApplyPB1(!applyPB1)}
+              >
+                <Text style={[styles.chipText, applyPB1 && styles.chipTextActive]}>{applyPB1 ? 'ON' : 'OFF'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Split Bill (Bagi Tagihan)</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <TouchableOpacity style={styles.smallAddBtn} onPress={() => setSplitBillWays(Math.max(1, splitBillWays - 1))}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#000' }}>-</Text>
+                </TouchableOpacity>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{splitBillWays} Orang</Text>
+                <TouchableOpacity style={styles.smallAddBtn} onPress={() => setSplitBillWays(splitBillWays + 1)}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#000' }}>+</Text>
+                </TouchableOpacity>
+              </View>
+              {splitBillWays > 1 && (
+                <Text style={{ color: '#00f2fe', fontSize: 12, marginTop: 6, fontWeight: '700' }}>
+                  Per Orang: Rp {(totalAmount / splitBillWays).toLocaleString('id-ID')}
+                </Text>
+              )}
             </View>
 
             {paymentMethod !== 'KASBON' && (

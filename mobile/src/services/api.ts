@@ -225,11 +225,11 @@ export const apiService = {
   },
 
   // Checkout POS
-  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string) {
+  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string, pb1Applied?: boolean, splitBillWays?: number) {
     try {
       return await request('/transactions', {
         method: 'POST',
-        body: { items, paid_amount: paidAmount, payment_method: paymentMethod, customer_name: customerName, customer_phone: customerPhone },
+        body: { items, paid_amount: paidAmount, payment_method: paymentMethod, customer_name: customerName, customer_phone: customerPhone, pb1_applied: pb1Applied, split_bill_ways: splitBillWays },
       });
     } catch (e) {
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
@@ -237,16 +237,36 @@ export const apiService = {
         const p = MOCK_PRODUCTS.find(mp => mp.id === i.product.id);
         if (p) p.stock = Math.max(0, p.stock - i.qty);
       });
-      return {
+      const totalAmount = pb1Applied ? total * 1.1 : total;
+      const res = {
         success: true,
         transaction_id: 'TX-DEMO-' + Date.now(),
-        total_amount: total,
+        total_amount: totalAmount,
         paid_amount: paidAmount,
-        change_amount: Math.max(0, paidAmount - total),
+        change_amount: Math.max(0, paidAmount - totalAmount),
         payment_method: paymentMethod,
         customer_name: customerName,
         customer_phone: customerPhone,
+        pb1_applied: pb1Applied,
+        split_bill_ways: splitBillWays,
       };
+      
+      MOCK_TRANSACTIONS.unshift({
+        id: res.transaction_id,
+        created_at: new Date().toISOString().slice(0,16).replace('T',' '),
+        total_amount: res.total_amount,
+        paid_amount: res.paid_amount,
+        change_amount: res.change_amount,
+        payment_method: res.payment_method,
+        items_count: items.length,
+        cashier_name: currentUser?.username || 'admin',
+        customer_name: res.customer_name,
+        customer_phone: res.customer_phone,
+        pb1_applied: res.pb1_applied,
+        split_bill_ways: res.split_bill_ways,
+      });
+
+      return res;
     }
   },
 
