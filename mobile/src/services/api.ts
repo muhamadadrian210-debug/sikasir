@@ -527,3 +527,5 @@ Selamat datang Bos! Berikut adalah 4 fitur utama SiKasir Mobile:
     }
   },
 };
+
+export default apiService;
