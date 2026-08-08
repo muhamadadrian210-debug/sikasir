@@ -1857,7 +1857,7 @@ function loadMutasiPanel() {
           Fitur ini telah dirilis dan tersinkronisasi di <strong>SiKasir versi Aplikasi Android</strong>. Silakan gunakan versi Android untuk melakukan mutasi barang fisik antar toko!
         </p>
         <br>
-        <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-v2-native.apk'">Unduh SiKasir Android</button>
+        <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-v2-native.apk'">📱 Unduh SiKasir (Native React)</button>
       </div>
     </div>
   `;
@@ -1878,9 +1878,10 @@ function loadKasbonPanel() {
           Sistem mencatat Kasbon secara otomatis di Cloud SiKasir. Fitur penagihan, limit, dan rekap detail tersedia secara optimal di <strong>SiKasir versi Aplikasi Android</strong>.
         </p>
         <br>
-        <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-v2-native.apk'">Unduh SiKasir Android</button>
+        <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-v2-native.apk'">📱 Unduh SiKasir (Native React)</button>
       </div>
     </div>
   `;
 }
+
 
