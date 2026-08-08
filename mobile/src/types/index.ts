@@ -52,6 +52,8 @@ export interface TransactionRecord {
   payment_method: 'CASH' | 'QRIS' | 'KASBON';
   items_count: number;
   cashier_name?: string;
+  customer_name?: string;
+  customer_phone?: string;
 }
 
 export interface IncomingLog {

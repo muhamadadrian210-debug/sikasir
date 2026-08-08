@@ -55,6 +55,7 @@ import {
   Dimensions,
   Image,
   useWindowDimensions,
+  Linking,
 } from 'react-native';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -126,6 +127,8 @@ export default function App() {
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QRIS' | 'KASBON'>('CASH');
+  const [kasbonCustomerName, setKasbonCustomerName] = useState('');
+  const [kasbonCustomerPhone, setKasbonCustomerPhone] = useState('');
 
   // Shift Management State
   const [shiftStatus, setShiftStatus] = useState<'closed' | 'open'>('closed');
@@ -358,8 +361,12 @@ export default function App() {
       Alert.alert('Pembayaran', `Nominal kurang dari total Rp ${totalAmount.toLocaleString('id-ID')}`);
       return;
     }
+    if (paymentMethod === 'KASBON' && (!kasbonCustomerName || !kasbonCustomerPhone)) {
+      Alert.alert('Data Kasbon', 'Nama dan Nomor WA Penghutang wajib diisi!');
+      return;
+    }
     const finalPaid = paymentMethod === 'KASBON' ? 0 : paid;
-    const res = await apiService.checkout(cart, finalPaid, paymentMethod);
+    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone);
     Alert.alert(
       'Transaksi Berhasil!',
       paymentMethod === 'KASBON' ? 'Tagihan berhasil dicatat ke buku Kasbon (Hutang).' : `Kembalian: Rp ${Number(res.change_amount || finalPaid - totalAmount).toLocaleString('id-ID')}`,
@@ -370,6 +377,8 @@ export default function App() {
             setCart([]);
             setPaidAmount('');
             setPaymentMethod('CASH');
+            setKasbonCustomerName('');
+            setKasbonCustomerPhone('');
             setCheckoutModalVisible(false);
             loadProducts();
           },
@@ -1045,7 +1054,23 @@ export default function App() {
                     Rp{item.total_amount.toLocaleString('id-ID')}
                   </Text>
                   {item.payment_method === 'KASBON' ? (
-                    <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 2, fontWeight: '700' }}>BELUM LUNAS (KASBON)</Text>
+                    <>
+                      <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 2, fontWeight: '700' }}>BELUM LUNAS (KASBON)</Text>
+                      {item.customer_phone && (
+                        <TouchableOpacity
+                          style={{ marginTop: 4, backgroundColor: '#25D366', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}
+                          onPress={() => {
+                            const message = `Halo ${item.customer_name || 'Kak'},\nIni dari SiKasir. Total tagihan Kasbon Anda adalah Rp${item.total_amount.toLocaleString('id-ID')}. Mohon untuk segera diselesaikan. Terima kasih.`;
+                            Linking.openURL(`whatsapp://send?phone=${item.customer_phone}&text=${encodeURIComponent(message)}`).catch(() => {
+                              Alert.alert('Error', 'Gagal membuka WhatsApp. Pastikan aplikasi terinstall.');
+                            });
+                          }}
+                        >
+                          <Ionicons name="logo-whatsapp" size={12} color="#fff" style={{ marginRight: 4 }} />
+                          <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Follow Up WA</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
                   ) : (
                     <Text style={{ color: '#10b981', fontSize: 10, marginTop: 2 }}>
                       Bayar: Rp{item.paid_amount.toLocaleString('id-ID')}
@@ -1344,6 +1369,28 @@ export default function App() {
                   keyboardType="numeric"
                   value={paidAmount}
                   onChangeText={setPaidAmount}
+                />
+              </>
+            )}
+
+            {paymentMethod === 'KASBON' && (
+              <>
+                <Text style={styles.label}>Nama Penghutang</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Masukkan nama..."
+                  placeholderTextColor="#64748b"
+                  value={kasbonCustomerName}
+                  onChangeText={setKasbonCustomerName}
+                />
+                <Text style={styles.label}>Nomor WA (Contoh: 62812...)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="628..."
+                  placeholderTextColor="#64748b"
+                  keyboardType="phone-pad"
+                  value={kasbonCustomerPhone}
+                  onChangeText={setKasbonCustomerPhone}
                 />
               </>
             )}

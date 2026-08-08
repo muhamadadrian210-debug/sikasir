@@ -225,11 +225,11 @@ export const apiService = {
   },
 
   // Checkout POS
-  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH') {
+  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string) {
     try {
       return await request('/transactions', {
         method: 'POST',
-        body: { items, paid_amount: paidAmount, payment_method: paymentMethod },
+        body: { items, paid_amount: paidAmount, payment_method: paymentMethod, customer_name: customerName, customer_phone: customerPhone },
       });
     } catch (e) {
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
@@ -244,6 +244,8 @@ export const apiService = {
         paid_amount: paidAmount,
         change_amount: Math.max(0, paidAmount - total),
         payment_method: paymentMethod,
+        customer_name: customerName,
+        customer_phone: customerPhone,
       };
     }
   },
