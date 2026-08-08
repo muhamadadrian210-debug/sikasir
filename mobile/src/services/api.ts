@@ -37,8 +37,8 @@ const MOCK_PRODUCTS: Product[] = [
   { id: 102, barcode: '8999999002', name: 'Indomie Goreng Spesial', purchase_price: 2500, sale_price: 3100, stock: 240 },
   { id: 103, barcode: '8999999003', name: 'Air Mineral Le Minerale 600ml', purchase_price: 2000, sale_price: 3500, stock: 48 },
   // Apotek
-  { id: 201, barcode: '8998888001', name: 'Paracetamol 500mg (Strip 10 Kaplet)', purchase_price: 3500, sale_price: 6000, stock: 150 },
-  { id: 202, barcode: '8998888002', name: 'Vitamin C 1000mg Enervon-C Botol', purchase_price: 32000, sale_price: 40000, stock: 30 },
+  { id: 201, barcode: '8998888001', name: 'Paracetamol 500mg (Strip 10 Kaplet)', purchase_price: 3500, sale_price: 6000, stock: 150, expiry_date: '2026-08-15' },
+  { id: 202, barcode: '8998888002', name: 'Vitamin C 1000mg Enervon-C Botol', purchase_price: 32000, sale_price: 40000, stock: 30, expiry_date: '2027-12-01' },
   { id: 203, barcode: '8998888003', name: 'Betadine Antiseptik 30ml', purchase_price: 18000, sale_price: 23500, stock: 25 },
   // Cafe / F&B
   { id: 301, barcode: '8997777001', name: 'Es Kopi Susu Gula Aren 500ml', purchase_price: 10000, sale_price: 18000, stock: 50 },
@@ -247,6 +247,18 @@ export const apiService = {
         customer_name: customerName,
         customer_phone: customerPhone,
       };
+    }
+  },
+
+  async refundTransaction(transactionId: string) {
+    try {
+      return await request(`/transactions/${transactionId}/refund`, { method: 'POST' });
+    } catch (e) {
+      const idx = MOCK_TRANSACTIONS.findIndex(t => t.id === transactionId);
+      if (idx !== -1) {
+        MOCK_TRANSACTIONS[idx].is_refunded = true;
+      }
+      return { success: true };
     }
   },
 

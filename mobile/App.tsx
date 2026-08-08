@@ -387,6 +387,29 @@ export default function App() {
     );
   };
 
+  const handleRefund = async (transactionId: string) => {
+    if (currentUser?.role !== 'admin') {
+      Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak meretur barang/transaksi.');
+      return;
+    }
+    Alert.alert(
+      'Konfirmasi Retur',
+      `Apakah Anda yakin ingin membatalkan/meretur transaksi ${transactionId}?`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Ya, Retur',
+          style: 'destructive',
+          onPress: async () => {
+            await apiService.refundTransaction(transactionId);
+            Alert.alert('Sukses', 'Transaksi berhasil diretur.');
+            loadTransactions();
+          }
+        }
+      ]
+    );
+  };
+
   const handleRestock = async () => {
     if (currentUser?.role !== 'admin') {
       Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak merestock barang.');
@@ -855,6 +878,11 @@ export default function App() {
                     </Text>
                   </View>
                   <Text style={styles.gridProdName} numberOfLines={2}>{item.name}</Text>
+                  {item.expiry_date && (
+                    <Text style={{ fontSize: 9, color: (new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) ? '#ef4444' : '#64748b', fontWeight: '800', marginTop: 2 }}>
+                      Exp: {item.expiry_date}
+                    </Text>
+                  )}
                   <Text style={styles.gridProdPrice}>Rp{item.sale_price.toLocaleString('id-ID')}</Text>
                 </TouchableOpacity>
               )}
@@ -959,6 +987,11 @@ export default function App() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.name}</Text>
                   <Text style={{ color: '#64748b', fontSize: 10 }}>Barcode: {item.barcode || '-'}</Text>
+                  {item.expiry_date && (
+                    <Text style={{ fontSize: 10, color: (new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) ? '#ef4444' : '#94a3b8', fontWeight: '700', marginTop: 2 }}>
+                      Exp: {item.expiry_date} {(new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) && '(Segera Kedaluwarsa)'}
+                    </Text>
+                  )}
                   <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>
                     Harga Jual: Rp{item.sale_price.toLocaleString('id-ID')}
                   </Text>
@@ -1072,9 +1105,21 @@ export default function App() {
                       )}
                     </>
                   ) : (
-                    <Text style={{ color: '#10b981', fontSize: 10, marginTop: 2 }}>
-                      Bayar: Rp{item.paid_amount.toLocaleString('id-ID')}
-                    </Text>
+                    <>
+                      <Text style={{ color: '#10b981', fontSize: 10, marginTop: 2 }}>
+                        Bayar: Rp{item.paid_amount.toLocaleString('id-ID')}
+                      </Text>
+                      {item.is_refunded ? (
+                        <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: '900' }}>[ DIRETUR ]</Text>
+                      ) : (
+                        <TouchableOpacity
+                          style={{ marginTop: 4, backgroundColor: '#334155', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+                          onPress={() => handleRefund(item.id)}
+                        >
+                          <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Retur Barang</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
                   )}
                 </View>
               </View>

@@ -9,6 +9,7 @@ export interface Product {
   category_name?: string;
   wholesale_price?: number;
   wholesale_min_qty?: number;
+  expiry_date?: string;
 }
 
 export interface CartItem {
@@ -54,6 +55,7 @@ export interface TransactionRecord {
   cashier_name?: string;
   customer_name?: string;
   customer_phone?: string;
+  is_refunded?: boolean;
 }
 
 export interface IncomingLog {
