@@ -66,6 +66,89 @@ import { AiAssistantModal } from './src/components/AiAssistantModal';
 import { HeavyDutyBarcodeScannerModal } from './src/components/HeavyDutyBarcodeScannerModal';
 import * as ImagePicker from 'expo-image-picker';
 
+const STORE_CATEGORIES = [
+  {
+    title: 'Retail & Kebutuhan',
+    data: [
+      { type: 'minimarket', label: '🛒 Minimarket' },
+      { type: 'supermarket', label: '🛒 Supermarket' },
+      { type: 'warung_kelontong', label: '🏪 Warung Kelontong' },
+      { type: 'sayur_buah', label: '🥬 Sayur, Buah & Daging' },
+      { type: 'toko_plastik', label: '🛍️ Toko Plastik & Kemasan' },
+      { type: 'bahan_kue', label: '🧁 Toko Bahan Kue' },
+    ]
+  },
+  {
+    title: 'Makanan & Minuman (F&B)',
+    data: [
+      { type: 'cafe', label: '☕ Cafe & Kopi' },
+      { type: 'resto', label: '🍽️ Restoran & Rumah Makan' },
+      { type: 'warteg', label: '🍛 Warteg & Nasi Bungkus' },
+      { type: 'street_food', label: '🍢 Kaki Lima & Gerobak' },
+      { type: 'bakery', label: '🍞 Bakery & Pastry' },
+    ]
+  },
+  {
+    title: 'Kesehatan & Kecantikan',
+    data: [
+      { type: 'apotek', label: '💊 Apotek & Obat' },
+      { type: 'klinik', label: '⚕️ Klinik Kesehatan' },
+      { type: 'salon', label: '💇‍♀️ Salon Kecantikan' },
+      { type: 'barbershop', label: '✂️ Barbershop' },
+      { type: 'optik', label: '👓 Optik Kacamata' },
+      { type: 'skincare_kosmetik', label: '💄 Skincare & Kosmetik' },
+    ]
+  },
+  {
+    title: 'Fashion & Aksesoris',
+    data: [
+      { type: 'fashion', label: '👕 Pakaian & Distro' },
+      { type: 'sepatu_sandal', label: '👟 Sepatu & Sandal' },
+      { type: 'toko_emas', label: '💍 Toko Emas & Perhiasan' },
+      { type: 'toko_jam', label: '⌚ Toko Jam' },
+    ]
+  },
+  {
+    title: 'Elektronik & Gadget',
+    data: [
+      { type: 'counter', label: '📱 Counter HP & Pulsa' },
+      { type: 'toko_komputer', label: '💻 Toko Komputer & Laptop' },
+      { type: 'elektronik_rumah_tangga', label: '📺 Elektronik Rumah Tangga' },
+    ]
+  },
+  {
+    title: 'Otomotif',
+    data: [
+      { type: 'bengkel', label: '🏍️ Bengkel Motor / Mobil' },
+      { type: 'cuci_mobil', label: '🚗 Cuci Mobil & Motor' },
+      { type: 'variasi_aksesoris_kendaraan', label: '🏎️ Aksesoris Kendaraan' },
+    ]
+  },
+  {
+    title: 'Jasa & Layanan',
+    data: [
+      { type: 'laundry', label: '🧺 Laundry & Cuci Baju' },
+      { type: 'jasa_servis', label: '🔧 Jasa Servis (AC, TV)' },
+      { type: 'percetakan', label: '🖨️ Percetakan & Fotokopi' },
+      { type: 'studio_foto', label: '📸 Studio Foto' },
+    ]
+  },
+  {
+    title: 'Hobi & Lain-lain',
+    data: [
+      { type: 'toko_buku', label: '📚 Toko Buku & Alat Tulis' },
+      { type: 'toko_mainan', label: '🧸 Toko Mainan' },
+      { type: 'petshop', label: '🐾 Petshop & Dokter Hewan' },
+      { type: 'toko_olahraga', label: '⚽ Toko Peralatan Olahraga' },
+      { type: 'alat_musik', label: '🎸 Toko Alat Musik' },
+      { type: 'florist', label: '💐 Toko Bunga' },
+      { type: 'bangunan', label: '🛠️ Toko Bangunan & Material' },
+      { type: 'distributor', label: '📦 Distributor & Grosir' },
+      { type: 'umum', label: '🏬 Toko Umum / Lainnya' },
+    ]
+  }
+];
+
 export default function App() {
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const isTablet = SCREEN_W >= 768;
@@ -115,6 +198,7 @@ export default function App() {
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regStoreType, setRegStoreType] = useState<StoreType>('minimarket');
+  const [isStoreTypeModalVisible, setIsStoreTypeModalVisible] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
 
   // Products State
@@ -580,13 +664,13 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor="#07090e" />
+        <StatusBar barStyle="light-content" backgroundColor="#09090b" />
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.loginContent}>
             <View style={styles.loginHeader}>
               <Image source={require('./assets/icon.png')} style={{ width: 80, height: 80, alignSelf: 'center', marginBottom: 10, borderRadius: 20 }} />
               <View style={styles.logoBadge}>
-                <MaterialCommunityIcons name="cash-register" size={36} color="#00f2fe" />
+                <MaterialCommunityIcons name="cash-register" size={36} color="#3b82f6" />
               </View>
               <Text style={styles.appTitle}>SiKasir Mobile</Text>
               <Text style={styles.appSubtitle}>Supermarket & Warung POS Native</Text>
@@ -618,7 +702,7 @@ export default function App() {
                   style={[styles.roleSelectBtn, loginRole === 'kasir' && styles.roleSelectBtnActive]}
                   onPress={() => setLoginRole('kasir')}
                 >
-                  <Ionicons name="cart-outline" size={16} color={loginRole === 'kasir' ? '#00f2fe' : '#94a3b8'} />
+                  <Ionicons name="cart-outline" size={16} color={loginRole === 'kasir' ? '#3b82f6' : '#94a3b8'} />
                   <Text style={[styles.roleSelectText, loginRole === 'kasir' && styles.roleSelectTextActive]}>
                     STAF KASIR
                   </Text>
@@ -628,7 +712,7 @@ export default function App() {
                   style={[styles.roleSelectBtn, loginRole === 'admin' && styles.roleSelectBtnActive]}
                   onPress={() => setLoginRole('admin')}
                 >
-                  <Ionicons name="shield-checkmark-outline" size={16} color={loginRole === 'admin' ? '#00f2fe' : '#94a3b8'} />
+                  <Ionicons name="shield-checkmark-outline" size={16} color={loginRole === 'admin' ? '#3b82f6' : '#94a3b8'} />
                   <Text style={[styles.roleSelectText, loginRole === 'admin' && styles.roleSelectTextActive]}>
                     ADMIN TOKO
                   </Text>
@@ -678,7 +762,7 @@ export default function App() {
                 style={styles.secondaryRegBtn}
                 onPress={() => setRegisterModalVisible(true)}
               >
-                <Ionicons name="storefront-outline" size={16} color="#00f2fe" style={{ marginRight: 6 }} />
+                <Ionicons name="storefront-outline" size={16} color="#3b82f6" style={{ marginRight: 6 }} />
                 <Text style={styles.secondaryRegBtnText}>+ DAFTAR TOKO / MINIMARKET BARU</Text>
               </TouchableOpacity>
             </View>
@@ -691,7 +775,7 @@ export default function App() {
             <View style={styles.modalCard}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Image source={require('./assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />
+                  <Image source={require('./assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 16 }} />
                   <Text style={styles.modalTitle}>Daftarkan Toko Baru</Text>
                 </View>
                 <TouchableOpacity onPress={() => setRegisterModalVisible(false)}>
@@ -706,69 +790,16 @@ export default function App() {
               <TextInput style={styles.modalInput} placeholder="Contoh: Apotek Kimia Medika" placeholderTextColor="#64748b" value={regStoreName} onChangeText={setRegStoreName} />
 
               <Text style={[styles.label, { marginTop: 10 }]}>Jenis / Tipe Usaha Toko *</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }}>
-                {[
-                  { type: 'minimarket', label: '🛒 Minimarket' },
-                  { type: 'supermarket', label: '🛒 Supermarket' },
-                  { type: 'warung_kelontong', label: '🏪 Warung Kelontong' },
-                  { type: 'sayur_buah', label: '🥬 Sayur, Buah & Daging' },
-                  { type: 'toko_plastik', label: '🛍️ Toko Plastik & Kemasan' },
-                  { type: 'bahan_kue', label: '🧁 Toko Bahan Kue' },
-                  
-                  { type: 'cafe', label: '☕ Cafe & Kopi' },
-                  { type: 'resto', label: '🍽️ Restoran & Rumah Makan' },
-                  { type: 'warteg', label: '🍛 Warteg & Nasi Bungkus' },
-                  { type: 'street_food', label: '🍢 Kaki Lima & Gerobak' },
-                  { type: 'bakery', label: '🍞 Bakery & Pastry' },
-
-                  { type: 'apotek', label: '💊 Apotek & Obat' },
-                  { type: 'klinik', label: '⚕️ Klinik Kesehatan' },
-                  { type: 'salon', label: '💇‍♀️ Salon Kecantikan' },
-                  { type: 'barbershop', label: '✂️ Barbershop' },
-                  { type: 'optik', label: '👓 Optik Kacamata' },
-                  { type: 'skincare_kosmetik', label: '💄 Skincare & Kosmetik' },
-
-                  { type: 'fashion', label: '👕 Pakaian & Distro' },
-                  { type: 'sepatu_sandal', label: '👟 Sepatu & Sandal' },
-                  { type: 'toko_emas', label: '💍 Toko Emas & Perhiasan' },
-                  { type: 'toko_jam', label: '⌚ Toko Jam' },
-
-                  { type: 'counter', label: '📱 Counter HP & Pulsa' },
-                  { type: 'toko_komputer', label: '💻 Toko Komputer & Laptop' },
-                  { type: 'elektronik_rumah_tangga', label: '📺 Elektronik Rumah Tangga' },
-
-                  { type: 'bengkel', label: '🏍️ Bengkel Motor / Mobil' },
-                  { type: 'cuci_mobil', label: '🚗 Cuci Mobil & Motor' },
-                  { type: 'variasi_aksesoris_kendaraan', label: '🏎️ Aksesoris Kendaraan' },
-
-                  { type: 'laundry', label: '🧺 Laundry & Cuci Baju' },
-                  { type: 'jasa_servis', label: '🔧 Jasa Servis (AC, TV, dll)' },
-                  { type: 'percetakan', label: '🖨️ Percetakan & Fotokopi' },
-                  { type: 'studio_foto', label: '📸 Studio Foto' },
-
-                  { type: 'toko_buku', label: '📚 Toko Buku & Alat Tulis' },
-                  { type: 'toko_mainan', label: '🧸 Toko Mainan' },
-                  { type: 'petshop', label: '🐾 Petshop & Dokter Hewan' },
-                  { type: 'toko_olahraga', label: '⚽ Toko Peralatan Olahraga' },
-                  { type: 'alat_musik', label: '🎸 Toko Alat Musik' },
-                  { type: 'florist', label: '💐 Toko Bunga (Florist)' },
-
-                  { type: 'bangunan', label: '🛠️ Toko Bangunan & Material' },
-                  { type: 'distributor', label: '📦 Distributor & Grosir' },
-
-                  { type: 'umum', label: '🏬 Toko Umum / Lainnya' },
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.type}
-                    style={[styles.chip, regStoreType === item.type && styles.chipActive]}
-                    onPress={() => setRegStoreType(item.type as StoreType)}
-                  >
-                    <Text style={[styles.chipText, regStoreType === item.type && styles.chipTextActive]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <TouchableOpacity
+                style={[styles.modalInput, { justifyContent: 'center' }]}
+                onPress={() => setIsStoreTypeModalVisible(true)}
+              >
+                <Text style={{ color: regStoreType ? '#fff' : '#64748b' }}>
+                  {regStoreType 
+                    ? STORE_CATEGORIES.flatMap(c => c.data).find(d => d.type === regStoreType)?.label 
+                    : 'Pilih Tipe Toko'}
+                </Text>
+              </TouchableOpacity>
 
               <Text style={[styles.label, { marginTop: 10 }]}>Nama Pemilik / Admin *</Text>
               <TextInput style={styles.modalInput} placeholder="Budi Santoso" placeholderTextColor="#64748b" value={regOwnerName} onChangeText={setRegOwnerName} />
@@ -790,6 +821,45 @@ export default function App() {
             </View>
           </View>
         </Modal>
+
+        {/* Modal Pilih Tipe Toko */}
+        <Modal visible={isStoreTypeModalVisible} animationType="slide" transparent>
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, { width: SCREEN_W * 0.9, height: SCREEN_H * 0.8, backgroundColor: '#18181b' }]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={styles.modalTitle}>Pilih Kategori Usaha</Text>
+                <TouchableOpacity onPress={() => setIsStoreTypeModalVisible(false)}>
+                  <Ionicons name="close-circle" size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {STORE_CATEGORIES.map((cat, idx) => (
+                  <View key={idx} style={{ marginBottom: 20 }}>
+                    <Text style={{ color: '#3b82f6', fontSize: 14, fontWeight: '700', marginBottom: 10 }}>{cat.title}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      {cat.data.map(item => (
+                        <TouchableOpacity
+                          key={item.type}
+                          style={[styles.chip, regStoreType === item.type && styles.chipActive]}
+                          onPress={() => {
+                            setRegStoreType(item.type as StoreType);
+                            setIsStoreTypeModalVisible(false);
+                          }}
+                        >
+                          <Text style={[styles.chipText, regStoreType === item.type && styles.chipTextActive]}>
+                            {item.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
       </SafeAreaView>
     );
   }
@@ -846,7 +916,7 @@ export default function App() {
   // 2. MAIN APP INTERFACE WITH ROLE BADGES & ROLE ACCESS
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#07090e" />
+      <StatusBar barStyle="light-content" backgroundColor="#09090b" />
 
       {/* App Top Bar with Role Badge */}
       <View style={styles.topBar}>
@@ -890,8 +960,8 @@ export default function App() {
               <View style={{ flexDirection: isTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
                 {kdsOrders.map((order) => (
                   <View key={order.id} style={{ 
-                    backgroundColor: '#0f172a', 
-                    borderRadius: 12, 
+                    backgroundColor: '#121212', 
+                    borderRadius: 16, 
                     borderWidth: 1, 
                     borderColor: order.status === 'READY' ? '#10b981' : (order.status === 'PREPARING' ? '#f59e0b' : '#334155'), 
                     padding: 16,
@@ -899,7 +969,7 @@ export default function App() {
                   }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                       <Text style={{ color: '#fff', fontWeight: '800' }}>#{order.id.slice(-4)}</Text>
-                      <Text style={{ color: order.status === 'READY' ? '#10b981' : (order.status === 'PREPARING' ? '#f59e0b' : '#00f2fe'), fontWeight: '700', fontSize: 12 }}>
+                      <Text style={{ color: order.status === 'READY' ? '#10b981' : (order.status === 'PREPARING' ? '#f59e0b' : '#3b82f6'), fontWeight: '700', fontSize: 12 }}>
                         {order.status}
                       </Text>
                     </View>
@@ -912,7 +982,7 @@ export default function App() {
                     </View>
                     {order.status === 'PENDING' && (
                       <TouchableOpacity 
-                        style={{ backgroundColor: '#f59e0b', padding: 10, borderRadius: 8, alignItems: 'center' }}
+                        style={{ backgroundColor: '#f59e0b', padding: 10, borderRadius: 16, alignItems: 'center' }}
                         onPress={() => setKdsOrders(kdsOrders.map(o => o.id === order.id ? { ...o, status: 'PREPARING' } : o))}
                       >
                         <Text style={{ color: '#000', fontWeight: '800' }}>MASAK SEKARANG</Text>
@@ -920,7 +990,7 @@ export default function App() {
                     )}
                     {order.status === 'PREPARING' && (
                       <TouchableOpacity 
-                        style={{ backgroundColor: '#10b981', padding: 10, borderRadius: 8, alignItems: 'center' }}
+                        style={{ backgroundColor: '#10b981', padding: 10, borderRadius: 16, alignItems: 'center' }}
                         onPress={() => setKdsOrders(kdsOrders.map(o => o.id === order.id ? { ...o, status: 'READY' } : o))}
                       >
                         <Text style={{ color: '#fff', fontWeight: '800' }}>SELESAI & SIAP</Text>
@@ -928,7 +998,7 @@ export default function App() {
                     )}
                     {order.status === 'READY' && (
                       <TouchableOpacity 
-                        style={{ backgroundColor: '#334155', padding: 10, borderRadius: 8, alignItems: 'center' }}
+                        style={{ backgroundColor: '#334155', padding: 10, borderRadius: 16, alignItems: 'center' }}
                         onPress={() => setKdsOrders(kdsOrders.filter(o => o.id !== order.id))}
                       >
                         <Text style={{ color: '#fff', fontWeight: '800' }}>ARSIPKAN</Text>
@@ -958,24 +1028,24 @@ export default function App() {
               <Text style={styles.screenHeader}>Alat Admin Khusus</Text>
               
               {/* Generator Barcode */}
-              <View style={{ backgroundColor: '#0f172a', padding: 16, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#1e293b' }}>
+              <View style={{ backgroundColor: '#121212', padding: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: '#1e1e1e' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <Ionicons name="barcode-outline" size={24} color="#00f2fe" />
+                  <Ionicons name="barcode-outline" size={24} color="#3b82f6" />
                   <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>Generator Barcode Internal</Text>
                 </View>
                 <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
                   Gunakan alat ini untuk membuat barcode khusus untuk barang yang tidak memiliki barcode bawaan pabrik.
                 </Text>
                 <TouchableOpacity 
-                  style={{ backgroundColor: '#1e293b', paddingVertical: 12, borderRadius: 8, alignItems: 'center' }}
+                  style={{ backgroundColor: '#1e1e1e', paddingVertical: 14, borderRadius: 16, alignItems: 'center' }}
                   onPress={() => Alert.alert('Barcode Internal Dibuat!', `Kode: INT-${Math.floor(100000 + Math.random() * 900000)}\n\nSilahkan tempel barcode ini ke produk.`)}
                 >
-                  <Text style={{ color: '#00f2fe', fontWeight: '800' }}>BUAT BARCODE BARU</Text>
+                  <Text style={{ color: '#3b82f6', fontWeight: '800' }}>BUAT BARCODE BARU</Text>
                 </TouchableOpacity>
               </View>
 
               {/* Mutasi Cabang */}
-              <View style={{ backgroundColor: '#0f172a', padding: 16, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#1e293b' }}>
+              <View style={{ backgroundColor: '#121212', padding: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: '#1e1e1e' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                   <Ionicons name="swap-horizontal-outline" size={24} color="#f59e0b" />
                   <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>Mutasi Stok Antar Cabang</Text>
@@ -984,7 +1054,7 @@ export default function App() {
                   Fitur untuk memindahkan stok berlebih ke cabang lain yang kekurangan stok (hanya untuk bisnis Multi-Outlet).
                 </Text>
                 <TouchableOpacity 
-                  style={{ backgroundColor: '#1e293b', paddingVertical: 12, borderRadius: 8, alignItems: 'center' }}
+                  style={{ backgroundColor: '#1e1e1e', paddingVertical: 14, borderRadius: 16, alignItems: 'center' }}
                   onPress={() => setMutasiModalVisible(true)}
                 >
                   <Text style={{ color: '#f59e0b', fontWeight: '800' }}>MULAI MUTASI STOK</Text>
@@ -1011,7 +1081,7 @@ export default function App() {
               <Text style={styles.screenHeader}>Ringkasan & Laporan</Text>
               
               {currentTenant?.company_id && (
-                <View style={{ flexDirection: 'row', backgroundColor: '#1e293b', borderRadius: 8, padding: 4, marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', backgroundColor: '#1e1e1e', borderRadius: 16, padding: 4, marginBottom: 16 }}>
                   <TouchableOpacity
                     style={{ flex: 1, paddingVertical: 8, backgroundColor: dashboardView === 'tenant' ? '#334155' : 'transparent', borderRadius: 6, alignItems: 'center' }}
                     onPress={() => setDashboardView('tenant')}
@@ -1036,7 +1106,7 @@ export default function App() {
                   <>
                     <View style={styles.statsGrid}>
                       <View style={styles.statCard}>
-                        <Ionicons name="cube-outline" size={22} color="#00f2fe" />
+                        <Ionicons name="cube-outline" size={22} color="#3b82f6" />
                         <Text style={styles.statVal}>{dashboardProducts.length}</Text>
                         <Text style={styles.statSub}>Jenis Barang</Text>
                       </View>
@@ -1143,7 +1213,7 @@ export default function App() {
           {/* Product Grid — show empty state if no products */}
           {products.length === 0 ? (
             <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="package-variant" size={72} color="#1e293b" />
+              <MaterialCommunityIcons name="package-variant" size={72} color="#1e1e1e" />
               <Text style={styles.emptyStateTitle}>Katalog Barang Kosong</Text>
               <Text style={styles.emptyStateDesc}>
                 Toko ini belum memiliki produk.{isAdmin ? '\nTekan tab Stok Barang → Tambah Barang untuk mulai mengisi.' : '\nHubungi Admin Toko untuk menambah produk.'}
@@ -1182,18 +1252,18 @@ export default function App() {
           </View>
 
           {/* Cart & Checkout Panel */}
-          <View style={[styles.cartPanel, isTablet && { flex: 1, height: '100%', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 1, borderLeftColor: '#1e293b' }]}>
+          <View style={[styles.cartPanel, isTablet && { flex: 1, height: '100%', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 1, borderLeftColor: '#1e1e1e' }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8' }}>
                 Keranjang POS ({cart.length} item)
               </Text>
               {cart.length > 0 && !['bengkel', 'cuci_mobil', 'jasa_servis', 'laundry', 'salon', 'barbershop', 'studio_foto', 'percetakan'].includes(storeType) && (
-                <TouchableOpacity onPress={holdBill} style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                <TouchableOpacity onPress={holdBill} style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
                   <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Hold Bill</Text>
                 </TouchableOpacity>
               )}
               {cart.length === 0 && heldBills.length > 0 && (
-                <TouchableOpacity onPress={() => loadBill(0)} style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                <TouchableOpacity onPress={() => loadBill(0)} style={{ backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
                   <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Load Bill ({heldBills.length})</Text>
                 </TouchableOpacity>
               )}
@@ -1207,7 +1277,7 @@ export default function App() {
                       {item.product.name}
                     </Text>
                     {item.selected_variants && item.selected_variants.length > 0 && (
-                      <Text style={{ color: '#00f2fe', fontSize: 10, marginTop: 2 }}>
+                      <Text style={{ color: '#3b82f6', fontSize: 10, marginTop: 2 }}>
                         {item.selected_variants.join(', ')}
                       </Text>
                     )}
@@ -1221,7 +1291,7 @@ export default function App() {
                       <Text style={{ color: '#fff', fontWeight: '800' }}>+</Text>
                     </TouchableOpacity>
                   </View>
-                  <Text style={{ color: '#00f2fe', fontWeight: '700', fontSize: 12, marginLeft: 12 }}>
+                  <Text style={{ color: '#3b82f6', fontWeight: '700', fontSize: 12, marginLeft: 12 }}>
                     Rp{item.subtotal.toLocaleString('id-ID')}
                   </Text>
                 </View>
@@ -1231,7 +1301,7 @@ export default function App() {
             <View style={styles.checkoutBar}>
               <View>
                 <Text style={{ fontSize: 10, color: '#94a3b8' }}>Total Tagihan:</Text>
-                <Text style={{ fontSize: 18, fontWeight: '900', color: '#00f2fe' }}>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: '#3b82f6' }}>
                   Rp{totalAmount.toLocaleString('id-ID')}
                 </Text>
               </View>
@@ -1260,7 +1330,7 @@ export default function App() {
 
       {/* TAB CONTENT 3: PRODUCTS INVENTORY */}
       {activeTab === 'products' && (
-        <View style={{ flex: 1, padding: 12 }}>
+        <View style={{ flex: 1, padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <Text style={styles.screenHeader}>Daftar Stok Barang ({products.length})</Text>
             {isAdmin && (
@@ -1307,7 +1377,7 @@ export default function App() {
                         setRestockModalVisible(true);
                       }}
                     >
-                      <Text style={{ color: '#00f2fe', fontSize: 10, fontWeight: '700' }}>Restock</Text>
+                      <Text style={{ color: '#3b82f6', fontSize: 10, fontWeight: '700' }}>Restock</Text>
                     </TouchableOpacity>
                   ) : (
                     <Text style={{ color: '#64748b', fontSize: 9 }}>View Only</Text>
@@ -1321,7 +1391,7 @@ export default function App() {
 
       {/* TAB CONTENT 4: USERS MANAGEMENT (ADMIN ONLY) */}
       {activeTab === 'users' && (
-        <View style={{ flex: 1, padding: 12 }}>
+        <View style={{ flex: 1, padding: 16 }}>
           {!isAdmin ? (
             <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="lock-closed" size={48} color="#ef4444" />
@@ -1363,7 +1433,7 @@ export default function App() {
       )}
                 {/* TAB CONTENT 5: RIWAYAT TRANSAKSI PENJUALAN */}
       {activeTab === 'history' && (
-        <View style={{ flex: 1, padding: 12 }}>
+        <View style={{ flex: 1, padding: 16 }}>
           <Text style={styles.screenHeader}>Riwayat Penjualan ({transactions.length})</Text>
           <FlatList
             data={transactions}
@@ -1372,7 +1442,7 @@ export default function App() {
               <View style={styles.inventoryRow}>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="receipt-outline" size={16} color="#00f2fe" />
+                    <Ionicons name="receipt-outline" size={16} color="#3b82f6" />
                     <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.id}</Text>
                   </View>
                   <Text style={{ color: '#64748b', fontSize: 10, marginTop: 2 }}>Tanggal: {item.created_at}</Text>
@@ -1383,7 +1453,7 @@ export default function App() {
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ color: '#00f2fe', fontWeight: '900', fontSize: 14 }}>
+                  <Text style={{ color: '#3b82f6', fontWeight: '900', fontSize: 14 }}>
                     Rp{item.total_amount.toLocaleString('id-ID')}
                   </Text>
                   {item.split_bill_ways && item.split_bill_ways > 1 && (
@@ -1396,7 +1466,7 @@ export default function App() {
                       <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 2, fontWeight: '700' }}>BELUM LUNAS (KASBON)</Text>
                       {item.customer_phone && (
                         <TouchableOpacity
-                          style={{ marginTop: 4, backgroundColor: '#25D366', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}
+                          style={{ marginTop: 4, backgroundColor: '#25D366', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
                           onPress={() => {
                             const message = `Halo ${item.customer_name || 'Kak'},\nIni dari SiKasir. Total tagihan Kasbon Anda adalah Rp${item.total_amount.toLocaleString('id-ID')}. Mohon untuk segera diselesaikan. Terima kasih.`;
                             Linking.openURL(`whatsapp://send?phone=${item.customer_phone}&text=${encodeURIComponent(message)}`).catch(() => {
@@ -1419,7 +1489,7 @@ export default function App() {
                       ) : (
                         !['cafe', 'resto', 'warteg', 'street_food', 'bakery'].includes(storeType) && isAdmin && (
                           <TouchableOpacity
-                            style={{ marginTop: 4, backgroundColor: '#334155', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+                            style={{ marginTop: 4, backgroundColor: '#334155', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}
                             onPress={() => handleRefund(item.id)}
                           >
                             <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Retur Barang</Text>
@@ -1437,7 +1507,7 @@ export default function App() {
 
       {/* TAB CONTENT 6: LOG BARANG MASUK (RESTOCK SUPPLIER) */}
       {activeTab === 'incoming' && (
-        <View style={{ flex: 1, padding: 12 }}>
+        <View style={{ flex: 1, padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <Text style={styles.screenHeader}>Log Penerimaan Barang Masuk ({incomingLogs.length})</Text>
             {isAdmin && (
@@ -1454,7 +1524,7 @@ export default function App() {
               <View style={styles.inventoryRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.item_name}</Text>
-                  <Text style={{ color: '#00f2fe', fontSize: 11, marginTop: 2 }}>Supplier: {item.supplier_name}</Text>
+                  <Text style={{ color: '#3b82f6', fontSize: 11, marginTop: 2 }}>Supplier: {item.supplier_name}</Text>
                   <Text style={{ color: '#64748b', fontSize: 10, marginTop: 2 }}>Tgl: {item.created_at} • Catatan: {item.notes || '-'}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
@@ -1469,7 +1539,7 @@ export default function App() {
 
       {/* TAB CONTENT 7: LOG AUDIT (ADMIN ONLY) */}
       {activeTab === 'audit' && (
-        <View style={{ flex: 1, padding: 12 }}>
+        <View style={{ flex: 1, padding: 16 }}>
           {!isAdmin ? (
             <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="lock-closed" size={48} color="#ef4444" />
@@ -1486,7 +1556,7 @@ export default function App() {
                   <View style={styles.inventoryRow}>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ color: '#00f2fe', fontSize: 11, fontWeight: '800' }}>[{item.action}]</Text>
+                        <Text style={{ color: '#3b82f6', fontSize: 11, fontWeight: '800' }}>[{item.action}]</Text>
                         <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{item.username}</Text>
                       </View>
                       <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>{item.details}</Text>
@@ -1527,7 +1597,7 @@ export default function App() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ color: '#94a3b8', fontSize: 12 }}>Percobaan Akses Diblokir (24j):</Text>
-                <Text style={{ color: '#00f2fe', fontWeight: '900', fontSize: 12 }}>{cyberStatus?.blocked_attempts_24h || 14} Serangan</Text>
+                <Text style={{ color: '#3b82f6', fontWeight: '900', fontSize: 12 }}>{cyberStatus?.blocked_attempts_24h || 14} Serangan</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ color: '#94a3b8', fontSize: 12 }}>Tingkat Ancaman (Threat Level):</Text>
@@ -1547,7 +1617,7 @@ export default function App() {
             onPress={() => setActiveTab('kasir')}
             activeOpacity={0.7}
           >
-            <MaterialCommunityIcons name="cash-register" size={22} color={activeTab === 'kasir' ? '#00f2fe' : '#64748b'} />
+            <MaterialCommunityIcons name="cash-register" size={22} color={activeTab === 'kasir' ? '#3b82f6' : '#64748b'} />
             <Text style={[styles.tabLabel, activeTab === 'kasir' && styles.tabLabelActive]}>Kasir</Text>
           </TouchableOpacity>
 
@@ -1557,7 +1627,7 @@ export default function App() {
             onPress={() => setActiveTab('history')}
             activeOpacity={0.7}
           >
-            <Ionicons name="receipt-outline" size={20} color={activeTab === 'history' ? '#00f2fe' : '#64748b'} />
+            <Ionicons name="receipt-outline" size={20} color={activeTab === 'history' ? '#3b82f6' : '#64748b'} />
             <Text style={[styles.tabLabel, activeTab === 'history' && styles.tabLabelActive]}>Riwayat</Text>
           </TouchableOpacity>
 
@@ -1567,7 +1637,7 @@ export default function App() {
             onPress={() => setActiveTab('products')}
             activeOpacity={0.7}
           >
-            <Ionicons name="cube-outline" size={20} color={activeTab === 'products' ? '#00f2fe' : '#64748b'} />
+            <Ionicons name="cube-outline" size={20} color={activeTab === 'products' ? '#3b82f6' : '#64748b'} />
             <Text style={[styles.tabLabel, activeTab === 'products' && styles.tabLabelActive]}>Stok</Text>
           </TouchableOpacity>
 
@@ -1577,7 +1647,7 @@ export default function App() {
             onPress={() => setActiveTab('incoming')}
             activeOpacity={0.7}
           >
-            <Ionicons name="log-in-outline" size={20} color={activeTab === 'incoming' ? '#00f2fe' : '#64748b'} />
+            <Ionicons name="log-in-outline" size={20} color={activeTab === 'incoming' ? '#3b82f6' : '#64748b'} />
             <Text style={[styles.tabLabel, activeTab === 'incoming' && styles.tabLabelActive]}>Masuk</Text>
           </TouchableOpacity>
 
@@ -1590,7 +1660,7 @@ export default function App() {
               <MaterialCommunityIcons
                 name="chef-hat"
                 size={20}
-                color={activeTab === 'kds' ? '#00f2fe' : '#64748b'}
+                color={activeTab === 'kds' ? '#3b82f6' : '#64748b'}
               />
               <Text style={[styles.tabLabel, activeTab === 'kds' && styles.tabLabelActive]}>Dapur KDS</Text>
             </TouchableOpacity>
@@ -1604,7 +1674,7 @@ export default function App() {
                 onPress={() => setActiveTab('dashboard')}
                 activeOpacity={0.7}
               >
-                <Ionicons name="bar-chart-outline" size={20} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
+                <Ionicons name="bar-chart-outline" size={20} color={activeTab === 'dashboard' ? '#3b82f6' : '#64748b'} />
                 <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.tabLabelActive]}>Laporan</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1612,7 +1682,7 @@ export default function App() {
                 onPress={() => setActiveTab('adminTools')}
                 activeOpacity={0.7}
               >
-                <Ionicons name="settings-outline" size={20} color={activeTab === 'adminTools' ? '#00f2fe' : '#64748b'} />
+                <Ionicons name="settings-outline" size={20} color={activeTab === 'adminTools' ? '#3b82f6' : '#64748b'} />
                 <Text style={[styles.tabLabel, activeTab === 'adminTools' && styles.tabLabelActive]}>Alat Admin</Text>
               </TouchableOpacity>
             </>
@@ -1625,7 +1695,7 @@ export default function App() {
               onPress={() => setActiveTab('users')}
               activeOpacity={0.7}
             >
-              <Ionicons name="people-outline" size={20} color={activeTab === 'users' ? '#00f2fe' : '#64748b'} />
+              <Ionicons name="people-outline" size={20} color={activeTab === 'users' ? '#3b82f6' : '#64748b'} />
               <Text style={[styles.tabLabel, activeTab === 'users' && styles.tabLabelActive]}>Staf</Text>
             </TouchableOpacity>
           )}
@@ -1637,7 +1707,7 @@ export default function App() {
               onPress={() => setActiveTab('audit')}
               activeOpacity={0.7}
             >
-              <Ionicons name="document-text-outline" size={20} color={activeTab === 'audit' ? '#00f2fe' : '#64748b'} />
+              <Ionicons name="document-text-outline" size={20} color={activeTab === 'audit' ? '#3b82f6' : '#64748b'} />
               <Text style={[styles.tabLabel, activeTab === 'audit' && styles.tabLabelActive]}>Audit</Text>
             </TouchableOpacity>
           )}
@@ -1649,7 +1719,7 @@ export default function App() {
               onPress={() => setActiveTab('cybersecurity')}
               activeOpacity={0.7}
             >
-              <Ionicons name="shield-outline" size={20} color={activeTab === 'cybersecurity' ? '#00f2fe' : '#64748b'} />
+              <Ionicons name="shield-outline" size={20} color={activeTab === 'cybersecurity' ? '#3b82f6' : '#64748b'} />
               <Text style={[styles.tabLabel, activeTab === 'cybersecurity' && styles.tabLabelActive]}>Keamanan</Text>
             </TouchableOpacity>
           )}
@@ -1727,10 +1797,10 @@ export default function App() {
                   key={t.id}
                   style={{
                     padding: 10,
-                    backgroundColor: mutasiDestTenantId === t.id ? 'rgba(245, 158, 11, 0.1)' : '#1e293b',
+                    backgroundColor: mutasiDestTenantId === t.id ? 'rgba(245, 158, 11, 0.1)' : '#1e1e1e',
                     borderWidth: 1,
                     borderColor: mutasiDestTenantId === t.id ? '#f59e0b' : '#334155',
-                    borderRadius: 8,
+                    borderRadius: 16,
                     marginBottom: 6
                   }}
                   onPress={() => setMutasiDestTenantId(t.id)}
@@ -1749,16 +1819,16 @@ export default function App() {
                   key={p.id}
                   style={{
                     padding: 10,
-                    backgroundColor: mutasiProductId === p.id ? 'rgba(0, 242, 254, 0.1)' : '#1e293b',
+                    backgroundColor: mutasiProductId === p.id ? 'rgba(59, 130, 246, 0.1)' : '#1e1e1e',
                     borderWidth: 1,
-                    borderColor: mutasiProductId === p.id ? '#00f2fe' : '#334155',
-                    borderRadius: 8,
+                    borderColor: mutasiProductId === p.id ? '#3b82f6' : '#334155',
+                    borderRadius: 16,
                     marginBottom: 6
                   }}
                   onPress={() => setMutasiProductId(p.id)}
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ color: mutasiProductId === p.id ? '#00f2fe' : '#fff', fontWeight: '700' }}>{p.name}</Text>
+                    <Text style={{ color: mutasiProductId === p.id ? '#3b82f6' : '#fff', fontWeight: '700' }}>{p.name}</Text>
                     <Text style={{ color: '#94a3b8' }}>Stok: {p.stock}</Text>
                   </View>
                 </TouchableOpacity>
@@ -1838,7 +1908,7 @@ export default function App() {
                     </TouchableOpacity>
                   </View>
                   {splitBillWays > 1 && (
-                    <Text style={{ color: '#00f2fe', fontSize: 12, marginTop: 6, fontWeight: '700' }}>
+                    <Text style={{ color: '#3b82f6', fontSize: 12, marginTop: 6, fontWeight: '700' }}>
                       Per Orang: Rp {(totalAmount / splitBillWays).toLocaleString('id-ID')}
                     </Text>
                   )}
@@ -1884,17 +1954,17 @@ export default function App() {
                     <TouchableOpacity
                       key={cust.id}
                       style={{
-                        padding: 12,
-                        backgroundColor: selectedCustomerId === cust.id ? 'rgba(0, 242, 254, 0.1)' : '#1e293b',
+                        padding: 16,
+                        backgroundColor: selectedCustomerId === cust.id ? 'rgba(59, 130, 246, 0.1)' : '#1e1e1e',
                         borderWidth: 1,
-                        borderColor: selectedCustomerId === cust.id ? '#00f2fe' : '#334155',
-                        borderRadius: 8,
+                        borderColor: selectedCustomerId === cust.id ? '#3b82f6' : '#334155',
+                        borderRadius: 16,
                         marginBottom: 8
                       }}
                       onPress={() => setSelectedCustomerId(cust.id)}
                     >
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text style={{ color: selectedCustomerId === cust.id ? '#00f2fe' : '#fff', fontWeight: '700' }}>{cust.name}</Text>
+                        <Text style={{ color: selectedCustomerId === cust.id ? '#3b82f6' : '#fff', fontWeight: '700' }}>{cust.name}</Text>
                         <Text style={{ color: '#94a3b8', fontSize: 12 }}>{cust.phone}</Text>
                       </View>
                       <Text style={{ color: cust.kasbon_balance + totalAmount > cust.kasbon_limit ? '#ef4444' : '#10b981', fontSize: 11, marginTop: 4 }}>
@@ -1984,14 +2054,14 @@ export default function App() {
                         style={{
                           paddingHorizontal: 12,
                           paddingVertical: 8,
-                          borderRadius: 8,
+                          borderRadius: 16,
                           borderWidth: 1,
-                          borderColor: isSelected ? '#00f2fe' : '#334155',
-                          backgroundColor: isSelected ? 'rgba(0, 242, 254, 0.1)' : '#07090e',
+                          borderColor: isSelected ? '#3b82f6' : '#334155',
+                          backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : '#09090b',
                         }}
                         onPress={() => setSelectedVariants(prev => ({ ...prev, [group.group_name]: opt }))}
                       >
-                        <Text style={{ color: isSelected ? '#00f2fe' : '#94a3b8', fontSize: 13, fontWeight: '700' }}>
+                        <Text style={{ color: isSelected ? '#3b82f6' : '#94a3b8', fontSize: 13, fontWeight: '700' }}>
                           {opt.name} {opt.price_diff > 0 ? `(+Rp${opt.price_diff.toLocaleString('id-ID')})` : ''}
                         </Text>
                       </TouchableOpacity>
@@ -2113,15 +2183,15 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#07090e',
+    backgroundColor: '#09090b',
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#1e1e1e',
   },
   topBarTitle: {
     fontSize: 16,
@@ -2138,9 +2208,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   roleBadgeAdmin: {
-    backgroundColor: '#00f2fe20',
+    backgroundColor: '#3b82f620',
     borderWidth: 1,
-    borderColor: '#00f2fe',
+    borderColor: '#3b82f6',
   },
   roleBadgeKasir: {
     backgroundColor: '#10b98120',
@@ -2152,7 +2222,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   roleBadgeTextAdmin: {
-    color: '#00f2fe',
+    color: '#3b82f6',
   },
   roleBadgeTextKasir: {
     color: '#10b981',
@@ -2160,13 +2230,13 @@ const styles = StyleSheet.create({
   logoutBtn: {
     padding: 6,
     backgroundColor: '#ef444415',
-    borderRadius: 8,
+    borderRadius: 16,
   },
   aiPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#00f2fe',
+    backgroundColor: '#3b82f6',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
@@ -2174,7 +2244,7 @@ const styles = StyleSheet.create({
   aiPillText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#07090e',
+    color: '#09090b',
   },
   loginContent: {
     flexGrow: 1,
@@ -2189,9 +2259,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#121212',
     borderWidth: 1,
-    borderColor: '#00f2fe33',
+    borderColor: '#3b82f633',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -2206,11 +2276,11 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
   },
   card: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#121212',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1e1e1e',
   },
   cardTitle: {
     fontSize: 16,
@@ -2228,20 +2298,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1e1e1e',
     marginRight: 6,
   },
   chipActive: {
-    backgroundColor: '#00f2fe20',
+    backgroundColor: '#3b82f620',
     borderWidth: 1,
-    borderColor: '#00f2fe',
+    borderColor: '#3b82f6',
   },
   chipText: {
     fontSize: 11,
     color: '#94a3b8',
   },
   chipTextActive: {
-    color: '#00f2fe',
+    color: '#3b82f6',
     fontWeight: '700',
   },
   roleSelectBtn: {
@@ -2252,13 +2322,13 @@ const styles = StyleSheet.create({
     gap: 6,
     height: 38,
     borderRadius: 10,
-    backgroundColor: '#07090e',
+    backgroundColor: '#09090b',
     borderWidth: 1,
     borderColor: '#334155',
   },
   roleSelectBtnActive: {
-    backgroundColor: '#00f2fe15',
-    borderColor: '#00f2fe',
+    backgroundColor: '#3b82f615',
+    borderColor: '#3b82f6',
   },
   roleSelectText: {
     fontSize: 11,
@@ -2266,17 +2336,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   roleSelectTextActive: {
-    color: '#00f2fe',
+    color: '#3b82f6',
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#07090e',
-    borderRadius: 12,
+    backgroundColor: '#09090b',
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#334155',
     paddingHorizontal: 12,
-    height: 44,
+    height: 48,
     marginBottom: 12,
   },
   input: {
@@ -2285,15 +2355,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   primaryBtn: {
-    backgroundColor: '#00f2fe',
-    borderRadius: 12,
-    height: 44,
+    backgroundColor: '#3b82f6',
+    borderRadius: 16,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
   },
   primaryBtnText: {
-    color: '#07090e',
+    color: '#09090b',
     fontSize: 12,
     fontWeight: '900',
   },
@@ -2302,14 +2372,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#00f2fe66',
-    borderRadius: 12,
-    height: 44,
+    borderColor: '#3b82f666',
+    borderRadius: 16,
+    height: 48,
     marginTop: 12,
-    backgroundColor: '#00f2fe10',
+    backgroundColor: '#3b82f610',
   },
   secondaryRegBtnText: {
-    color: '#00f2fe',
+    color: '#3b82f6',
     fontSize: 11,
     fontWeight: '800',
   },
@@ -2325,11 +2395,11 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#121212',
     borderRadius: 14,
-    padding: 12,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1e1e1e',
   },
   statVal: {
     fontSize: 18,
@@ -2346,22 +2416,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#1e1e1e',
   },
   gridProdCard: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#121212',
     borderRadius: 14,
-    padding: 12,
+    padding: 16,
     margin: 5,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1e1e1e',
     minHeight: 100,
     justifyContent: 'space-between',
   },
   gridProdStockBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1e1e1e',
     borderRadius: 6,
     paddingHorizontal: 5,
     paddingVertical: 2,
@@ -2377,13 +2447,13 @@ const styles = StyleSheet.create({
   gridProdPrice: {
     fontSize: 13,
     fontWeight: '900',
-    color: '#00f2fe',
+    color: '#3b82f6',
     marginTop: 6,
   },
   searchBarWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#121212',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: '#334155',
@@ -2415,7 +2485,7 @@ const styles = StyleSheet.create({
   cartPanel: {
     backgroundColor: '#0a0e17',
     borderTopWidth: 1.5,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#1e1e1e',
     padding: 14,
   },
   cartRow: {
@@ -2424,7 +2494,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   qtyBtn: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1e1e1e',
     width: 22,
     height: 22,
     borderRadius: 6,
@@ -2438,18 +2508,18 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     marginTop: 6,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#1e1e1e',
   },
   inventoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#121212',
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1e1e1e',
   },
   avatarBadge: {
     width: 36,
@@ -2459,7 +2529,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarAdmin: {
-    backgroundColor: '#00f2fe33',
+    backgroundColor: '#3b82f633',
   },
   avatarKasir: {
     backgroundColor: '#10b98133',
@@ -2468,13 +2538,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#00f2fe',
+    backgroundColor: '#3b82f6',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
   },
   restockSmallBtn: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1e1e1e',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -2484,7 +2554,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#0d1117',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#1e1e1e',
     // Tall enough to be tappable + extra for Android nav bar
     paddingBottom: Platform.OS === 'android' ? 8 : 20,
     paddingTop: 6,
@@ -2499,7 +2569,7 @@ const styles = StyleSheet.create({
   },
   tabItemActive: {
     borderTopWidth: 2.5,
-    borderTopColor: '#00f2fe',
+    borderTopColor: '#3b82f6',
   },
   tabLabel: {
     fontSize: 10,
@@ -2508,7 +2578,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tabLabelActive: {
-    color: '#00f2fe',
+    color: '#3b82f6',
     fontWeight: '800',
   },
   modalOverlay: {
@@ -2518,11 +2588,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#121212',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1e1e1e',
   },
   modalTitle: {
     fontSize: 16,
@@ -2531,7 +2601,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalInput: {
-    backgroundColor: '#07090e',
+    backgroundColor: '#09090b',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#334155',
@@ -2544,7 +2614,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 42,
     borderRadius: 10,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
   },
