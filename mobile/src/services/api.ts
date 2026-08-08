@@ -1,4 +1,4 @@
-import { Product, CartItem, User, Tenant, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from '../types';
+import { Product, CartItem, Tenant, User, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus, Customer, StoreType } from '../types';
 
 // Dynamic API URL for Vercel/Online Cloud Server or Local Dev
 let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.184:3000/api';
@@ -23,29 +23,35 @@ const MOCK_AUDIT: AuditLog[] = [
 ];
 
 export const MOCK_TENANTS: Tenant[] = [
-  { id: 1, name: 'Sivilize Supermarket & Mart', slug: 'sivilize-mart', store_type: 'minimarket', icon: 'cart-outline' },
+  { id: 1, company_id: 1, name: 'Sivilize Supermarket & Mart', slug: 'sivilize-mart', store_type: 'minimarket', icon: 'cart-outline' },
   { id: 2, name: 'Apotek Kimia Medika 24 Jam', slug: 'apotek-medika', store_type: 'apotek', icon: 'medical-outline' },
-  { id: 3, name: 'Kopi Senja & Resto F&B', slug: 'kopi-senja', store_type: 'cafe', icon: 'cafe-outline' },
+  { id: 3, company_id: 1, name: 'Kopi Senja & Resto F&B', slug: 'kopi-senja', store_type: 'cafe', icon: 'cafe-outline' },
   { id: 4, name: 'Aegis Cell & Counter HP', slug: 'aegis-cell', store_type: 'counter', icon: 'phone-portrait-outline' },
   { id: 5, name: 'Distro Fashion & Apparels', slug: 'distro-fashion', store_type: 'fashion', icon: 'shirt-outline' },
   { id: 6, name: 'Toko Bangunan & Material Jaya', slug: 'tb-jaya', store_type: 'bangunan', icon: 'construct-outline' },
 ];
 
+export let MOCK_CUSTOMERS: Customer[] = [
+  { id: 101, company_id: 1, name: 'Bapak Budi (Pelanggan VIP)', phone: '081234567890', kasbon_balance: 150000, kasbon_limit: 1000000 },
+  { id: 102, company_id: 1, name: 'Ibu Ani (Langganan)', phone: '081987654321', kasbon_balance: 0, kasbon_limit: 500000 },
+];
+
 const MOCK_PRODUCTS: Product[] = [
-  // Minimarket
-  { id: 101, barcode: '8999999001', name: 'Rokok Sampoerna Mild 16', purchase_price: 28000, sale_price: 32000, stock: 100 },
-  { id: 102, barcode: '8999999002', name: 'Indomie Goreng Spesial', purchase_price: 2500, sale_price: 3100, stock: 240 },
-  { id: 103, barcode: '8999999003', name: 'Air Mineral Le Minerale 600ml', purchase_price: 2000, sale_price: 3500, stock: 48 },
+  // Minimarket (tenant_id: 1)
+  { id: 101, tenant_id: 1, barcode: '8999999001', name: 'Rokok Sampoerna Mild 16', purchase_price: 28000, sale_price: 32000, stock: 100 },
+  { id: 102, tenant_id: 1, barcode: '8999999002', name: 'Indomie Goreng Spesial', purchase_price: 2500, sale_price: 3100, stock: 240 },
+  { id: 103, tenant_id: 1, barcode: '8999999003', name: 'Air Mineral Le Minerale 600ml', purchase_price: 2000, sale_price: 3500, stock: 48 },
   // Apotek
   { id: 201, barcode: '8998888001', name: 'Paracetamol 500mg (Strip 10 Kaplet)', purchase_price: 3500, sale_price: 6000, stock: 150, expiry_date: '2026-08-15' },
   { id: 202, barcode: '8998888002', name: 'Vitamin C 1000mg Enervon-C Botol', purchase_price: 32000, sale_price: 40000, stock: 30, expiry_date: '2027-12-01' },
   { id: 203, barcode: '8998888003', name: 'Betadine Antiseptik 30ml', purchase_price: 18000, sale_price: 23500, stock: 25 },
-  // Cafe / F&B
-  { id: 3001, barcode: 'MAT-KOPI', name: 'Biji Kopi House Blend (Gram)', purchase_price: 150, sale_price: 0, stock: 5000 },
-  { id: 3002, barcode: 'MAT-SUSU', name: 'Susu Cair Fresh Milk (ml)', purchase_price: 20, sale_price: 0, stock: 10000 },
-  { id: 3003, barcode: 'MAT-GULA', name: 'Gula Aren Cair (ml)', purchase_price: 30, sale_price: 0, stock: 5000 },
+  // Cafe / F&B (tenant_id: 3)
+  { id: 3001, tenant_id: 3, barcode: 'MAT-KOPI', name: 'Biji Kopi House Blend (Gram)', purchase_price: 150, sale_price: 0, stock: 5000 },
+  { id: 3002, tenant_id: 3, barcode: 'MAT-SUSU', name: 'Susu Cair Fresh Milk (ml)', purchase_price: 20, sale_price: 0, stock: 10000 },
+  { id: 3003, tenant_id: 3, barcode: 'MAT-GULA', name: 'Gula Aren Cair (ml)', purchase_price: 30, sale_price: 0, stock: 5000 },
   { 
     id: 301, 
+    tenant_id: 3,
     barcode: '8997777001', 
     name: 'Es Kopi Susu Gula Aren 500ml', 
     purchase_price: 10000, 
@@ -58,7 +64,7 @@ const MOCK_PRODUCTS: Product[] = [
       { group_name: 'Sugar Level', options: [{ name: 'Normal', price_diff: 0 }, { name: 'Less Sugar', price_diff: 0 }, { name: 'No Sugar', price_diff: 0 }] }
     ]
   },
-  { id: 302, barcode: '8997777002', name: 'Roti Bakar Cokelat Keju', purchase_price: 8000, sale_price: 15000, stock: 40 },
+  { id: 302, tenant_id: 3, barcode: '8997777002', name: 'Roti Bakar Cokelat Keju', purchase_price: 8000, sale_price: 15000, stock: 40 },
   // Fashion
   {
     id: 501,
@@ -255,7 +261,7 @@ export const apiService = {
   },
 
   // Checkout POS
-  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string, pb1Applied?: boolean, splitBillWays?: number, spgName?: string) {
+  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string, pb1Applied?: boolean, splitBillWays?: number, spgName?: string, customerId?: number) {
     try {
       return await request('/transactions', {
         method: 'POST',
@@ -278,6 +284,13 @@ export const apiService = {
         }
       });
       const totalAmount = pb1Applied ? total * 1.1 : total;
+      if (paymentMethod === 'KASBON' && customerId) {
+        const cust = MOCK_CUSTOMERS.find(c => c.id === customerId);
+        if (cust) {
+          cust.kasbon_balance += totalAmount; // increase debt
+        }
+      }
+      
       const res = {
         success: true,
         transaction_id: 'TX-DEMO-' + Date.now(),

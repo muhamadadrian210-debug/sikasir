@@ -13,6 +13,7 @@ export interface Product {
   recipe?: { material_id: number; qty_needed: number }[];
   has_variants?: boolean;
   variants?: { group_name: string; options: { name: string; price_diff: number }[] }[];
+  tenant_id?: number;
 }
 
 export interface KdsOrder {
@@ -37,10 +38,20 @@ export interface User {
   tenant_id: number;
 }
 
+export interface Customer {
+  id: number;
+  company_id: number;
+  name: string;
+  phone: string;
+  kasbon_balance: number;
+  kasbon_limit: number;
+}
+
 export type StoreType = 'minimarket' | 'apotek' | 'cafe' | 'counter' | 'fashion' | 'bangunan' | 'umum';
 
 export interface Tenant {
   id: number;
+  company_id?: number;
   name: string;
   slug: string;
   store_type?: StoreType;

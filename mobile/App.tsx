@@ -60,7 +60,7 @@ import {
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser, MOCK_TENANTS } from './src/services/api';
+import apiService, { MOCK_TENANTS, MOCK_PRODUCTS, MOCK_CUSTOMERS, setAuthToken, getAuthToken, setCurrentUser, getCurrentUser } from './src/services/api';
 import { Product, CartItem, Tenant, User, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from './src/types';
 import { AiAssistantModal } from './src/components/AiAssistantModal';
 import { HeavyDutyBarcodeScannerModal } from './src/components/HeavyDutyBarcodeScannerModal';
@@ -140,10 +140,20 @@ export default function App() {
   const [spgName, setSpgName] = useState('');
   const [applyPB1, setApplyPB1] = useState(false);
   const [splitBillWays, setSplitBillWays] = useState(1);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
 
   // Shift Management State
   const [shiftStatus, setShiftStatus] = useState<'closed' | 'open'>('closed');
-  const [shiftModalVisible, setShiftModalVisible] = useState(false);
+  const [shiftStartBalance, setShiftStartBalance] = useState(0);
+
+  // Dashboard State
+  const [dashboardView, setDashboardView] = useState<'tenant' | 'company'>('tenant');
+
+  // Corporate Mutasi State
+  const [mutasiModalVisible, setMutasiModalVisible] = useState(false);
+  const [mutasiDestTenantId, setMutasiDestTenantId] = useState<number | null>(null);
+  const [mutasiProductId, setMutasiProductId] = useState<number | null>(null);
+  const [mutasiQty, setMutasiQty] = useState('');
   const [openingCash, setOpeningCash] = useState('');
   const [closingCash, setClosingCash] = useState('');
   const [shiftAction, setShiftAction] = useState<'open' | 'close'>('open');
@@ -379,12 +389,12 @@ export default function App() {
       Alert.alert('Pembayaran', `Nominal kurang dari total Rp ${totalAmount.toLocaleString('id-ID')}`);
       return;
     }
-    if (paymentMethod === 'KASBON' && (!kasbonCustomerName || !kasbonCustomerPhone)) {
-      Alert.alert('Data Kasbon', 'Nama dan Nomor WA Penghutang wajib diisi!');
+    if (paymentMethod === 'KASBON' && !selectedCustomerId) {
+      Alert.alert('Data Kasbon', 'Silakan pilih Pelanggan dari daftar Kasbon!');
       return;
     }
     const finalPaid = paymentMethod === 'KASBON' ? 0 : paid;
-    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone, applyPB1, splitBillWays, spgName);
+    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone, applyPB1, splitBillWays, spgName, selectedCustomerId || undefined);
     Alert.alert(
       'Transaksi Berhasil!',
       paymentMethod === 'KASBON' ? 'Tagihan berhasil dicatat ke buku Kasbon (Hutang).' : `Kembalian: Rp ${Number(res.change_amount || finalPaid - totalAmount).toLocaleString('id-ID')}`,
@@ -406,6 +416,7 @@ export default function App() {
             setPaymentMethod('CASH');
             setKasbonCustomerName('');
             setKasbonCustomerPhone('');
+            setSelectedCustomerId(null);
             setApplyPB1(false);
             setSplitBillWays(1);
             setSpgName('');
@@ -438,6 +449,52 @@ export default function App() {
         }
       ]
     );
+  };
+
+  const handleMutasi = () => {
+    if (!mutasiDestTenantId || !mutasiProductId || !mutasiQty) {
+      Alert.alert('Error', 'Harap isi Cabang Tujuan, Produk, dan Jumlah Mutasi!');
+      return;
+    }
+    const qty = parseInt(mutasiQty, 10);
+    if (isNaN(qty) || qty <= 0) {
+      Alert.alert('Error', 'Jumlah mutasi tidak valid.');
+      return;
+    }
+    
+    // Find the product in current tenant
+    const sourceProd = products.find(p => p.id === mutasiProductId);
+    if (!sourceProd || sourceProd.stock < qty) {
+      Alert.alert('Error', 'Stok produk tidak mencukupi untuk dimutasi.');
+      return;
+    }
+
+    // Deduct stock from current tenant
+    sourceProd.stock -= qty;
+
+    // Add stock to destination tenant
+    // Find if the product already exists in the destination tenant (by barcode)
+    let destProd = MOCK_PRODUCTS.find(p => p.tenant_id === mutasiDestTenantId && p.barcode === sourceProd.barcode);
+    
+    if (destProd) {
+      destProd.stock += qty;
+    } else {
+      // Create new product entry for destination
+      destProd = {
+        ...sourceProd,
+        id: Math.floor(Math.random() * 1000000),
+        tenant_id: mutasiDestTenantId,
+        stock: qty
+      };
+      MOCK_PRODUCTS.push(destProd);
+    }
+
+    Alert.alert('Sukses', `Berhasil memindahkan ${qty} pcs ${sourceProd.name} ke cabang ID ${mutasiDestTenantId}.`);
+    setMutasiModalVisible(false);
+    setMutasiDestTenantId(null);
+    setMutasiProductId(null);
+    setMutasiQty('');
+    loadProducts();
   };
 
   const handleRestock = async () => {
@@ -886,7 +943,7 @@ export default function App() {
                 </Text>
                 <TouchableOpacity 
                   style={{ backgroundColor: '#1e293b', paddingVertical: 12, borderRadius: 8, alignItems: 'center' }}
-                  onPress={() => Alert.alert('Pindah Stok', 'Silakan pilih Cabang Tujuan dan masukkan daftar barang yang ingin dimutasi pada versi lengkap aplikasi ini.')}
+                  onPress={() => setMutasiModalVisible(true)}
                 >
                   <Text style={{ color: '#f59e0b', fontWeight: '800' }}>MULAI MUTASI STOK</Text>
                 </TouchableOpacity>
@@ -909,38 +966,68 @@ export default function App() {
             </View>
           ) : (
             <>
-              <Text style={styles.screenHeader}>Ringkasan Toko & Laporan</Text>
-              <View style={styles.statsGrid}>
-                <View style={styles.statCard}>
-                  <Ionicons name="cube-outline" size={22} color="#00f2fe" />
-                  <Text style={styles.statVal}>{products.length}</Text>
-                  <Text style={styles.statSub}>Jenis Barang</Text>
+              <Text style={styles.screenHeader}>Ringkasan & Laporan</Text>
+              
+              {currentTenant?.company_id && (
+                <View style={{ flexDirection: 'row', backgroundColor: '#1e293b', borderRadius: 8, padding: 4, marginBottom: 16 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, paddingVertical: 8, backgroundColor: dashboardView === 'tenant' ? '#334155' : 'transparent', borderRadius: 6, alignItems: 'center' }}
+                    onPress={() => setDashboardView('tenant')}
+                  >
+                    <Text style={{ color: dashboardView === 'tenant' ? '#fff' : '#64748b', fontWeight: '700', fontSize: 12 }}>Cabang Ini Saja</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ flex: 1, paddingVertical: 8, backgroundColor: dashboardView === 'company' ? '#0f766e' : 'transparent', borderRadius: 6, alignItems: 'center' }}
+                    onPress={() => setDashboardView('company')}
+                  >
+                    <Text style={{ color: dashboardView === 'company' ? '#fff' : '#64748b', fontWeight: '700', fontSize: 12 }}>Grup Perusahaan</Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.statCard}>
-                  <Ionicons name="layers-outline" size={22} color="#10b981" />
-                  <Text style={styles.statVal}>{products.reduce((s, p) => s + p.stock, 0)}</Text>
-                  <Text style={styles.statSub}>Total Pcs Stok</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Ionicons name="alert-circle-outline" size={22} color="#ef4444" />
-                  <Text style={[styles.statVal, { color: '#ef4444' }]}>
-                    {products.filter((p) => p.stock <= 5).length}
-                  </Text>
-                  <Text style={styles.statSub}>Stok Kritis</Text>
-                </View>
-              </View>
-
-              <Text style={[styles.screenHeader, { marginTop: 16 }]}>Stok Kritis (&lt;=5 pcs)</Text>
-              {products.filter((p) => p.stock <= 5).length === 0 ? (
-                <Text style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>Semua stok aman.</Text>
-              ) : (
-                products.filter((p) => p.stock <= 5).map((p) => (
-                  <View key={p.id} style={styles.critRow}>
-                    <Text style={{ color: '#fff', fontSize: 13 }}>{p.name}</Text>
-                    <Text style={{ color: '#ef4444', fontWeight: '800', fontSize: 12 }}>{p.stock} pcs</Text>
-                  </View>
-                ))
               )}
+
+              {(() => {
+                const dashboardProducts = dashboardView === 'company' 
+                  ? MOCK_PRODUCTS.filter(p => MOCK_TENANTS.find(t => t.id === p.tenant_id)?.company_id === currentTenant?.company_id)
+                  : products;
+                
+                return (
+                  <>
+                    <View style={styles.statsGrid}>
+                      <View style={styles.statCard}>
+                        <Ionicons name="cube-outline" size={22} color="#00f2fe" />
+                        <Text style={styles.statVal}>{dashboardProducts.length}</Text>
+                        <Text style={styles.statSub}>Jenis Barang</Text>
+                      </View>
+                      <View style={styles.statCard}>
+                        <Ionicons name="layers-outline" size={22} color="#10b981" />
+                        <Text style={styles.statVal}>{dashboardProducts.reduce((s, p) => s + p.stock, 0)}</Text>
+                        <Text style={styles.statSub}>Total Pcs Stok</Text>
+                      </View>
+                      <View style={styles.statCard}>
+                        <Ionicons name="alert-circle-outline" size={22} color="#ef4444" />
+                        <Text style={[styles.statVal, { color: '#ef4444' }]}>
+                          {dashboardProducts.filter((p) => p.stock <= 5).length}
+                        </Text>
+                        <Text style={styles.statSub}>Stok Kritis</Text>
+                      </View>
+                    </View>
+
+                    <Text style={[styles.screenHeader, { marginTop: 16 }]}>Stok Kritis (&lt;=5 pcs)</Text>
+                    {dashboardProducts.filter((p) => p.stock <= 5).length === 0 ? (
+                      <Text style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>Semua stok aman.</Text>
+                    ) : (
+                      dashboardProducts.filter((p) => p.stock <= 5).map((p, idx) => (
+                        <View key={idx} style={styles.critRow}>
+                          <Text style={{ color: '#fff', fontSize: 13 }}>
+                            {p.name} {dashboardView === 'company' ? `(${MOCK_TENANTS.find(t => t.id === p.tenant_id)?.name})` : ''}
+                          </Text>
+                          <Text style={{ color: '#ef4444', fontWeight: '800', fontSize: 12 }}>{p.stock} pcs</Text>
+                        </View>
+                      ))
+                    )}
+                  </>
+                );
+              })()}
             </>
           )}
         </ScrollView>
@@ -1585,6 +1672,84 @@ export default function App() {
         </View>
       </Modal>
 
+      {/* MUTASI CABANG MODAL */}
+      <Modal visible={mutasiModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Mutasi Stok Antar Cabang</Text>
+            
+            <Text style={styles.label}>Pilih Cabang Tujuan</Text>
+            <ScrollView style={{ maxHeight: 100, marginBottom: 12 }}>
+              {MOCK_TENANTS.filter(t => t.company_id === currentTenant?.company_id && t.id !== currentTenant?.id).map(t => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={{
+                    padding: 10,
+                    backgroundColor: mutasiDestTenantId === t.id ? 'rgba(245, 158, 11, 0.1)' : '#1e293b',
+                    borderWidth: 1,
+                    borderColor: mutasiDestTenantId === t.id ? '#f59e0b' : '#334155',
+                    borderRadius: 8,
+                    marginBottom: 6
+                  }}
+                  onPress={() => setMutasiDestTenantId(t.id)}
+                >
+                  <Text style={{ color: mutasiDestTenantId === t.id ? '#f59e0b' : '#fff', fontWeight: '700' }}>
+                    {t.name} (Tipe: {t.store_type})
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={styles.label}>Pilih Produk untuk Dimutasi</Text>
+            <ScrollView style={{ maxHeight: 120, marginBottom: 12 }}>
+              {products.map(p => (
+                <TouchableOpacity
+                  key={p.id}
+                  style={{
+                    padding: 10,
+                    backgroundColor: mutasiProductId === p.id ? 'rgba(0, 242, 254, 0.1)' : '#1e293b',
+                    borderWidth: 1,
+                    borderColor: mutasiProductId === p.id ? '#00f2fe' : '#334155',
+                    borderRadius: 8,
+                    marginBottom: 6
+                  }}
+                  onPress={() => setMutasiProductId(p.id)}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ color: mutasiProductId === p.id ? '#00f2fe' : '#fff', fontWeight: '700' }}>{p.name}</Text>
+                    <Text style={{ color: '#94a3b8' }}>Stok: {p.stock}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={styles.label}>Jumlah (Pcs)</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Contoh: 10"
+              placeholderTextColor="#64748b"
+              keyboardType="numeric"
+              value={mutasiQty}
+              onChangeText={setMutasiQty}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => {
+                setMutasiModalVisible(false);
+                setMutasiDestTenantId(null);
+                setMutasiProductId(null);
+                setMutasiQty('');
+              }}>
+                <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#f59e0b' }]} onPress={handleMutasi}>
+                <Text style={styles.primaryBtnText}>KIRIM STOK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* CHECKOUT MODAL */}
       <Modal visible={checkoutModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -1668,23 +1833,34 @@ export default function App() {
 
             {paymentMethod === 'KASBON' && (
               <>
-                <Text style={styles.label}>Nama Penghutang</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="Masukkan nama..."
-                  placeholderTextColor="#64748b"
-                  value={kasbonCustomerName}
-                  onChangeText={setKasbonCustomerName}
-                />
-                <Text style={styles.label}>Nomor WA (Contoh: 62812...)</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="628..."
-                  placeholderTextColor="#64748b"
-                  keyboardType="phone-pad"
-                  value={kasbonCustomerPhone}
-                  onChangeText={setKasbonCustomerPhone}
-                />
+                <Text style={styles.label}>Pilih Pelanggan Kasbon Global</Text>
+                <Text style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8 }}>
+                  Limit kasbon tergabung untuk semua cabang di grup {currentTenant?.company_id ? 'ini' : ''}.
+                </Text>
+                <ScrollView style={{ maxHeight: 120, marginBottom: 16 }}>
+                  {MOCK_CUSTOMERS.filter(c => c.company_id === currentTenant?.company_id).map(cust => (
+                    <TouchableOpacity
+                      key={cust.id}
+                      style={{
+                        padding: 12,
+                        backgroundColor: selectedCustomerId === cust.id ? 'rgba(0, 242, 254, 0.1)' : '#1e293b',
+                        borderWidth: 1,
+                        borderColor: selectedCustomerId === cust.id ? '#00f2fe' : '#334155',
+                        borderRadius: 8,
+                        marginBottom: 8
+                      }}
+                      onPress={() => setSelectedCustomerId(cust.id)}
+                    >
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={{ color: selectedCustomerId === cust.id ? '#00f2fe' : '#fff', fontWeight: '700' }}>{cust.name}</Text>
+                        <Text style={{ color: '#94a3b8', fontSize: 12 }}>{cust.phone}</Text>
+                      </View>
+                      <Text style={{ color: cust.kasbon_balance + totalAmount > cust.kasbon_limit ? '#ef4444' : '#10b981', fontSize: 11, marginTop: 4 }}>
+                        Terpakai: Rp {cust.kasbon_balance.toLocaleString('id-ID')} / Rp {cust.kasbon_limit.toLocaleString('id-ID')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </>
             )}
 
