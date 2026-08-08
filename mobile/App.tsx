@@ -317,7 +317,7 @@ export default function App() {
   };
 
   const addToCart = (product: Product, selectedVars?: Record<string, {name: string, price_diff: number}>, customPrice?: number) => {
-    if (product.has_variants && ['cafe', 'fashion'].includes(storeType) && !selectedVars && !customPrice) {
+    if (product.has_variants && ['cafe', 'resto', 'warteg', 'street_food', 'bakery', 'fashion', 'sepatu_sandal'].includes(storeType) && !selectedVars && !customPrice) {
       setSelectedProductForVariant(product);
       setSelectedVariants({});
       setVariantModalVisible(true);
@@ -334,7 +334,7 @@ export default function App() {
         }
         
         const newQty = existing.qty + 1;
-        const priceToUse = (['minimarket', 'bangunan', 'umum'].includes(storeType) && product.wholesale_min_qty && newQty >= product.wholesale_min_qty && product.wholesale_price) 
+        const priceToUse = (['minimarket', 'supermarket', 'warung_kelontong', 'sayur_buah', 'distributor', 'bangunan', 'umum'].includes(storeType) && product.wholesale_min_qty && newQty >= product.wholesale_min_qty && product.wholesale_price) 
                            ? product.wholesale_price 
                            : product.sale_price;
 
@@ -345,7 +345,7 @@ export default function App() {
         );
       }
       
-      const priceToUse = (['minimarket', 'bangunan', 'umum'].includes(storeType) && product.wholesale_min_qty && 1 >= product.wholesale_min_qty && product.wholesale_price) 
+      const priceToUse = (['minimarket', 'supermarket', 'warung_kelontong', 'sayur_buah', 'distributor', 'bangunan', 'umum'].includes(storeType) && product.wholesale_min_qty && 1 >= product.wholesale_min_qty && product.wholesale_price) 
                          ? product.wholesale_price 
                          : product.sale_price;
                          
@@ -368,7 +368,7 @@ export default function App() {
               return item;
             }
             
-            const priceToUse = (['minimarket', 'bangunan', 'umum'].includes(storeType) && item.product.wholesale_min_qty && newQty >= item.product.wholesale_min_qty && item.product.wholesale_price) 
+            const priceToUse = (['minimarket', 'supermarket', 'warung_kelontong', 'sayur_buah', 'distributor', 'bangunan', 'umum'].includes(storeType) && item.product.wholesale_min_qty && newQty >= item.product.wholesale_min_qty && item.product.wholesale_price) 
                                ? item.product.wholesale_price 
                                : item.product.sale_price;
                                
@@ -402,7 +402,7 @@ export default function App() {
         {
           text: 'Selesai / Cetak Struk',
           onPress: () => {
-            if (storeType === 'cafe') {
+            if (['cafe', 'resto', 'warteg', 'street_food', 'bakery'].includes(storeType)) {
               setKdsOrders(prev => [{
                 id: res.id,
                 transaction_id: res.id,
@@ -708,13 +708,55 @@ export default function App() {
               <Text style={[styles.label, { marginTop: 10 }]}>Jenis / Tipe Usaha Toko *</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }}>
                 {[
-                  { type: 'minimarket', label: '🛒 Minimarket / Warung' },
+                  { type: 'minimarket', label: '🛒 Minimarket' },
+                  { type: 'supermarket', label: '🛒 Supermarket' },
+                  { type: 'warung_kelontong', label: '🏪 Warung Kelontong' },
+                  { type: 'sayur_buah', label: '🥬 Sayur, Buah & Daging' },
+                  { type: 'toko_plastik', label: '🛍️ Toko Plastik & Kemasan' },
+                  { type: 'bahan_kue', label: '🧁 Toko Bahan Kue' },
+                  
+                  { type: 'cafe', label: '☕ Cafe & Kopi' },
+                  { type: 'resto', label: '🍽️ Restoran & Rumah Makan' },
+                  { type: 'warteg', label: '🍛 Warteg & Nasi Bungkus' },
+                  { type: 'street_food', label: '🍢 Kaki Lima & Gerobak' },
+                  { type: 'bakery', label: '🍞 Bakery & Pastry' },
+
                   { type: 'apotek', label: '💊 Apotek & Obat' },
-                  { type: 'cafe', label: '☕ Cafe & F&B' },
+                  { type: 'klinik', label: '⚕️ Klinik Kesehatan' },
+                  { type: 'salon', label: '💇‍♀️ Salon Kecantikan' },
+                  { type: 'barbershop', label: '✂️ Barbershop' },
+                  { type: 'optik', label: '👓 Optik Kacamata' },
+                  { type: 'skincare_kosmetik', label: '💄 Skincare & Kosmetik' },
+
+                  { type: 'fashion', label: '👕 Pakaian & Distro' },
+                  { type: 'sepatu_sandal', label: '👟 Sepatu & Sandal' },
+                  { type: 'toko_emas', label: '💍 Toko Emas & Perhiasan' },
+                  { type: 'toko_jam', label: '⌚ Toko Jam' },
+
                   { type: 'counter', label: '📱 Counter HP & Pulsa' },
-                  { type: 'fashion', label: '👕 Fashion & Distro' },
-                  { type: 'bangunan', label: '🛠️ Toko Bangunan' },
-                  { type: 'umum', label: '🏬 Toko Umum' },
+                  { type: 'toko_komputer', label: '💻 Toko Komputer & Laptop' },
+                  { type: 'elektronik_rumah_tangga', label: '📺 Elektronik Rumah Tangga' },
+
+                  { type: 'bengkel', label: '🏍️ Bengkel Motor / Mobil' },
+                  { type: 'cuci_mobil', label: '🚗 Cuci Mobil & Motor' },
+                  { type: 'variasi_aksesoris_kendaraan', label: '🏎️ Aksesoris Kendaraan' },
+
+                  { type: 'laundry', label: '🧺 Laundry & Cuci Baju' },
+                  { type: 'jasa_servis', label: '🔧 Jasa Servis (AC, TV, dll)' },
+                  { type: 'percetakan', label: '🖨️ Percetakan & Fotokopi' },
+                  { type: 'studio_foto', label: '📸 Studio Foto' },
+
+                  { type: 'toko_buku', label: '📚 Toko Buku & Alat Tulis' },
+                  { type: 'toko_mainan', label: '🧸 Toko Mainan' },
+                  { type: 'petshop', label: '🐾 Petshop & Dokter Hewan' },
+                  { type: 'toko_olahraga', label: '⚽ Toko Peralatan Olahraga' },
+                  { type: 'alat_musik', label: '🎸 Toko Alat Musik' },
+                  { type: 'florist', label: '💐 Toko Bunga (Florist)' },
+
+                  { type: 'bangunan', label: '🛠️ Toko Bangunan & Material' },
+                  { type: 'distributor', label: '📦 Distributor & Grosir' },
+
+                  { type: 'umum', label: '🏬 Toko Umum / Lainnya' },
                 ].map((item) => (
                   <TouchableOpacity
                     key={item.type}
@@ -778,7 +820,7 @@ export default function App() {
     setSearchQuery(barcode);
 
     // Scale Barcode Logic (Minimarket only) - Example: 21XXXXXPPPPP
-    if (storeType === 'minimarket' && barcode.length >= 12 && barcode.startsWith('21')) {
+    if (['minimarket', 'supermarket', 'warung_kelontong', 'sayur_buah'].includes(storeType) && barcode.length >= 12 && barcode.startsWith('21')) {
       const pCode = barcode.substring(2, 7);
       const pPrice = parseInt(barcode.substring(7, 12), 10);
       const found = products.find(p => p.barcode === pCode || p.barcode === barcode);
@@ -1127,7 +1169,7 @@ export default function App() {
                     </Text>
                   </View>
                   <Text style={styles.gridProdName} numberOfLines={2}>{item.name}</Text>
-                  {['minimarket', 'apotek'].includes(storeType) && item.expiry_date && (
+                  {['minimarket', 'supermarket', 'apotek', 'klinik', 'skincare_kosmetik', 'sayur_buah', 'bahan_kue'].includes(storeType) && item.expiry_date && (
                     <Text style={{ fontSize: 9, color: (new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) ? '#ef4444' : '#64748b', fontWeight: '800', marginTop: 2 }}>
                       Exp: {item.expiry_date}
                     </Text>
@@ -1145,7 +1187,7 @@ export default function App() {
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8' }}>
                 Keranjang POS ({cart.length} item)
               </Text>
-              {cart.length > 0 && ['cafe', 'minimarket', 'apotek', 'umum'].includes(storeType) && (
+              {cart.length > 0 && !['bengkel', 'cuci_mobil', 'jasa_servis', 'laundry', 'salon', 'barbershop', 'studio_foto', 'percetakan'].includes(storeType) && (
                 <TouchableOpacity onPress={holdBill} style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
                   <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Hold Bill</Text>
                 </TouchableOpacity>
@@ -1243,7 +1285,7 @@ export default function App() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.name}</Text>
                   <Text style={{ color: '#64748b', fontSize: 10 }}>Barcode: {item.barcode || '-'}</Text>
-                  {['minimarket', 'apotek'].includes(storeType) && item.expiry_date && (
+                  {['minimarket', 'supermarket', 'apotek', 'klinik', 'skincare_kosmetik', 'sayur_buah', 'bahan_kue'].includes(storeType) && item.expiry_date && (
                     <Text style={{ fontSize: 10, color: (new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) ? '#ef4444' : '#94a3b8', fontWeight: '700', marginTop: 2 }}>
                       Exp: {item.expiry_date} {(new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) && '(Segera Kedaluwarsa)'}
                     </Text>
@@ -1375,7 +1417,7 @@ export default function App() {
                       {item.is_refunded ? (
                         <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: '900' }}>[ DIRETUR ]</Text>
                       ) : (
-                        storeType !== 'cafe' && isAdmin && (
+                        !['cafe', 'resto', 'warteg', 'street_food', 'bakery'].includes(storeType) && isAdmin && (
                           <TouchableOpacity
                             style={{ marginTop: 4, backgroundColor: '#334155', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
                             onPress={() => handleRefund(item.id)}
@@ -1539,7 +1581,7 @@ export default function App() {
             <Text style={[styles.tabLabel, activeTab === 'incoming' && styles.tabLabelActive]}>Masuk</Text>
           </TouchableOpacity>
 
-          {storeType === 'cafe' && (
+          {['cafe', 'resto', 'warteg', 'street_food', 'bakery'].includes(storeType) && (
             <TouchableOpacity
               style={[styles.tabItem, activeTab === 'kds' && styles.tabItemActive, { minWidth: 64 }]}
               onPress={() => setActiveTab('kds')}
@@ -1772,7 +1814,7 @@ export default function App() {
               ))}
             </View>
 
-            {storeType === 'cafe' && (
+            {['cafe', 'resto', 'warteg', 'street_food', 'bakery'].includes(storeType) && (
               <>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <Text style={styles.label}>Pajak PB1 (10%)</Text>
@@ -1804,7 +1846,7 @@ export default function App() {
               </>
             )}
 
-            {['fashion', 'bangunan', 'counter'].includes(storeType) && (
+            {['fashion', 'bangunan', 'counter', 'bengkel', 'cuci_mobil', 'elektronik_rumah_tangga', 'toko_komputer', 'jasa_servis', 'toko_emas', 'toko_jam', 'optik', 'sepatu_sandal', 'percetakan'].includes(storeType) && (
               <View style={{ marginBottom: 16 }}>
                 <Text style={styles.label}>Sales / SPG (Opsional)</Text>
                 <TextInput

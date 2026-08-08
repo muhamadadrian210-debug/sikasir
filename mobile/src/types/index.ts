@@ -47,7 +47,17 @@ export interface Customer {
   kasbon_limit: number;
 }
 
-export type StoreType = 'minimarket' | 'apotek' | 'cafe' | 'counter' | 'fashion' | 'bangunan' | 'umum';
+export type StoreType = 
+  | 'cafe' | 'resto' | 'warteg' | 'bakery' | 'street_food'
+  | 'minimarket' | 'supermarket' | 'warung_kelontong' | 'toko_plastik' | 'bahan_kue' | 'sayur_buah'
+  | 'apotek' | 'klinik' | 'salon' | 'barbershop' | 'optik' | 'skincare_kosmetik'
+  | 'fashion' | 'sepatu_sandal' | 'toko_emas' | 'toko_jam'
+  | 'counter' | 'toko_komputer' | 'elektronik_rumah_tangga'
+  | 'bengkel' | 'cuci_mobil' | 'variasi_aksesoris_kendaraan'
+  | 'laundry' | 'jasa_servis' | 'percetakan' | 'studio_foto'
+  | 'toko_buku' | 'toko_mainan' | 'petshop' | 'toko_olahraga' | 'alat_musik' | 'florist'
+  | 'bangunan' | 'distributor'
+  | 'umum';
 
 export interface Tenant {
   id: number;

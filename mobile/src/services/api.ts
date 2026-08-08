@@ -29,6 +29,9 @@ export const MOCK_TENANTS: Tenant[] = [
   { id: 4, name: 'Aegis Cell & Counter HP', slug: 'aegis-cell', store_type: 'counter', icon: 'phone-portrait-outline' },
   { id: 5, name: 'Distro Fashion & Apparels', slug: 'distro-fashion', store_type: 'fashion', icon: 'shirt-outline' },
   { id: 6, name: 'Toko Bangunan & Material Jaya', slug: 'tb-jaya', store_type: 'bangunan', icon: 'construct-outline' },
+  { id: 7, name: 'Bengkel Motor Sinar Jaya', slug: 'bengkel-jaya', store_type: 'bengkel', icon: 'build-outline' },
+  { id: 8, name: 'Salon Ayu & Barbershop', slug: 'salon-ayu', store_type: 'salon', icon: 'cut-outline' },
+  { id: 9, name: 'Fresh Market Sayur & Buah', slug: 'fresh-market', store_type: 'sayur_buah', icon: 'leaf-outline' },
 ];
 
 export let MOCK_CUSTOMERS: Customer[] = [
@@ -82,6 +85,15 @@ const MOCK_PRODUCTS: Product[] = [
   // Counter HP
   { id: 401, barcode: '8996666001', name: 'Kabel Data Fast Charge Type-C 65W', purchase_price: 15000, sale_price: 35000, stock: 20 },
   { id: 402, barcode: '8996666002', name: 'Voucher Telkomsel 10GB 30 Hari', purchase_price: 33000, sale_price: 38000, stock: 60 },
+  // Bengkel (tenant_id: 7)
+  { id: 801, tenant_id: 7, barcode: '8995555001', name: 'Oli Mesin Yamalube 800ml', purchase_price: 35000, sale_price: 45000, stock: 20 },
+  { id: 802, tenant_id: 7, barcode: '8995555002', name: 'Jasa Servis Ringan / Tune Up', purchase_price: 0, sale_price: 40000, stock: 9999 },
+  // Salon (tenant_id: 8)
+  { id: 901, tenant_id: 8, barcode: '8996666001', name: 'Potong Rambut Pria', purchase_price: 0, sale_price: 35000, stock: 9999 },
+  { id: 902, tenant_id: 8, barcode: '8996666002', name: 'Creambath + Pijat', purchase_price: 0, sale_price: 80000, stock: 9999 },
+  // Sayur Buah (tenant_id: 9)
+  { id: 1001, tenant_id: 9, barcode: '8992222001', name: 'Sayur Bayam Hidroponik (Ikat)', purchase_price: 3000, sale_price: 6000, stock: 50, expiry_date: '2026-08-10' },
+  { id: 1002, tenant_id: 9, barcode: '8992222002', name: 'Apel Fuji (Kg)', purchase_price: 25000, sale_price: 35000, stock: 20 },
 ];
 
 export function setApiBaseUrl(url: string) {
