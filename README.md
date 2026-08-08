@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/icons/logo.svg" alt="SiKasir Logo" width="120" height="120">
+  <img src="public/icons/logo.png" alt="SiKasir Logo" width="120" height="120">
   <h1>SiKasir</h1>
   <p><b>Sistem Point of Sales Cerdas Masa Depan (Super POS App)</b></p>
 </div>
