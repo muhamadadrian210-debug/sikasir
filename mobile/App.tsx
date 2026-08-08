@@ -60,7 +60,7 @@ import {
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser } from './src/services/api';
+import { apiService, getAuthToken, setAuthToken, setCurrentUser, getCurrentUser, MOCK_TENANTS } from './src/services/api';
 import { Product, CartItem, Tenant, User, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from './src/types';
 import { AiAssistantModal } from './src/components/AiAssistantModal';
 import { HeavyDutyBarcodeScannerModal } from './src/components/HeavyDutyBarcodeScannerModal';
@@ -72,16 +72,24 @@ export default function App() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
   const [currentUser, setCurrentUserLocal] = useState<User | null>(getCurrentUser());
-  const [activeTab, setActiveTab] = useState<'kasir' | 'history' | 'products' | 'incoming' | 'dashboard' | 'users' | 'audit' | 'cybersecurity'>('kasir');
+  const currentTenant = currentUser ? MOCK_TENANTS.find(t => t.id === currentUser.tenant_id) : null;
+  const storeType = currentTenant?.store_type || 'umum';
+  const [activeTab, setActiveTab] = useState<'kasir' | 'history' | 'products' | 'incoming' | 'dashboard' | 'users' | 'audit' | 'cybersecurity' | 'kds' | 'adminTools'>('kasir');
 
   // Heavy Duty Camera Barcode Scanner State
   const [scannerModalVisible, setScannerModalVisible] = useState(false);
 
-  // Parity State: History, Incoming, Audit, CyberSecurity
+  // Parity State: History, Incoming, Audit, CyberSecurity, KDS
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [incomingLogs, setIncomingLogs] = useState<IncomingLog[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [kdsOrders, setKdsOrders] = useState<any[]>([]);
   const [cyberStatus, setCyberStatus] = useState<CyberSecurityStatus | null>(null);
+
+  // Variant Modal State
+  const [variantModalVisible, setVariantModalVisible] = useState(false);
+  const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, {name: string, price_diff: number}>>({});
 
   // Incoming Modal State
   const [addIncomingModalVisible, setAddIncomingModalVisible] = useState(false);
@@ -129,6 +137,7 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QRIS' | 'KASBON'>('CASH');
   const [kasbonCustomerName, setKasbonCustomerName] = useState('');
   const [kasbonCustomerPhone, setKasbonCustomerPhone] = useState('');
+  const [spgName, setSpgName] = useState('');
   const [applyPB1, setApplyPB1] = useState(false);
   const [splitBillWays, setSplitBillWays] = useState(1);
 
@@ -297,14 +306,17 @@ export default function App() {
     setHeldBills((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addToCart = (product: Product) => {
-    if (product.stock <= 0) {
-      Alert.alert('Stok Habis', `Stok ${product.name} saat ini 0.`);
+  const addToCart = (product: Product, selectedVars?: Record<string, {name: string, price_diff: number}>, customPrice?: number) => {
+    if (product.has_variants && ['cafe', 'fashion'].includes(storeType) && !selectedVars && !customPrice) {
+      setSelectedProductForVariant(product);
+      setSelectedVariants({});
+      setVariantModalVisible(true);
       return;
     }
-    setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
-      
+
+    setCart(prev => {
+      const variantStr = selectedVars ? Object.values(selectedVars).map(v => v.name).sort().join(', ') : '';
+      const existing = prev.find(item => item.product.id === product.id && (item.selected_variants?.join(', ') || '') === variantStr);
       if (existing) {
         if (existing.qty >= product.stock) {
           Alert.alert('Stok Maksimal', `Stok ${product.name} tersisa ${product.stock} pcs.`);
@@ -312,7 +324,7 @@ export default function App() {
         }
         
         const newQty = existing.qty + 1;
-        const priceToUse = (product.wholesale_min_qty && newQty >= product.wholesale_min_qty && product.wholesale_price) 
+        const priceToUse = (['minimarket', 'bangunan', 'umum'].includes(storeType) && product.wholesale_min_qty && newQty >= product.wholesale_min_qty && product.wholesale_price) 
                            ? product.wholesale_price 
                            : product.sale_price;
 
@@ -323,19 +335,22 @@ export default function App() {
         );
       }
       
-      const priceToUse = (product.wholesale_min_qty && 1 >= product.wholesale_min_qty && product.wholesale_price) 
+      const priceToUse = (['minimarket', 'bangunan', 'umum'].includes(storeType) && product.wholesale_min_qty && 1 >= product.wholesale_min_qty && product.wholesale_price) 
                          ? product.wholesale_price 
                          : product.sale_price;
                          
-      return [...prev, { product, qty: 1, subtotal: priceToUse }];
+      const extraPrice = selectedVars ? Object.values(selectedVars).reduce((sum, v) => sum + v.price_diff, 0) : 0;
+      const finalPrice = customPrice !== undefined ? customPrice : priceToUse + extraPrice;
+
+      return [...prev, { product, qty: 1, subtotal: finalPrice, selected_variants: selectedVars ? Object.values(selectedVars).map(v => v.name).sort() : undefined }];
     });
   };
 
-  const updateCartQty = (productId: number, delta: number) => {
+  const updateCartQty = (productId: number, variantStr: string | undefined, delta: number) => {
     setCart((prev) =>
       prev
         .map((item) => {
-          if (item.product.id === productId) {
+          if (item.product.id === productId && (item.selected_variants?.join(', ') || '') === (variantStr || '')) {
             const newQty = item.qty + delta;
             if (newQty <= 0) return null;
             if (newQty > item.product.stock) {
@@ -343,7 +358,7 @@ export default function App() {
               return item;
             }
             
-            const priceToUse = (item.product.wholesale_min_qty && newQty >= item.product.wholesale_min_qty && item.product.wholesale_price) 
+            const priceToUse = (['minimarket', 'bangunan', 'umum'].includes(storeType) && item.product.wholesale_min_qty && newQty >= item.product.wholesale_min_qty && item.product.wholesale_price) 
                                ? item.product.wholesale_price 
                                : item.product.sale_price;
                                
@@ -369,7 +384,7 @@ export default function App() {
       return;
     }
     const finalPaid = paymentMethod === 'KASBON' ? 0 : paid;
-    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone, applyPB1, splitBillWays);
+    const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone, applyPB1, splitBillWays, spgName);
     Alert.alert(
       'Transaksi Berhasil!',
       paymentMethod === 'KASBON' ? 'Tagihan berhasil dicatat ke buku Kasbon (Hutang).' : `Kembalian: Rp ${Number(res.change_amount || finalPaid - totalAmount).toLocaleString('id-ID')}`,
@@ -377,6 +392,15 @@ export default function App() {
         {
           text: 'Selesai / Cetak Struk',
           onPress: () => {
+            if (storeType === 'cafe') {
+              setKdsOrders(prev => [{
+                id: res.id,
+                transaction_id: res.id,
+                items: [...cart],
+                status: 'PENDING',
+                created_at: new Date().toISOString()
+              }, ...prev]);
+            }
             setCart([]);
             setPaidAmount('');
             setPaymentMethod('CASH');
@@ -384,6 +408,7 @@ export default function App() {
             setKasbonCustomerPhone('');
             setApplyPB1(false);
             setSplitBillWays(1);
+            setSpgName('');
             setCheckoutModalVisible(false);
             loadProducts();
           },
@@ -694,6 +719,19 @@ export default function App() {
 
   const handleBarcodeScanned = (barcode: string) => {
     setSearchQuery(barcode);
+
+    // Scale Barcode Logic (Minimarket only) - Example: 21XXXXXPPPPP
+    if (storeType === 'minimarket' && barcode.length >= 12 && barcode.startsWith('21')) {
+      const pCode = barcode.substring(2, 7);
+      const pPrice = parseInt(barcode.substring(7, 12), 10);
+      const found = products.find(p => p.barcode === pCode || p.barcode === barcode);
+      if (found) {
+        addToCart(found, undefined, pPrice);
+        Alert.alert('✅ Barcode Timbangan!', `"${found.name}" ditambahkan dengan harga Rp${pPrice.toLocaleString('id-ID')}`);
+        return;
+      }
+    }
+
     const found = products.find(p => p.barcode === barcode || p.name.toLowerCase().includes(barcode.toLowerCase()));
     if (found) {
       addToCart(found);
@@ -738,6 +776,125 @@ export default function App() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* TAB CONTENT: KDS (Kitchen Display System) */}
+      {activeTab === 'kds' && (
+        <View style={{ flex: 1, padding: 16 }}>
+          <Text style={styles.screenHeader}>Kitchen Display System (KDS)</Text>
+          {kdsOrders.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="silverware-clean" size={48} color="#334155" />
+              <Text style={{ color: '#64748b', marginTop: 12 }}>Tidak ada pesanan aktif.</Text>
+            </View>
+          ) : (
+            <ScrollView style={{ flex: 1 }}>
+              <View style={{ flexDirection: isTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
+                {kdsOrders.map((order) => (
+                  <View key={order.id} style={{ 
+                    backgroundColor: '#0f172a', 
+                    borderRadius: 12, 
+                    borderWidth: 1, 
+                    borderColor: order.status === 'READY' ? '#10b981' : (order.status === 'PREPARING' ? '#f59e0b' : '#334155'), 
+                    padding: 16,
+                    width: isTablet ? '31%' : '100%',
+                  }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text style={{ color: '#fff', fontWeight: '800' }}>#{order.id.slice(-4)}</Text>
+                      <Text style={{ color: order.status === 'READY' ? '#10b981' : (order.status === 'PREPARING' ? '#f59e0b' : '#00f2fe'), fontWeight: '700', fontSize: 12 }}>
+                        {order.status}
+                      </Text>
+                    </View>
+                    <View style={{ marginBottom: 12 }}>
+                      {order.items.map((it: any, idx: number) => (
+                        <Text key={idx} style={{ color: '#94a3b8', fontSize: 13, marginVertical: 2 }}>
+                          {it.qty}x {it.product.name}
+                        </Text>
+                      ))}
+                    </View>
+                    {order.status === 'PENDING' && (
+                      <TouchableOpacity 
+                        style={{ backgroundColor: '#f59e0b', padding: 10, borderRadius: 8, alignItems: 'center' }}
+                        onPress={() => setKdsOrders(kdsOrders.map(o => o.id === order.id ? { ...o, status: 'PREPARING' } : o))}
+                      >
+                        <Text style={{ color: '#000', fontWeight: '800' }}>MASAK SEKARANG</Text>
+                      </TouchableOpacity>
+                    )}
+                    {order.status === 'PREPARING' && (
+                      <TouchableOpacity 
+                        style={{ backgroundColor: '#10b981', padding: 10, borderRadius: 8, alignItems: 'center' }}
+                        onPress={() => setKdsOrders(kdsOrders.map(o => o.id === order.id ? { ...o, status: 'READY' } : o))}
+                      >
+                        <Text style={{ color: '#fff', fontWeight: '800' }}>SELESAI & SIAP</Text>
+                      </TouchableOpacity>
+                    )}
+                    {order.status === 'READY' && (
+                      <TouchableOpacity 
+                        style={{ backgroundColor: '#334155', padding: 10, borderRadius: 8, alignItems: 'center' }}
+                        onPress={() => setKdsOrders(kdsOrders.filter(o => o.id !== order.id))}
+                      >
+                        <Text style={{ color: '#fff', fontWeight: '800' }}>ARSIPKAN</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      )}
+
+      {/* TAB CONTENT: ADMIN TOOLS */}
+      {activeTab === 'adminTools' && (
+        <ScrollView style={{ flex: 1, padding: 16 }}>
+          {!isAdmin ? (
+            <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="lock-closed" size={48} color="#ef4444" />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', marginTop: 12 }}>Akses Terkunci</Text>
+              <Text style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginTop: 6 }}>
+                Fitur Alat Admin hanya dapat diakses oleh Admin Toko.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.screenHeader}>Alat Admin Khusus</Text>
+              
+              {/* Generator Barcode */}
+              <View style={{ backgroundColor: '#0f172a', padding: 16, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#1e293b' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <Ionicons name="barcode-outline" size={24} color="#00f2fe" />
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>Generator Barcode Internal</Text>
+                </View>
+                <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
+                  Gunakan alat ini untuk membuat barcode khusus untuk barang yang tidak memiliki barcode bawaan pabrik.
+                </Text>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#1e293b', paddingVertical: 12, borderRadius: 8, alignItems: 'center' }}
+                  onPress={() => Alert.alert('Barcode Internal Dibuat!', `Kode: INT-${Math.floor(100000 + Math.random() * 900000)}\n\nSilahkan tempel barcode ini ke produk.`)}
+                >
+                  <Text style={{ color: '#00f2fe', fontWeight: '800' }}>BUAT BARCODE BARU</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Mutasi Cabang */}
+              <View style={{ backgroundColor: '#0f172a', padding: 16, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#1e293b' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <Ionicons name="swap-horizontal-outline" size={24} color="#f59e0b" />
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>Mutasi Stok Antar Cabang</Text>
+                </View>
+                <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
+                  Fitur untuk memindahkan stok berlebih ke cabang lain yang kekurangan stok (hanya untuk bisnis Multi-Outlet).
+                </Text>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#1e293b', paddingVertical: 12, borderRadius: 8, alignItems: 'center' }}
+                  onPress={() => Alert.alert('Pindah Stok', 'Silakan pilih Cabang Tujuan dan masukkan daftar barang yang ingin dimutasi pada versi lengkap aplikasi ini.')}
+                >
+                  <Text style={{ color: '#f59e0b', fontWeight: '800' }}>MULAI MUTASI STOK</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </ScrollView>
+      )}
 
       {/* TAB CONTENT 1: DASHBOARD (ADMIN ONLY VIEW) */}
       {activeTab === 'dashboard' && (
@@ -883,7 +1040,7 @@ export default function App() {
                     </Text>
                   </View>
                   <Text style={styles.gridProdName} numberOfLines={2}>{item.name}</Text>
-                  {item.expiry_date && (
+                  {['minimarket', 'apotek'].includes(storeType) && item.expiry_date && (
                     <Text style={{ fontSize: 9, color: (new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) ? '#ef4444' : '#64748b', fontWeight: '800', marginTop: 2 }}>
                       Exp: {item.expiry_date}
                     </Text>
@@ -901,7 +1058,7 @@ export default function App() {
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8' }}>
                 Keranjang POS ({cart.length} item)
               </Text>
-              {cart.length > 0 && (
+              {cart.length > 0 && ['cafe', 'minimarket', 'apotek', 'umum'].includes(storeType) && (
                 <TouchableOpacity onPress={holdBill} style={{ backgroundColor: '#f59e0b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
                   <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Hold Bill</Text>
                 </TouchableOpacity>
@@ -914,17 +1071,24 @@ export default function App() {
             </View>
 
             <ScrollView style={isTablet ? { flex: 1 } : { maxHeight: 110 }}>
-              {cart.map((item) => (
-                <View key={item.product.id} style={styles.cartRow}>
-                  <Text style={{ flex: 1, color: '#fff', fontSize: 12 }} numberOfLines={1}>
-                    {item.product.name}
-                  </Text>
+              {cart.map((item, cIdx) => (
+                <View key={cIdx} style={styles.cartRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#fff', fontSize: 12 }} numberOfLines={1}>
+                      {item.product.name}
+                    </Text>
+                    {item.selected_variants && item.selected_variants.length > 0 && (
+                      <Text style={{ color: '#00f2fe', fontSize: 10, marginTop: 2 }}>
+                        {item.selected_variants.join(', ')}
+                      </Text>
+                    )}
+                  </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQty(item.product.id, -1)}>
+                    <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQty(item.product.id, item.selected_variants?.join(', '), -1)}>
                       <Text style={{ color: '#fff', fontWeight: '800' }}>-</Text>
                     </TouchableOpacity>
                     <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{item.qty}</Text>
-                    <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQty(item.product.id, 1)}>
+                    <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQty(item.product.id, item.selected_variants?.join(', '), 1)}>
                       <Text style={{ color: '#fff', fontWeight: '800' }}>+</Text>
                     </TouchableOpacity>
                   </View>
@@ -992,7 +1156,7 @@ export default function App() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{item.name}</Text>
                   <Text style={{ color: '#64748b', fontSize: 10 }}>Barcode: {item.barcode || '-'}</Text>
-                  {item.expiry_date && (
+                  {['minimarket', 'apotek'].includes(storeType) && item.expiry_date && (
                     <Text style={{ fontSize: 10, color: (new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) ? '#ef4444' : '#94a3b8', fontWeight: '700', marginTop: 2 }}>
                       Exp: {item.expiry_date} {(new Date(item.expiry_date).getTime() < Date.now() + 30*24*60*60*1000) && '(Segera Kedaluwarsa)'}
                     </Text>
@@ -1086,6 +1250,7 @@ export default function App() {
                   <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>
                     Kasir: {item.cashier_name || 'Admin'} • {item.items_count} item • Metoda: {item.payment_method}
                     {item.pb1_applied && ' • (PB1 10%)'}
+                    {item.spg_name && ` • SPG: ${item.spg_name}`}
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
@@ -1123,12 +1288,14 @@ export default function App() {
                       {item.is_refunded ? (
                         <Text style={{ color: '#ef4444', fontSize: 10, marginTop: 4, fontWeight: '900' }}>[ DIRETUR ]</Text>
                       ) : (
-                        <TouchableOpacity
-                          style={{ marginTop: 4, backgroundColor: '#334155', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
-                          onPress={() => handleRefund(item.id)}
-                        >
-                          <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Retur Barang</Text>
-                        </TouchableOpacity>
+                        storeType !== 'cafe' && isAdmin && (
+                          <TouchableOpacity
+                            style={{ marginTop: 4, backgroundColor: '#334155', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+                            onPress={() => handleRefund(item.id)}
+                          >
+                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Retur Barang</Text>
+                          </TouchableOpacity>
+                        )
                       )}
                     </>
                   )}
@@ -1285,16 +1452,41 @@ export default function App() {
             <Text style={[styles.tabLabel, activeTab === 'incoming' && styles.tabLabelActive]}>Masuk</Text>
           </TouchableOpacity>
 
-          {/* 5. Dashboard (Admin Only) */}
-          {isAdmin && (
+          {storeType === 'cafe' && (
             <TouchableOpacity
-              style={[styles.tabItem, activeTab === 'dashboard' && styles.tabItemActive, { minWidth: 64 }]}
-              onPress={() => setActiveTab('dashboard')}
+              style={[styles.tabItem, activeTab === 'kds' && styles.tabItemActive, { minWidth: 64 }]}
+              onPress={() => setActiveTab('kds')}
               activeOpacity={0.7}
             >
-              <Ionicons name="bar-chart-outline" size={20} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
-              <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.tabLabelActive]}>Laporan</Text>
+              <MaterialCommunityIcons
+                name="chef-hat"
+                size={20}
+                color={activeTab === 'kds' ? '#00f2fe' : '#64748b'}
+              />
+              <Text style={[styles.tabLabel, activeTab === 'kds' && styles.tabLabelActive]}>Dapur KDS</Text>
             </TouchableOpacity>
+          )}
+
+          {/* 5. Dashboard (Admin Only) */}
+          {isAdmin && (
+            <>
+              <TouchableOpacity
+                style={[styles.tabItem, activeTab === 'dashboard' && styles.tabItemActive, { minWidth: 64 }]}
+                onPress={() => setActiveTab('dashboard')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="bar-chart-outline" size={20} color={activeTab === 'dashboard' ? '#00f2fe' : '#64748b'} />
+                <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.tabLabelActive]}>Laporan</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabItem, activeTab === 'adminTools' && styles.tabItemActive, { minWidth: 64 }]}
+                onPress={() => setActiveTab('adminTools')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="settings-outline" size={20} color={activeTab === 'adminTools' ? '#00f2fe' : '#64748b'} />
+                <Text style={[styles.tabLabel, activeTab === 'adminTools' && styles.tabLabelActive]}>Alat Admin</Text>
+              </TouchableOpacity>
+            </>
           )}
 
           {/* 6. Staf Kasir (Admin Only) */}
@@ -1415,33 +1607,50 @@ export default function App() {
               ))}
             </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={styles.label}>Pajak PB1 (10%)</Text>
-              <TouchableOpacity
-                style={[styles.chip, applyPB1 && styles.chipActive]}
-                onPress={() => setApplyPB1(!applyPB1)}
-              >
-                <Text style={[styles.chipText, applyPB1 && styles.chipTextActive]}>{applyPB1 ? 'ON' : 'OFF'}</Text>
-              </TouchableOpacity>
-            </View>
+            {storeType === 'cafe' && (
+              <>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <Text style={styles.label}>Pajak PB1 (10%)</Text>
+                  <TouchableOpacity
+                    style={[styles.chip, applyPB1 && styles.chipActive]}
+                    onPress={() => setApplyPB1(!applyPB1)}
+                  >
+                    <Text style={[styles.chipText, applyPB1 && styles.chipTextActive]}>{applyPB1 ? 'ON' : 'OFF'}</Text>
+                  </TouchableOpacity>
+                </View>
 
-            <View style={{ marginBottom: 16 }}>
-              <Text style={styles.label}>Split Bill (Bagi Tagihan)</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <TouchableOpacity style={styles.smallAddBtn} onPress={() => setSplitBillWays(Math.max(1, splitBillWays - 1))}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#000' }}>-</Text>
-                </TouchableOpacity>
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{splitBillWays} Orang</Text>
-                <TouchableOpacity style={styles.smallAddBtn} onPress={() => setSplitBillWays(splitBillWays + 1)}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#000' }}>+</Text>
-                </TouchableOpacity>
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={styles.label}>Split Bill (Bagi Tagihan)</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <TouchableOpacity style={styles.smallAddBtn} onPress={() => setSplitBillWays(Math.max(1, splitBillWays - 1))}>
+                      <Text style={{ fontSize: 16, fontWeight: '900', color: '#000' }}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{splitBillWays} Orang</Text>
+                    <TouchableOpacity style={styles.smallAddBtn} onPress={() => setSplitBillWays(splitBillWays + 1)}>
+                      <Text style={{ fontSize: 16, fontWeight: '900', color: '#000' }}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {splitBillWays > 1 && (
+                    <Text style={{ color: '#00f2fe', fontSize: 12, marginTop: 6, fontWeight: '700' }}>
+                      Per Orang: Rp {(totalAmount / splitBillWays).toLocaleString('id-ID')}
+                    </Text>
+                  )}
+                </View>
+              </>
+            )}
+
+            {['fashion', 'bangunan', 'counter'].includes(storeType) && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.label}>Sales / SPG (Opsional)</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Nama Sales / SPG / Mekanik..."
+                  placeholderTextColor="#64748b"
+                  value={spgName} 
+                  onChangeText={setSpgName} 
+                />
               </View>
-              {splitBillWays > 1 && (
-                <Text style={{ color: '#00f2fe', fontSize: 12, marginTop: 6, fontWeight: '700' }}>
-                  Per Orang: Rp {(totalAmount / splitBillWays).toLocaleString('id-ID')}
-                </Text>
-              )}
-            </View>
+            )}
 
             {paymentMethod !== 'KASBON' && (
               <>
@@ -1534,6 +1743,65 @@ export default function App() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateProduct}>
                 <Text style={styles.primaryBtnText}>TAMBAH</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* VARIANT MODAL */}
+      <Modal visible={variantModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Pilih Varian: {selectedProductForVariant?.name}</Text>
+            {selectedProductForVariant?.variants?.map((group, gIdx) => (
+              <View key={gIdx} style={{ marginBottom: 12 }}>
+                <Text style={styles.label}>{group.group_name}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                  {group.options.map((opt, oIdx) => {
+                    const isSelected = selectedVariants[group.group_name]?.name === opt.name;
+                    return (
+                      <TouchableOpacity
+                        key={oIdx}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: isSelected ? '#00f2fe' : '#334155',
+                          backgroundColor: isSelected ? 'rgba(0, 242, 254, 0.1)' : '#07090e',
+                        }}
+                        onPress={() => setSelectedVariants(prev => ({ ...prev, [group.group_name]: opt }))}
+                      >
+                        <Text style={{ color: isSelected ? '#00f2fe' : '#94a3b8', fontSize: 13, fontWeight: '700' }}>
+                          {opt.name} {opt.price_diff > 0 ? `(+Rp${opt.price_diff.toLocaleString('id-ID')})` : ''}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => {
+                setVariantModalVisible(false);
+                setSelectedProductForVariant(null);
+                setSelectedVariants({});
+              }}>
+                <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.primaryBtn} 
+                onPress={() => {
+                  if (selectedProductForVariant) {
+                    addToCart(selectedProductForVariant, selectedVariants);
+                    setVariantModalVisible(false);
+                    setSelectedProductForVariant(null);
+                    setSelectedVariants({});
+                  }
+                }}
+              >
+                <Text style={styles.primaryBtnText}>TAMBAH KE KERANJANG</Text>
               </TouchableOpacity>
             </View>
           </View>

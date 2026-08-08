@@ -22,7 +22,7 @@ const MOCK_AUDIT: AuditLog[] = [
   { id: 3, created_at: '2026-07-31 17:30', username: 'kasir_admin', action: 'TENANT_REGISTER', details: 'Restorasi Toko Berhasil', ip_address: '192.168.100.184' },
 ];
 
-const MOCK_TENANTS: Tenant[] = [
+export const MOCK_TENANTS: Tenant[] = [
   { id: 1, name: 'Sivilize Supermarket & Mart', slug: 'sivilize-mart', store_type: 'minimarket', icon: 'cart-outline' },
   { id: 2, name: 'Apotek Kimia Medika 24 Jam', slug: 'apotek-medika', store_type: 'apotek', icon: 'medical-outline' },
   { id: 3, name: 'Kopi Senja & Resto F&B', slug: 'kopi-senja', store_type: 'cafe', icon: 'cafe-outline' },
@@ -41,8 +41,38 @@ const MOCK_PRODUCTS: Product[] = [
   { id: 202, barcode: '8998888002', name: 'Vitamin C 1000mg Enervon-C Botol', purchase_price: 32000, sale_price: 40000, stock: 30, expiry_date: '2027-12-01' },
   { id: 203, barcode: '8998888003', name: 'Betadine Antiseptik 30ml', purchase_price: 18000, sale_price: 23500, stock: 25 },
   // Cafe / F&B
-  { id: 301, barcode: '8997777001', name: 'Es Kopi Susu Gula Aren 500ml', purchase_price: 10000, sale_price: 18000, stock: 50 },
+  { id: 3001, barcode: 'MAT-KOPI', name: 'Biji Kopi House Blend (Gram)', purchase_price: 150, sale_price: 0, stock: 5000 },
+  { id: 3002, barcode: 'MAT-SUSU', name: 'Susu Cair Fresh Milk (ml)', purchase_price: 20, sale_price: 0, stock: 10000 },
+  { id: 3003, barcode: 'MAT-GULA', name: 'Gula Aren Cair (ml)', purchase_price: 30, sale_price: 0, stock: 5000 },
+  { 
+    id: 301, 
+    barcode: '8997777001', 
+    name: 'Es Kopi Susu Gula Aren 500ml', 
+    purchase_price: 10000, 
+    sale_price: 18000, 
+    stock: 50, 
+    recipe: [{ material_id: 3001, qty_needed: 20 }, { material_id: 3002, qty_needed: 150 }, { material_id: 3003, qty_needed: 30 }],
+    has_variants: true,
+    variants: [
+      { group_name: 'Ukuran', options: [{ name: 'Reguler', price_diff: 0 }, { name: 'Large', price_diff: 5000 }] },
+      { group_name: 'Sugar Level', options: [{ name: 'Normal', price_diff: 0 }, { name: 'Less Sugar', price_diff: 0 }, { name: 'No Sugar', price_diff: 0 }] }
+    ]
+  },
   { id: 302, barcode: '8997777002', name: 'Roti Bakar Cokelat Keju', purchase_price: 8000, sale_price: 15000, stock: 40 },
+  // Fashion
+  {
+    id: 501,
+    barcode: 'FASH-001',
+    name: 'Kemeja Flannel Pria',
+    purchase_price: 75000,
+    sale_price: 125000,
+    stock: 120,
+    has_variants: true,
+    variants: [
+      { group_name: 'Ukuran', options: [{ name: 'M', price_diff: 0 }, { name: 'L', price_diff: 0 }, { name: 'XL', price_diff: 10000 }] },
+      { group_name: 'Warna', options: [{ name: 'Merah', price_diff: 0 }, { name: 'Hitam', price_diff: 0 }] }
+    ]
+  },
   // Counter HP
   { id: 401, barcode: '8996666001', name: 'Kabel Data Fast Charge Type-C 65W', purchase_price: 15000, sale_price: 35000, stock: 20 },
   { id: 402, barcode: '8996666002', name: 'Voucher Telkomsel 10GB 30 Hari', purchase_price: 33000, sale_price: 38000, stock: 60 },
@@ -225,17 +255,27 @@ export const apiService = {
   },
 
   // Checkout POS
-  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string, pb1Applied?: boolean, splitBillWays?: number) {
+  async checkout(items: CartItem[], paidAmount: number, paymentMethod: 'CASH' | 'QRIS' | 'KASBON' = 'CASH', customerName?: string, customerPhone?: string, pb1Applied?: boolean, splitBillWays?: number, spgName?: string) {
     try {
       return await request('/transactions', {
         method: 'POST',
-        body: { items, paid_amount: paidAmount, payment_method: paymentMethod, customer_name: customerName, customer_phone: customerPhone, pb1_applied: pb1Applied, split_bill_ways: splitBillWays },
+        body: { items, paid_amount: paidAmount, payment_method: paymentMethod, customer_name: customerName, customer_phone: customerPhone, pb1_applied: pb1Applied, split_bill_ways: splitBillWays, spg_name: spgName },
       });
     } catch (e) {
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
       items.forEach(i => {
         const p = MOCK_PRODUCTS.find(mp => mp.id === i.product.id);
-        if (p) p.stock = Math.max(0, p.stock - i.qty);
+        if (p) {
+          p.stock = Math.max(0, p.stock - i.qty);
+          if (p.recipe && p.recipe.length > 0) {
+            p.recipe.forEach(r => {
+              const mat = MOCK_PRODUCTS.find(mp => mp.id === r.material_id);
+              if (mat) {
+                mat.stock = Math.max(0, mat.stock - (r.qty_needed * i.qty));
+              }
+            });
+          }
+        }
       });
       const totalAmount = pb1Applied ? total * 1.1 : total;
       const res = {
@@ -249,6 +289,7 @@ export const apiService = {
         customer_phone: customerPhone,
         pb1_applied: pb1Applied,
         split_bill_ways: splitBillWays,
+        spg_name: spgName,
       };
       
       MOCK_TRANSACTIONS.unshift({
@@ -264,6 +305,7 @@ export const apiService = {
         customer_phone: res.customer_phone,
         pb1_applied: res.pb1_applied,
         split_bill_ways: res.split_bill_ways,
+        spg_name: res.spg_name,
       });
 
       return res;

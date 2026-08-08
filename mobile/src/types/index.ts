@@ -10,12 +10,24 @@ export interface Product {
   wholesale_price?: number;
   wholesale_min_qty?: number;
   expiry_date?: string;
+  recipe?: { material_id: number; qty_needed: number }[];
+  has_variants?: boolean;
+  variants?: { group_name: string; options: { name: string; price_diff: number }[] }[];
+}
+
+export interface KdsOrder {
+  id: string;
+  transaction_id: string;
+  items: CartItem[];
+  status: 'PENDING' | 'PREPARING' | 'READY';
+  created_at: string;
 }
 
 export interface CartItem {
   product: Product;
   qty: number;
   subtotal: number;
+  selected_variants?: string[];
 }
 
 export interface User {
@@ -58,6 +70,7 @@ export interface TransactionRecord {
   is_refunded?: boolean;
   pb1_applied?: boolean;
   split_bill_ways?: number;
+  spg_name?: string;
 }
 
 export interface IncomingLog {
