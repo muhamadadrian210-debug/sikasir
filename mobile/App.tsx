@@ -127,6 +127,13 @@ export default function App() {
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QRIS' | 'KASBON'>('CASH');
 
+  // Shift Management State
+  const [shiftStatus, setShiftStatus] = useState<'closed' | 'open'>('closed');
+  const [shiftModalVisible, setShiftModalVisible] = useState(false);
+  const [openingCash, setOpeningCash] = useState('');
+  const [closingCash, setClosingCash] = useState('');
+  const [shiftAction, setShiftAction] = useState<'open' | 'close'>('open');
+
   // AI Assistant Modal State
   const [aiModalVisible, setAiModalVisible] = useState(false);
 
@@ -292,18 +299,30 @@ export default function App() {
     }
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
+      
       if (existing) {
         if (existing.qty >= product.stock) {
           Alert.alert('Stok Maksimal', `Stok ${product.name} tersisa ${product.stock} pcs.`);
           return prev;
         }
+        
+        const newQty = existing.qty + 1;
+        const priceToUse = (product.wholesale_min_qty && newQty >= product.wholesale_min_qty && product.wholesale_price) 
+                           ? product.wholesale_price 
+                           : product.sale_price;
+
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, qty: item.qty + 1, subtotal: (item.qty + 1) * product.sale_price }
+            ? { ...item, qty: newQty, subtotal: newQty * priceToUse }
             : item
         );
       }
-      return [...prev, { product, qty: 1, subtotal: product.sale_price }];
+      
+      const priceToUse = (product.wholesale_min_qty && 1 >= product.wholesale_min_qty && product.wholesale_price) 
+                         ? product.wholesale_price 
+                         : product.sale_price;
+                         
+      return [...prev, { product, qty: 1, subtotal: priceToUse }];
     });
   };
 
@@ -318,7 +337,12 @@ export default function App() {
               Alert.alert('Stok Maksimal', `Stok tersisa ${item.product.stock} pcs.`);
               return item;
             }
-            return { ...item, qty: newQty, subtotal: newQty * item.product.sale_price };
+            
+            const priceToUse = (item.product.wholesale_min_qty && newQty >= item.product.wholesale_min_qty && item.product.wholesale_price) 
+                               ? item.product.wholesale_price 
+                               : item.product.sale_price;
+                               
+            return { ...item, qty: newQty, subtotal: newQty * priceToUse };
           }
           return item;
         })
@@ -729,7 +753,25 @@ export default function App() {
       )}
 
       {/* TAB CONTENT 2: KASIR POS (ALL ROLES HAVE ACCESS) */}
-      {activeTab === 'kasir' && (
+      {activeTab === 'kasir' && shiftStatus === 'closed' && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <MaterialCommunityIcons name="cash-register" size={64} color="#64748b" />
+          <Text style={{ fontSize: 18, color: '#fff', fontWeight: 'bold', marginTop: 16 }}>Shift Kasir Belum Dibuka</Text>
+          <Text style={{ fontSize: 12, color: '#94a3b8', marginTop: 8, marginBottom: 24 }}>Buka shift terlebih dahulu untuk mulai melayani pelanggan.</Text>
+          <TouchableOpacity 
+            style={[styles.primaryBtn, { width: 200 }]} 
+            onPress={() => {
+              setShiftAction('open');
+              setOpeningCash('');
+              setShiftModalVisible(true);
+            }}
+          >
+            <Text style={styles.primaryBtnText}>BUKA SHIFT KASIR</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {activeTab === 'kasir' && shiftStatus === 'open' && (
         <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
           <View style={{ flex: isTablet ? 2 : 1 }}>
             {/* Search bar & Heavy Duty Camera Scanner Button */}
@@ -867,6 +909,16 @@ export default function App() {
                 <Text style={styles.primaryBtnText}>PROSES BAYAR</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity 
+              style={{ marginTop: 12, alignItems: 'center' }}
+              onPress={() => {
+                setShiftAction('close');
+                setClosingCash('');
+                setShiftModalVisible(true);
+              }}
+            >
+              <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '700' }}>Tutup Shift Kasir</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -1379,6 +1431,42 @@ export default function App() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateIncomingLog}>
                 <Text style={styles.primaryBtnText}>CATAT MASUK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Shift Modal */}
+      <Modal visible={shiftModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{shiftAction === 'open' ? 'Buka Shift Kasir' : 'Tutup Shift Kasir'}</Text>
+            <Text style={[styles.label, { marginTop: 12 }]}>{shiftAction === 'open' ? 'Uang Modal Awal (Rp)' : 'Total Uang di Laci (Rp)'}</Text>
+            <TextInput
+              style={styles.modalInput}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor="#64748b"
+              value={shiftAction === 'open' ? openingCash : closingCash}
+              onChangeText={shiftAction === 'open' ? setOpeningCash : setClosingCash}
+            />
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShiftModalVisible(false)}>
+                <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveBtn}
+                onPress={() => {
+                  if (shiftAction === 'open') {
+                    setShiftStatus('open');
+                  } else {
+                    setShiftStatus('closed');
+                  }
+                  setShiftModalVisible(false);
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>{shiftAction === 'open' ? 'Buka Shift' : 'Tutup Shift'}</Text>
               </TouchableOpacity>
             </View>
           </View>
