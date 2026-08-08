@@ -1844,7 +1844,7 @@ window.__openWebBarcodeScanner = openWebBarcodeScanner;
 
 function loadMutasiPanel() {
   const root = document.getElementById('view-mutasi');
-  root.innerHTML = \
+  root.innerHTML = `
     <div class="card">
       <h3 style="margin-top:0">Mutasi Stok Antar Cabang</h3>
       <p style="color:var(--text); font-size:0.9rem">
@@ -1860,12 +1860,12 @@ function loadMutasiPanel() {
         <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-debug.apk'">Unduh SiKasir Android</button>
       </div>
     </div>
-  \;
+  `;
 }
 
 function loadKasbonPanel() {
   const root = document.getElementById('view-kasbon-global');
-  root.innerHTML = \
+  root.innerHTML = `
     <div class="card">
       <h3 style="margin-top:0">Buku Kasbon Global</h3>
       <p style="color:var(--text); font-size:0.9rem">
@@ -1881,5 +1881,5 @@ function loadKasbonPanel() {
         <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-debug.apk'">Unduh SiKasir Android</button>
       </div>
     </div>
-  \;
+  `;
 }
