@@ -1,19 +1,19 @@
 /* SiKasir — Design System */
 :root {
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --secondary: #38bdf8;
-  --bg: #121212;
-  --bg-muted: #09090b;
-  --heading: #ffffff;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --border: #1e1e1e;
-  --text: #a1a1aa;
+  --primary: #10b981;
+  --primary-dark: #059669;
+  --secondary: #34d399;
+  --bg: #064e3b;
+  --bg-muted: #022c22;
+  --heading: #ecfdf5;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --border: #047857;
+  --text: #a7f3d0;
   --radius: 16px;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow: 0 4px 12px rgba(2, 44, 34, 0.4), 0 8px 24px rgba(2, 44, 34, 0.2);
+  --shadow-md: 0 8px 32px rgba(2, 44, 34, 0.6);
   --sidebar-w: 240px;
   font-family: 'Inter', system-ui, sans-serif;
 }
