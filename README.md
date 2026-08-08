@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/icons/logo.svg" alt="SiKasir Logo" width="120" height="120">
   <h1>SiKasir</h1>
-  <p><b>Sistem Point of Sales Cerdas Masa Depan</b></p>
+  <p><b>Sistem Point of Sales Cerdas Masa Depan (Super POS App)</b></p>
 </div>
 
 ---
@@ -9,6 +9,49 @@
 ## 🚀 Apa itu SiKasir?
 
 **SiKasir** adalah sistem *Point of Sales* (POS) dan manajemen inventaris digital tingkat lanjut yang dirancang khusus untuk mempercepat, mempermudah, dan mengotomatisasi proses bisnis ritel modern. SiKasir adalah sebuah **Universal POS** yang secara otomatis beradaptasi dengan lebih dari 30 tipe bisnis, mulai dari F&B, Ritel, Jasa, Otomotif, hingga Klinik Kesehatan. Dibekali dengan fitur **AI Assistant**, SiKasir tidak hanya mencatat transaksi, tetapi juga mampu diajak berkomunikasi untuk mengatur dan mengaudit stok secara instan, cerdas, dan efisien.
+
+---
+
+## 🌟 Kenapa SiKasir Berbeda dari POS Lainnya? (Key Differentiators)
+
+Di pasaran, ada banyak sekali aplikasi kasir. Namun, SiKasir lahir dari pemikiran teknis tingkat tinggi (Silicon Valley Standard) untuk mengatasi masalah yang tidak bisa diselesaikan oleh POS biasa. Berikut adalah keunggulan mutlak SiKasir:
+
+1. **🤖 AI-Powered Input (Asisten AI Cerdas)**
+   POS biasa memaksa Anda mengetik manual berpuluh-puluh form. SiKasir memiliki kolom AI di mana Anda cukup mengetik bahasa sehari-hari: *"Kopi Susu ukuran Large harga 25ribu stok 100"*. AI akan langsung mengekstrak, mengenali varian, dan menyimpan data secara otomatis.
+2. **🧬 Universal Business Adaptability (Bunglon UI/UX)**
+   Aplikasi kasir lain biasanya "memaksa" tampilan restoran dipakai di toko baju. SiKasir berbeda! Saat Anda mendaftar sebagai **Apotek**, sistem akan memunculkan fitur *Tanggal Kedaluwarsa (Expired Date)*. Saat mendaftar sebagai **Bengkel**, form *Nama Mekanik* akan otomatis muncul saat checkout. Saat menjadi **Cafe**, fitur *Layar Dapur (KDS)* dan *Pajak PB1* otomatis aktif. Aplikasi yang beradaptasi dengan Anda, bukan sebaliknya.
+3. **🏢 Multi-Outlet Corporate Integration (Lintas Industri)**
+   Jika Anda memiliki 1 Minimarket dan 1 Cafe, POS lain akan memisahkannya. SiKasir memungkinkan 1 *Owner* (Company ID) menghubungkan kedua bisnis beda tipe tersebut. Anda bisa **memindahkan stok** dari Minimarket ke Cafe secara otomatis, dan melihat **Dashboard Laporan Gabungan** dari keduanya.
+4. **💬 Penagihan Hutang via WhatsApp (1-Klik)**
+   Manajemen hutang pelanggan (KASBON) bukan sekadar catatan. SiKasir memiliki tombol **Follow Up WA** yang otomatis melompat ke WhatsApp pelanggan, lengkap dengan draf pesan otomatis berisi sisa hutang yang harus dilunasi.
+5. **🛡️ Active Cybersecurity Defense**
+   POS biasa hanya berfungsi sebagai laci uang digital. SiKasir dirancang layaknya brankas bank digital. Dilengkapi dengan pendeteksi **Brute Force**, **IP Blacklisting**, dan **Log Audit** untuk mencatat siapa saja yang menghapus produk atau memanipulasi harga.
+
+---
+
+## 🛠️ Bedah Fitur Secara Mendalam (Deep Dive)
+
+Berikut adalah penjelasan rinci dari setiap modul dan fitur kelas *Enterprise* yang tertanam di dalam SiKasir:
+
+### 1. Modul Dinamis & Matriks Varian
+* **Harga Grosir (Wholesale):** Anda dapat mengatur batas minimal pembelian. Misalnya, "Harga satuan Rp 10.000, jika beli di atas 10 pcs harga otomatis menjadi Rp 8.000". Fitur ini krusial untuk Toko Bangunan dan Distributor.
+* **Matriks Varian Berlapis:** Sangat berguna untuk Fashion (Ukuran: M/L/XL, Warna: Merah/Hitam) atau F&B (Gula: Normal/Less, Ukuran: Reg/Large). Harga akan otomatis menyesuaikan setiap kombinasi varian.
+* **Timbangan Barcode (Scale Barcode):** Mendukung pemindaian barcode yang dicetak oleh timbangan digital (misal di Supermarket/Toko Buah) yang menyimpan data harga langsung di dalam string barcode-nya.
+
+### 2. Modul Kasir Khusus F&B (Food & Beverage)
+Jika toko Anda terdaftar sebagai *Cafe*, *Restoran*, *Warteg*, atau *Bakery*, fitur khusus ini akan otomatis menyala:
+* **Kitchen Display System (KDS):** Pesanan kasir tidak perlu diteriakkan atau diprint kertas struk. Dapur akan memiliki layar sendiri yang menampilkan pesanan secara *real-time*. Koki bisa menekan tombol "SIAP" agar pelayan tahu pesanan telah matang.
+* **Split Bill (Pisah Tagihan):** Memudahkan rombongan tamu yang ingin membayar tagihannya masing-masing. Total pesanan bisa dipecah menjadi beberapa bon dalam hitungan detik.
+* **Pajak Restoran PB1:** Perhitungan pajak pembangunan daerah (PB1) otomatis diterapkan di akhir tagihan.
+
+### 3. Modul Kasbon & Keuangan Terpadu
+* **Kasbon Global Berbasis Limit:** Setiap Pelanggan (Customer) memiliki profil dan *Limit Hutang*. Saat pelanggan *checkout* menggunakan opsi Kasbon, saldo hutang mereka akan bertambah. 
+* **Saling Mengurangi Limit Lintas Cabang:** Karena sistem terintegrasi, jika pelanggan VIP menghabiskan limit hutang di cabang A (misal Minimarket), maka sisa jatah hutangnya di cabang B (Cafe) akan ikut menyusut!
+* **Retur Barang & Pengembalian Dana (Refund):** Jika terjadi salah input atau pembatalan, Admin dapat melakukan Retur. Sistem akan membatalkan nilai transaksi dan mengembalikan stok barang ke dalam rak secara otomatis tanpa selisih data.
+
+### 4. Modul Multi-Outlet (Grup Perusahaan)
+* **Dashboard Konsolidasi:** Tuas (Toggle) khusus bagi Pemilik/Admin untuk beralih antara melihat laporan "Toko Ini Saja" atau "Keseluruhan Grup Perusahaan". Data Omzet, Total Produk, dan Barang Kritis akan langsung dijumlahkan menjadi 1 laporan raksasa.
+* **Alat Mutasi Stok:** Transfer stok barang yang menganggur di satu toko ke toko Anda yang lain. Mengurangi *dead stock* (barang mati) dan memperlancar likuiditas barang fisik Anda.
 
 ---
 
@@ -36,54 +79,26 @@ Menjadi pilar utama dalam transformasi dan digitalisasi ritel modern di Indonesi
 
 ## 📖 Panduan Lengkap Penggunaan Aplikasi
 
-Berikut adalah panduan lengkap cara mengoperasikan sistem **SiKasir**, baik untuk kebutuhan administrasi (Admin) maupun operasional kasir harian (POS).
-
----
+Berikut adalah ringkasan cara mengoperasikan sistem **SiKasir**, baik untuk kebutuhan administrasi (Admin) maupun operasional kasir harian (POS).
 
 ### 🔑 1. Pendaftaran & Setup Toko Awal
-SiKasir mendukung lebih dari 30+ kategori usaha yang ada di Indonesia.
 1. Akses halaman login dan tekan tombol **Buat Toko Baru**.
 2. Masukkan **Nama Toko** Anda dan tekan **Pilih Tipe Toko**.
-3. Di dalam menu pilihan, toko telah terkelompok rapi (misal: *F&B, Retail, Kesehatan, Otomotif*). Pilih kategori yang paling sesuai dengan bisnis Anda, misalnya: `Cafe & Kopi`, `Bengkel Motor`, `Apotek`, atau `Minimarket`.
+3. Di dalam *Bottom Sheet Modal*, toko telah terkelompok rapi (misal: *F&B, Retail, Kesehatan, Otomotif, Jasa*). Terdapat 30+ pilihan tipe toko yang spesifik di Indonesia.
 4. Isi data pemilik (Admin) dan masukkan kata sandi. 
-5. UI & UX serta fitur-fitur di dalam aplikasi akan **Otomatis Beradaptasi** sesuai dengan kategori usaha Anda! (Contoh: Fitur Dapur hanya muncul di Cafe, Input Nama Mekanik hanya muncul di Bengkel, fitur Expired Date hanya muncul di Apotek).
+5. UI & UX serta fitur-fitur di dalam aplikasi akan **Otomatis Beradaptasi** sesuai dengan kategori usaha Anda!
 
----
+### 📦 2. Cara Cerdas Memasukkan Barang
+1. Masuk ke halaman Kasir atau Admin, buka pendaftaran produk.
+2. Manfaatkan **AI Assistant**: Cukup ketik deskripsi produk di dalam form AI, seperti *"Oli Yamalube 800ml harga beli 35000 harga jual 45000 stok 20"*, dan AI akan mengisikan datanya secara ajaib.
+3. Sesuaikan atribut dinamis: Jika Anda Apotek, wajib isi *Expired Date*. Jika Anda Bengkel, tidak perlu mengisi apa-apa.
 
-### 📦 2. Manajemen Stok & Produk Terpintar
-SiKasir mendukung berbagai macam varian dan otomatisasi saat Anda memasukkan barang baru:
-1. Masuk ke halaman Kasir atau Admin, buka fitur pendaftaran produk.
-2. Manfaatkan **AI Assistant**: Cukup ketik deskripsi produk di dalam form AI, seperti *"Kopi Susu Gula Aren, harga 20ribu"*, dan AI akan mengisikan datanya untuk Anda.
-3. Mendukung **Matriks Varian**: Anda dapat membuat varian produk berlapis (seperti "Ukuran: Regular/Large" dan "Gula: Normal/Less Sugar").
-4. Mendukung **Harga Grosir**: Tentukan harga grosir yang otomatis aktif apabila pelanggan membeli di atas batas minimal kuantitas yang Anda tentukan (Sangat cocok untuk Toko Bangunan / Grosir / Minimarket).
-
----
-
-### 🏢 3. Integrasi Grup Perusahaan (Multi-Outlet)
-Bagi pengusaha yang memiliki lebih dari 1 jenis bisnis (misal: Punya Minimarket dan Cafe sekaligus), SiKasir menyediakan fitur **Corporate Integration**:
-1. **Dashboard Konsolidasi**: Admin dapat menyalakan tuas (toggle) *"Grup Perusahaan"* di layar Laporan untuk melihat gabungan omzet, total produk, dan stok dari *seluruh* toko di bawah payung grup usahanya.
-2. **Mutasi Stok Antar Cabang**: Pemilik dapat memindahkan stok sisa (misal: Air mineral) dari Minimarket ke Cafe secara otomatis melalui alat **Kirim Stok**.
-3. **Kasbon Global Terpadu**: Jika seorang pelanggan (VIP) memiliki hutang di Minimarket, limit kasbonnya akan otomatis tersinkronisasi dan terpotong saat ia ngopi di Cafe grup Anda! Penagihan Kasbon juga cukup dilakukan dengan 1-klik yang otomatis meluncurkan chat WhatsApp.
-
----
-
-### 🛒 4. Transaksi Kasir POS (Point of Sales)
-Transaksi penjualan dirancang khusus agar tidak menyebabkan antrian panjang:
-1. Scan produk menggunakan *barcode scanner* atau cari berdasarkan nama.
-2. Fitur-fitur Spesial Checkout:
-   * **Hold Bill (Simpan Tagihan):** Kasir Minimarket bisa menahan antrian jika pelanggan sedang mengambil dompet yang tertinggal.
-   * **Split Bill (Pisah Tagihan):** Khusus untuk Cafe / Resto, rombongan tamu dapat membagi tagihannya masing-masing dengan adil.
-   * **Sales/Mekanik/Karyawan:** Catat nama SPG atau Mekanik yang melayani pelanggan (Otomatis muncul untuk Bengkel, Salon, dll).
-3. **Retur Barang & Refund**: Admin memiliki kendali penuh untuk menekan tombol **Retur Barang** pada histori transaksi apabila pelanggan ingin membatalkan/menukar pesanan yang sudah tercetak, menjaga agar catatan uang dan stok tidak pernah selisih.
-4. Pembayaran mendukung CASH, QRIS Dinamis, dan KASBON.
-
----
-
-### 🛡️ 5. Fitur Keamanan & Log Audit Sistem (Cybersecurity Ready)
-SiKasir dirancang dengan pertahanan siber tingkat tinggi untuk melindungi data bisnis Anda dari penyusup:
-* **Anti Brute Force**: Jika terjadi 5 kali gagal login berturut-turut pada IP yang sama, sistem akan memblokir IP tersebut selama 1 jam.
-* **IP Auto Blacklist**: IP yang melakukan aktivitas mencurigakan berulang kali akan otomatis masuk daftar hitam (*permanent block*).
-* **Log Audit Admin**: Setiap perubahan data penting (seperti menghapus produk, mengedit harga, menambah kasir) akan dicatat lengkap beserta timestamp dan IP pelaksana di menu **Log Audit** untuk pelacakan internal.
+### 🛒 3. Transaksi Cepat & Bebas Hambatan (Checkout)
+1. Scan barcode produk atau sentuh kotak produk di halaman layar POS.
+2. Atur kuantitas (jika mencapai batas kuantitas Grosir, harga otomatis turun).
+3. Jika antrian terhambat pelanggan yang mengambil dompet, cukup klik **Hold Bill** untuk meminggirkan tagihannya dan layani pelanggan berikutnya.
+4. Pilih metode pembayaran (CASH, QRIS, KASBON). Apabila toko Anda adalah Bengkel atau Jasa Salon, sistem akan otomatis meminta input **Nama Mekanik/Stylist** sebelum mencetak struk.
+5. Transaksi selesai dan tersimpan dengan arsitektur tahan kegagalan (Single Database Transaction).
 
 ---
 
