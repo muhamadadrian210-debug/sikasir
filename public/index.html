@@ -43,6 +43,10 @@
 
         <form id="login-form" class="auth-panel" data-panel="login">
           <div class="field">
+            <label for="company-id-login">Company ID (Opsional)</label>
+            <input id="company-id-login" name="company_id" placeholder="Kosongkan jika bukan Multi-Cabang" />
+          </div>
+          <div class="field">
             <label for="username">Username</label>
             <input id="username" name="username" autocomplete="username" required />
           </div>
@@ -74,20 +78,53 @@
             <label for="reg-store-type">Jenis Toko / Kios</label>
             <select id="reg-store-type" name="store_type" required>
               <option value="">— Pilih jenis toko —</option>
-              <option value="Minimarket">Minimarket</option>
-              <option value="Warung Sembako">Warung Sembako</option>
-              <option value="Toko Kelontong">Toko Kelontong</option>
-              <option value="Apotek / Toko Obat">Apotek / Toko Obat</option>
-              <option value="Toko Elektronik">Toko Elektronik</option>
-              <option value="Toko Pakaian / Fashion">Toko Pakaian / Fashion</option>
-              <option value="Toko Alat Tulis / ATK">Toko Alat Tulis / ATK</option>
-              <option value="Toko Bangunan / Material">Toko Bangunan / Material</option>
-              <option value="Toko Kosmetik / Kecantikan">Toko Kosmetik / Kecantikan</option>
-              <option value="Toko Makanan & Minuman">Toko Makanan & Minuman</option>
-              <option value="Toko Peralatan Rumah Tangga">Toko Peralatan Rumah Tangga</option>
-              <option value="Toko Otomotif / Spare Part">Toko Otomotif / Spare Part</option>
-              <option value="Lainnya">Lainnya</option>
+              <optgroup label="Retail & Dagang">
+                <option value="Minimarket">Minimarket</option>
+                <option value="Toko Kelontong">Toko Kelontong</option>
+                <option value="Warung Sembako">Warung Sembako</option>
+                <option value="Toko Pakaian / Fashion">Toko Pakaian / Fashion</option>
+                <option value="Toko Elektronik">Toko Elektronik</option>
+                <option value="Toko Komputer / HP">Toko Komputer / HP</option>
+                <option value="Toko Peralatan Rumah Tangga">Toko Peralatan Rumah Tangga</option>
+                <option value="Toko Alat Tulis / ATK">Toko Alat Tulis / ATK</option>
+                <option value="Toko Mainan">Toko Mainan</option>
+                <option value="Toko Buku">Toko Buku</option>
+                <option value="Pet Shop">Pet Shop</option>
+                <option value="Toko Kosmetik / Kecantikan">Toko Kosmetik / Kecantikan</option>
+                <option value="Toko Parfum">Toko Parfum</option>
+                <option value="Toko Plastik / Kemasan">Toko Plastik / Kemasan</option>
+              </optgroup>
+              <optgroup label="Makanan & Minuman">
+                <option value="Cafe / Kedai Kopi">Cafe / Kedai Kopi</option>
+                <option value="Restoran">Restoran</option>
+                <option value="Rumah Makan">Rumah Makan</option>
+                <option value="Warung Makan / Tegal">Warung Makan / Tegal</option>
+                <option value="Kedai Teh / Minuman">Kedai Teh / Minuman</option>
+                <option value="Toko Kue / Bakery">Toko Kue / Bakery</option>
+                <option value="Toko Daging / Seafood">Toko Daging / Seafood</option>
+              </optgroup>
+              <optgroup label="Jasa & Kesehatan">
+                <option value="Apotek / Toko Obat">Apotek / Toko Obat</option>
+                <option value="Klinik Kesehatan">Klinik Kesehatan</option>
+                <option value="Klinik Gigi">Klinik Gigi</option>
+                <option value="Barbershop / Pangkas Rambut">Barbershop / Pangkas Rambut</option>
+                <option value="Salon Kecantikan">Salon Kecantikan</option>
+                <option value="Laundry">Laundry</option>
+                <option value="Cuci Mobil / Motor">Cuci Mobil / Motor</option>
+                <option value="Bengkel Motor / Mobil">Bengkel Motor / Mobil</option>
+              </optgroup>
+              <optgroup label="Material & Agrikultur">
+                <option value="Toko Bangunan / Material">Toko Bangunan / Material</option>
+                <option value="Toko Otomotif / Spare Part">Toko Otomotif / Spare Part</option>
+                <option value="Toko Pertanian / Pupuk">Toko Pertanian / Pupuk</option>
+                <option value="Agen Gas & Galon">Agen Gas & Galon</option>
+                <option value="Lainnya">Lainnya</option>
+              </optgroup>
             </select>
+          </div>
+          <div class="field">
+            <label for="reg-company-id">Company ID (Corporate)</label>
+            <input id="reg-company-id" name="company_id" placeholder="Opsional untuk Holding / Multi-Cabang" />
           </div>
           <div class="field">
             <label for="reg-username">Username Admin</label>

@@ -218,6 +218,8 @@ const NAV_ADMIN = [
   { id: 'incoming', label: 'Barang Masuk', title: 'Barang Masuk (log)', icon: '📥' },
   { id: 'reports', label: 'Laporan & Untung', title: 'Laporan & Untung', icon: '📊' },
   { id: 'stock', label: 'Stok', title: 'Manajemen Stok', icon: '🗃️' },
+  { id: 'mutasi', label: 'Mutasi Stok', title: 'Mutasi Antar Cabang', icon: '🔄' },
+  { id: 'kasbon-global', label: 'Kasbon', title: 'Kasbon Global', icon: '💳' },
   { id: 'users', label: 'Kasir', title: 'Manajemen Kasir', icon: '👥' },
   { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin', icon: '📝' },
   { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
@@ -351,6 +353,8 @@ function buildSidebar() {
       if (btn.dataset.view === 'history') loadHistoryTable();
       if (btn.dataset.view === 'scan') renderScanPanel();
       if (btn.dataset.view === 'incoming') loadIncomingPanel();
+      if (btn.dataset.view === 'mutasi') loadMutasiPanel();
+      if (btn.dataset.view === 'kasbon-global') loadKasbonPanel();
       if (btn.dataset.view === 'audit') loadAuditTable();
       if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
     });
@@ -1836,3 +1840,46 @@ if (modalScanUpload) {
 }
 
 window.__openWebBarcodeScanner = openWebBarcodeScanner;
+
+
+function loadMutasiPanel() {
+  const root = document.getElementById('view-mutasi');
+  root.innerHTML = \
+    <div class="card">
+      <h3 style="margin-top:0">Mutasi Stok Antar Cabang</h3>
+      <p style="color:var(--text); font-size:0.9rem">
+        Fitur mutasi memindahkan stok dari toko Anda ke cabang lain secara real-time. (Tampilan Web)
+      </p>
+      <div style="padding: 2rem; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius)">
+        <span style="font-size:3rem">🔄</span>
+        <h4 style="margin:1rem 0">Sinkronisasi SiKasir Mobile</h4>
+        <p style="color:var(--text); max-width:400px; margin:auto">
+          Fitur ini telah dirilis dan tersinkronisasi di <strong>SiKasir versi Aplikasi Android</strong>. Silakan gunakan versi Android untuk melakukan mutasi barang fisik antar toko!
+        </p>
+        <br>
+        <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-debug.apk'">Unduh SiKasir Android</button>
+      </div>
+    </div>
+  \;
+}
+
+function loadKasbonPanel() {
+  const root = document.getElementById('view-kasbon-global');
+  root.innerHTML = \
+    <div class="card">
+      <h3 style="margin-top:0">Buku Kasbon Global</h3>
+      <p style="color:var(--text); font-size:0.9rem">
+        Manajemen hutang pelanggan yang terintegrasi di seluruh jaringan toko/cabang Anda. (Tampilan Web)
+      </p>
+      <div style="padding: 2rem; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius)">
+        <span style="font-size:3rem">💳</span>
+        <h4 style="margin:1rem 0">Terintegrasi di Mobile</h4>
+        <p style="color:var(--text); max-width:400px; margin:auto">
+          Sistem mencatat Kasbon secara otomatis di Cloud SiKasir. Fitur penagihan, limit, dan rekap detail tersedia secara optimal di <strong>SiKasir versi Aplikasi Android</strong>.
+        </p>
+        <br>
+        <button class="btn btn-primary" onclick="window.location.href='/downloads/sikasir-debug.apk'">Unduh SiKasir Android</button>
+      </div>
+    </div>
+  \;
+}

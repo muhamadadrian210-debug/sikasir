@@ -54,13 +54,15 @@ loginForm.addEventListener('submit', async (e) => {
   const fd = new FormData(loginForm);
   const username = fd.get('username');
   const password = fd.get('password');
+  const company_id = fd.get('company_id') || '';
   try {
     const data = await api('/auth/login', {
       method: 'POST',
-      body: { username, password },
+      body: { username, password, company_id },
     });
     setToken(data.token);
     setUser(data.user);
+    if (company_id) localStorage.setItem('sikasir_company_id', company_id);
     const defaultMode = data.user.role === 'admin' ? 'both' : 'kasir';
     localStorage.setItem('sikasir_app_mode', defaultMode);
     window.location.href = '/app.html';
@@ -80,6 +82,7 @@ registerForm.addEventListener('submit', async (e) => {
   const username = document.getElementById('reg-username').value.trim();
   const password = document.getElementById('reg-password').value;
   const passwordConfirm = document.getElementById('reg-password-confirm').value;
+  const company_id = document.getElementById('reg-company-id').value.trim();
 
   if (!store_type) {
     showAlert('Pilih jenis toko terlebih dahulu');
@@ -96,10 +99,11 @@ registerForm.addEventListener('submit', async (e) => {
   try {
     const data = await api('/auth/register-tenant', {
       method: 'POST',
-      body: { store_name: full_store_name, username, password },
+      body: { store_name: full_store_name, username, password, company_id },
     });
     setToken(data.token);
     setUser(data.user);
+    if (company_id) localStorage.setItem('sikasir_company_id', company_id);
     const defaultMode = data.user.role === 'admin' ? 'both' : 'kasir';
     localStorage.setItem('sikasir_app_mode', defaultMode);
     window.location.href = '/app.html';
