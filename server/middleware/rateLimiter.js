@@ -1,11 +1,16 @@
 const rateLimit = require('express-rate-limit');
+const RedisStore = require('rate-limit-redis').default || require('rate-limit-redis');
 const { clientIp, recordViolation, blacklistPermanent } = require('../lib/ipLists');
 const { setTempBan } = require('./tempBan');
+const { getRedisClient } = require('../config/redis');
 
 const WINDOW_MS = 60 * 1000;
 const MAX = Number(process.env.RATE_LIMIT_MAX) || 100;
 
 const apiLimiter = rateLimit({
+  store: new RedisStore({
+    sendCommand: (...args) => getRedisClient().call(...args),
+  }),
   windowMs: WINDOW_MS,
   max: MAX,
   standardHeaders: true,

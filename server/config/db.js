@@ -9,7 +9,15 @@ const dbConfig = {
   database: process.env.DB_NAME || 'sikasir',
   waitForConnections: true,
   connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS) || 8000,
+  
+  // [SECURITY/NEON DB] Batas maksimal koneksi yang dipertahankan dalam Pool. 
+  // Jika menggunakan Serverless Postgres (Neon), sangat penting membatasi ini 
+  // di angka 10-20 agar tidak terjadi serangan Connection Exhaustion 
+  // yang bisa menghabiskan RAM Neon instance Anda.
   connectionLimit: 10,
+  
+  // 0 berarti antrean tidak dibatasi, namun rateLimiter (Redis) 
+  // akan memotong request yang spam sebelum masuk ke antrean ini.
   queueLimit: 0,
 };
 
