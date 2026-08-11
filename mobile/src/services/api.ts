@@ -1,7 +1,7 @@
 import { Product, CartItem, Tenant, User, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus, Customer, StoreType } from '../types';
 
 // Dynamic API URL for Vercel/Online Cloud Server or Local Dev
-let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.184:3000/api';
+let API_URL = (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) ? process.env.EXPO_PUBLIC_API_URL : 'http://192.168.100.184:3000/api';
 let authToken = '';
 let currentUser: User | null = null;
 
