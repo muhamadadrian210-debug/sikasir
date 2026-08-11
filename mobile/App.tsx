@@ -21,7 +21,7 @@ import {
   Linking,
 } from 'react-native';
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import apiService, { MOCK_TENANTS, MOCK_PRODUCTS, MOCK_CUSTOMERS, setAuthToken, getAuthToken, setCurrentUser, getCurrentUser } from './src/services/api';
 import { Product, CartItem, Tenant, User, StoreType, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus } from './src/types';
