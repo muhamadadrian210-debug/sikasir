@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0d121d"
       },
-      "package": "com.sivilize.sikasirmobile"
+      "package": "com.sivilize.sikasirmobile",
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
