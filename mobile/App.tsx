@@ -212,7 +212,7 @@ const CustomAlertComponent = () => {
   }
 
   return (
-    <Modal transparent visible={state.visible} animationType="none">
+    <Modal transparent visible={state.visible} animationType="none" onRequestClose={() => setState(s => ({ ...s, visible: false }))}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <Animated.View style={{ 
             backgroundColor: '#18181b', 
@@ -1012,10 +1012,10 @@ export default function App() {
         </KeyboardAvoidingView>
 
         {/* REGISTER TENANT / DAFTAR TOKO BARU MODAL */}
-        <Modal visible={registerModalVisible} transparent animationType="slide">
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+        <Modal visible={registerModalVisible} transparent animationType="slide" onRequestClose={() => setRegisterModalVisible(false)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} enabled={Platform.OS === 'ios'} style={styles.modalOverlay}>
             <View style={[styles.modalCard, { maxHeight: '90%', flexShrink: 1 }]}>
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <Image source={require('./assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 16 }} />
@@ -1061,48 +1061,46 @@ export default function App() {
                     {regLoading ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryBtnText}>DAFTARKAN TOKO</Text>}
                   </TouchableOpacity>
                 </View>
+
+                {isStoreTypeModalVisible && (
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#18181b', borderRadius: 20, zIndex: 100, padding: 20 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <Text style={styles.modalTitle}>Pilih Kategori Usaha</Text>
+                      <TouchableOpacity onPress={() => setIsStoreTypeModalVisible(false)}>
+                        <Ionicons name="close-circle" size={24} color="#64748b" />
+                      </TouchableOpacity>
+                    </View>
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                      {STORE_CATEGORIES.map((cat, idx) => (
+                        <View key={idx} style={{ marginBottom: 20 }}>
+                          <Text style={{ color: '#10b981', fontSize: 14, fontWeight: '700', marginBottom: 10 }}>{cat.title}</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                            {cat.data.map(item => (
+                              <TouchableOpacity
+                                key={item.type}
+                                style={[styles.chip, regStoreType === item.type && styles.chipActive]}
+                                onPress={() => {
+                                  setRegStoreType(item.type as StoreType);
+                                  setIsStoreTypeModalVisible(false);
+                                }}
+                              >
+                                <Text style={[styles.chipText, regStoreType === item.type && styles.chipTextActive]}>
+                                  {item.label}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
         </Modal>
 
-        {/* Modal Pilih Tipe Toko */}
-        <Modal visible={isStoreTypeModalVisible} animationType="slide" transparent>
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalContent, { width: SCREEN_W * 0.9, height: SCREEN_H * 0.8, backgroundColor: '#18181b' }]}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={styles.modalTitle}>Pilih Kategori Usaha</Text>
-                <TouchableOpacity onPress={() => setIsStoreTypeModalVisible(false)}>
-                  <Ionicons name="close-circle" size={24} color="#64748b" />
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {STORE_CATEGORIES.map((cat, idx) => (
-                  <View key={idx} style={{ marginBottom: 20 }}>
-                    <Text style={{ color: '#10b981', fontSize: 14, fontWeight: '700', marginBottom: 10 }}>{cat.title}</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {cat.data.map(item => (
-                        <TouchableOpacity
-                          key={item.type}
-                          style={[styles.chip, regStoreType === item.type && styles.chipActive]}
-                          onPress={() => {
-                            setRegStoreType(item.type as StoreType);
-                            setIsStoreTypeModalVisible(false);
-                          }}
-                        >
-                          <Text style={[styles.chipText, regStoreType === item.type && styles.chipTextActive]}>
-                            {item.label}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
+        
 
       </SafeAreaView>
     );
@@ -1971,7 +1969,7 @@ export default function App() {
       </View>
 
       {/* ADD STAFF USER MODAL (ADMIN ONLY) */}
-      <Modal visible={addUserModalVisible} transparent animationType="slide">
+      <Modal visible={addUserModalVisible} transparent animationType="slide" onRequestClose={() => setAddUserModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Tambah Akun Staf Toko Baru</Text>
@@ -2029,7 +2027,7 @@ export default function App() {
       </Modal>
 
       {/* MUTASI CABANG MODAL */}
-      <Modal visible={mutasiModalVisible} transparent animationType="slide">
+      <Modal visible={mutasiModalVisible} transparent animationType="slide" onRequestClose={() => setMutasiModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Mutasi Stok Antar Cabang</Text>
@@ -2107,7 +2105,7 @@ export default function App() {
       </Modal>
 
       {/* CHECKOUT MODAL */}
-      <Modal visible={checkoutModalVisible} transparent animationType="fade">
+      <Modal visible={checkoutModalVisible} transparent animationType="fade" onRequestClose={() => setCheckoutModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Proses Pembayaran</Text>
@@ -2233,7 +2231,7 @@ export default function App() {
       </Modal>
 
       {/* RESTOCK MODAL */}
-      <Modal visible={restockModalVisible} transparent animationType="fade">
+      <Modal visible={restockModalVisible} transparent animationType="fade" onRequestClose={() => setRestockModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Restock {selectedProduct?.name}</Text>
@@ -2259,7 +2257,7 @@ export default function App() {
       </Modal>
 
       {/* ADD PRODUCT MODAL */}
-      <Modal visible={addProductModalVisible} transparent animationType="slide">
+      <Modal visible={addProductModalVisible} transparent animationType="slide" onRequestClose={() => setAddProductModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Tambah Produk Baru</Text>
@@ -2282,7 +2280,7 @@ export default function App() {
       </Modal>
 
       {/* VARIANT MODAL */}
-      <Modal visible={variantModalVisible} transparent animationType="slide">
+      <Modal visible={variantModalVisible} transparent animationType="slide" onRequestClose={() => setVariantModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Pilih Varian: {selectedProductForVariant?.name}</Text>
@@ -2341,7 +2339,7 @@ export default function App() {
       </Modal>
 
       {/* CATAT BARANG MASUK MODAL */}
-      <Modal visible={addIncomingModalVisible} transparent animationType="slide">
+      <Modal visible={addIncomingModalVisible} transparent animationType="slide" onRequestClose={() => setAddIncomingModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Catat Barang Masuk (Restock Supplier)</Text>
@@ -2369,7 +2367,7 @@ export default function App() {
       </Modal>
 
       {/* Shift Modal */}
-      <Modal visible={shiftModalVisible} transparent animationType="fade">
+      <Modal visible={shiftModalVisible} transparent animationType="fade" onRequestClose={() => setShiftModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{shiftAction === 'open' ? 'Buka Shift Kasir' : 'Tutup Shift Kasir'}</Text>
