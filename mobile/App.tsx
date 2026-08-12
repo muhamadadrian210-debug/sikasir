@@ -323,14 +323,22 @@ export default function App() {
         regStoreType
       );
       setCurrentUserLocal(res.user);
-      Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" (${regStoreType.toUpperCase()}) berhasil didaftarkan sebagai Admin.`);
-      setRegisterModalVisible(false);
-      setRegStoreName('');
-      setRegOwnerName('');
-      setRegUsername('');
-      setRegPassword('');
-      await fetchTenants();
-      setIsLoggedIn(true);
+      Alert.alert(
+        'Pendaftaran Sukses! 🎉',
+        `Toko "${regStoreName}" (${regStoreType.toUpperCase()}) berhasil didaftarkan sebagai Admin.`,
+        [{
+          text: 'Mulai Sekarang',
+          onPress: async () => {
+            setRegisterModalVisible(false);
+            setRegStoreName('');
+            setRegOwnerName('');
+            setRegUsername('');
+            setRegPassword('');
+            await fetchTenants();
+            setIsLoggedIn(true);
+          }
+        }]
+      );
     } catch (e: any) {
       Alert.alert('Pendaftaran Gagal', e.message || 'Gagal merestorasi data toko.');
     } finally {
@@ -344,11 +352,19 @@ export default function App() {
       return;
     }
     await apiService.createUser(newStaffUsername.trim(), newStaffPassword, newStaffRole);
-    Alert.alert('Sukses', `Akun staf "${newStaffUsername}" (${newStaffRole.toUpperCase()}) berhasil dibuat.`);
-    setAddUserModalVisible(false);
-    setNewStaffUsername('');
-    setNewStaffPassword('');
-    loadUsers();
+    Alert.alert(
+      'Sukses',
+      `Akun staf "${newStaffUsername}" (${newStaffRole.toUpperCase()}) berhasil dibuat.`,
+      [{
+        text: 'OK',
+        onPress: () => {
+          setAddUserModalVisible(false);
+          setNewStaffUsername('');
+          setNewStaffPassword('');
+          loadUsers();
+        }
+      }]
+    );
   };
 
   const holdBill = () => {
