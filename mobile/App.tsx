@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -133,8 +133,8 @@ export const showCustomAlert = (title: string, message: string, buttons?: {text:
   if (showCustomAlertFn) {
     showCustomAlertFn(title, message, buttons, options);
   } else {
-    // Fallback if not mounted
-    showCustomAlert(title, message, buttons as any);
+    // Fallback if component not mounted yet - use native Alert
+    Alert.alert(title, message);
   }
 };
 
@@ -471,6 +471,7 @@ export default function App() {
 
   // AI Assistant Modal State
   const [aiModalVisible, setAiModalVisible] = useState(false);
+  const [shiftModalVisible, setShiftModalVisible] = useState(false);
 
   // Stock Restock & New Product Modals
   const [restockModalVisible, setRestockModalVisible] = useState(false);
