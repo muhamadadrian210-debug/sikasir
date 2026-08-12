@@ -276,6 +276,106 @@ const CustomAlertComponent = () => {
 };
 // ==========================================
 
+
+// ==========================================
+// PREMIUM SCAN TOAST OVERLAY
+// ==========================================
+let showScanToastFn: (message: string) => void;
+
+export const showScanToast = (message: string) => {
+  if (showScanToastFn) {
+    showScanToastFn(message);
+  }
+};
+
+const ScanSuccessOverlay = () => {
+  const [visible, setVisible] = useState(false);
+  const [message, setMessage] = useState('');
+  
+  const scaleValue = useRef(new Animated.Value(0.5)).current;
+  const opacityValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    showScanToastFn = (msg: string) => {
+      setMessage(msg);
+      setVisible(true);
+      
+      Animated.parallel([
+        Animated.spring(scaleValue, {
+          toValue: 1,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true
+        }),
+        Animated.timing(opacityValue, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true
+        })
+      ]).start();
+
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(scaleValue, {
+            toValue: 0.8,
+            duration: 150,
+            useNativeDriver: true
+          }),
+          Animated.timing(opacityValue, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true
+          })
+        ]).start(() => setVisible(false));
+      }, 1000); // Auto dismiss after 1 second
+    };
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <View style={{ 
+      position: 'absolute', 
+      top: 0, left: 0, right: 0, bottom: 0, 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      zIndex: 99999,
+      elevation: 99999,
+      pointerEvents: 'none'
+    }}>
+      <Animated.View style={{
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
+        paddingVertical: 24,
+        paddingHorizontal: 32,
+        borderRadius: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        transform: [{ scale: scaleValue }],
+        opacity: opacityValue
+      }}>
+        <View style={{
+          width: 60, height: 60, 
+          borderRadius: 30, 
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          justifyContent: 'center', alignItems: 'center',
+          marginBottom: 12
+        }}>
+          <Ionicons name="checkmark" size={36} color="#10b981" />
+        </View>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' }}>
+          {message}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+};
+// ==========================================
+
 export default function App() {
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const isTablet = SCREEN_W >= 768;
@@ -1051,7 +1151,7 @@ export default function App() {
       showCustomAlert('✅ Barcode Terdeteksi!', `"${found.name}" ditambahkan ke keranjang (+1 pcs).`);
     } else {
       loadProducts(barcode);
-      showCustomAlert('🔍 Barcode Terbaca', `Mencari barang dengan barcode: ${barcode}`);
+      showScanToast(`Barcode Terbaca: ${barcode}`);
     }
   };
 

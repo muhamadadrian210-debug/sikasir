@@ -1,3 +1,24 @@
+
+window.showScanToast = function(message) {
+  const overlay = document.createElement('div');
+  overlay.className = 'scan-toast-overlay';
+  overlay.innerHTML = `
+    <div class="scan-toast-card">
+      <div class="scan-toast-icon">✓</div>
+      <div class="scan-toast-text">${message}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  // Play sound if possible (optional subtle beep)
+  // try { const a = new Audio('/sounds/beep.mp3'); a.volume = 0.5; a.play(); } catch(e) {}
+  
+  setTimeout(() => {
+    overlay.classList.add('fade-out');
+    setTimeout(() => overlay.remove(), 200);
+  }, 1000); // 1 second duration
+};
+
 ﻿import { api, getToken, getUser, setToken, setUser } from './api.js';
 import { startScanner, stopScanner, scanFile } from './scanner.js';
 
@@ -440,7 +461,8 @@ function renderPOS() {
     });
 }
 
-function renderCart() {
+function renderCart(newItemName) {
+  if (newItemName) window.showScanToast(`Ditambahkan: ${newItemName}`);
   const list = document.getElementById('pos-cart-list');
   if (!list) return;
   const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
