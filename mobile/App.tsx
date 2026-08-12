@@ -315,15 +315,14 @@ export default function App() {
     }
     setRegLoading(true);
     try {
-      await apiService.registerTenant(
+      const res = await apiService.registerTenant(
         regStoreName.trim(),
         regOwnerName.trim(),
         regUsername.trim(),
         regPassword,
         regStoreType
       );
-      const newOwner: User = { id: Date.now(), username: regUsername.trim(), role: 'admin', tenant_id: Date.now() };
-      setCurrentUserLocal(newOwner);
+      setCurrentUserLocal(res.user);
       Alert.alert('Pendaftaran Sukses! 🎉', `Toko "${regStoreName}" (${regStoreType.toUpperCase()}) berhasil didaftarkan sebagai Admin.`);
       setRegisterModalVisible(false);
       setRegStoreName('');
@@ -734,55 +733,57 @@ export default function App() {
 
         {/* REGISTER TENANT / DAFTAR TOKO BARU MODAL */}
         <Modal visible={registerModalVisible} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Image source={require('./assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 16 }} />
-                  <Text style={styles.modalTitle}>Daftarkan Toko Baru</Text>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
+            <View style={[styles.modalCard, { maxHeight: '90%', flexShrink: 1 }]}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Image source={require('./assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 16 }} />
+                    <Text style={styles.modalTitle}>Daftarkan Toko Baru</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setRegisterModalVisible(false)}>
+                    <Ionicons name="close-circle" size={24} color="#64748b" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => setRegisterModalVisible(false)}>
-                  <Ionicons name="close-circle" size={24} color="#64748b" />
-                </TouchableOpacity>
-              </View>
-              <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
-                Buat toko baru dan otomatis menjadi Admin Toko.
-              </Text>
-
-              <Text style={styles.label}>Nama Toko / Usaha *</Text>
-              <TextInput style={styles.modalInput} placeholder="Contoh: Apotek Kimia Medika" placeholderTextColor="#64748b" value={regStoreName} onChangeText={setRegStoreName} />
-
-              <Text style={[styles.label, { marginTop: 10 }]}>Jenis / Tipe Usaha Toko *</Text>
-              <TouchableOpacity
-                style={[styles.modalInput, { justifyContent: 'center' }]}
-                onPress={() => setIsStoreTypeModalVisible(true)}
-              >
-                <Text style={{ color: regStoreType ? '#fff' : '#64748b' }}>
-                  {regStoreType 
-                    ? STORE_CATEGORIES.flatMap(c => c.data).find(d => d.type === regStoreType)?.label 
-                    : 'Pilih Tipe Toko'}
+                <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
+                  Buat toko baru dan otomatis menjadi Admin Toko.
                 </Text>
-              </TouchableOpacity>
 
-              <Text style={[styles.label, { marginTop: 10 }]}>Nama Pemilik / Admin *</Text>
-              <TextInput style={styles.modalInput} placeholder="Budi Santoso" placeholderTextColor="#64748b" value={regOwnerName} onChangeText={setRegOwnerName} />
+                <Text style={styles.label}>Nama Toko / Usaha *</Text>
+                <TextInput style={styles.modalInput} placeholder="Contoh: Apotek Kimia Medika" placeholderTextColor="#64748b" value={regStoreName} onChangeText={setRegStoreName} />
 
-              <Text style={[styles.label, { marginTop: 10 }]}>Username Admin *</Text>
-              <TextInput style={styles.modalInput} placeholder="budi_admin" placeholderTextColor="#64748b" autoCapitalize="none" value={regUsername} onChangeText={setRegUsername} />
-
-              <Text style={[styles.label, { marginTop: 10 }]}>Password *</Text>
-              <TextInput style={styles.modalInput} placeholder="Password" placeholderTextColor="#64748b" secureTextEntry value={regPassword} onChangeText={setRegPassword} />
-
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setRegisterModalVisible(false)}>
-                  <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+                <Text style={[styles.label, { marginTop: 10 }]}>Jenis / Tipe Usaha Toko *</Text>
+                <TouchableOpacity
+                  style={[styles.modalInput, { justifyContent: 'center' }]}
+                  onPress={() => setIsStoreTypeModalVisible(true)}
+                >
+                  <Text style={{ color: regStoreType ? '#fff' : '#64748b' }}>
+                    {regStoreType 
+                      ? STORE_CATEGORIES.flatMap(c => c.data).find(d => d.type === regStoreType)?.label 
+                      : 'Pilih Tipe Toko'}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.primaryBtn} onPress={handleRegisterTenant} disabled={regLoading}>
-                  {regLoading ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryBtnText}>DAFTARKAN TOKO</Text>}
-                </TouchableOpacity>
-              </View>
+
+                <Text style={[styles.label, { marginTop: 10 }]}>Nama Pemilik / Admin *</Text>
+                <TextInput style={styles.modalInput} placeholder="Budi Santoso" placeholderTextColor="#64748b" value={regOwnerName} onChangeText={setRegOwnerName} />
+
+                <Text style={[styles.label, { marginTop: 10 }]}>Username Admin *</Text>
+                <TextInput style={styles.modalInput} placeholder="budi_admin" placeholderTextColor="#64748b" autoCapitalize="none" value={regUsername} onChangeText={setRegUsername} />
+
+                <Text style={[styles.label, { marginTop: 10 }]}>Password *</Text>
+                <TextInput style={styles.modalInput} placeholder="Password" placeholderTextColor="#64748b" secureTextEntry value={regPassword} onChangeText={setRegPassword} />
+
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setRegisterModalVisible(false)}>
+                    <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.primaryBtn} onPress={handleRegisterTenant} disabled={regLoading}>
+                    {regLoading ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryBtnText}>DAFTARKAN TOKO</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Modal Pilih Tipe Toko */}
