@@ -19,6 +19,7 @@ import {
   Image,
   useWindowDimensions,
   Linking,
+  Animated,
 } from 'react-native';
 
 
@@ -111,6 +112,169 @@ const STORE_CATEGORIES = [
     ]
   }
 ];
+
+
+// ==========================================
+// CUSTOM ANIMATED ALERT SYSTEM
+// ==========================================
+type AlertType = 'success' | 'error' | 'warning' | 'info';
+
+interface CustomAlertState {
+  visible: boolean;
+  title: string;
+  message: string;
+  type: AlertType;
+  buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[];
+}
+
+let showCustomAlertFn: (title: string, message: string, buttons?: {text: string, onPress?: () => void, style?: string}[], options?: {type?: AlertType}) => void;
+
+export const showCustomAlert = (title: string, message: string, buttons?: {text: string, onPress?: () => void, style?: string}[], options?: {type?: AlertType}) => {
+  if (showCustomAlertFn) {
+    showCustomAlertFn(title, message, buttons, options);
+  } else {
+    // Fallback if not mounted
+    showCustomAlert(title, message, buttons as any);
+  }
+};
+
+const CustomAlertComponent = () => {
+  const [state, setState] = useState<CustomAlertState>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+    buttons: []
+  });
+
+  const scaleValue = useRef(new Animated.Value(0.8)).current;
+  const opacityValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    showCustomAlertFn = (title, message, buttons, options) => {
+      setState({
+        visible: true,
+        title,
+        message,
+        type: options?.type || 'info',
+        buttons: buttons || [{ text: 'OK', onPress: () => closeAlert() }]
+      });
+      
+      Animated.parallel([
+        Animated.spring(scaleValue, {
+          toValue: 1,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true
+        }),
+        Animated.timing(opacityValue, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true
+        })
+      ]).start();
+    };
+  }, []);
+
+  const closeAlert = (callback?: () => void) => {
+    Animated.parallel([
+      Animated.timing(scaleValue, {
+        toValue: 0.8,
+        duration: 150,
+        useNativeDriver: true
+      }),
+      Animated.timing(opacityValue, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      setState(prev => ({ ...prev, visible: false }));
+      if (callback) callback();
+    });
+  };
+
+  if (!state.visible) return null;
+
+  let iconName = 'information-circle';
+  let iconColor = '#3b82f6';
+  
+  const titleLow = state.title.toLowerCase();
+  if (state.type === 'success' || titleLow.includes('sukses') || titleLow.includes('✅') || titleLow.includes('🎉')) {
+    iconName = 'checkmark-circle';
+    iconColor = '#10b981';
+  } else if (state.type === 'error' || titleLow.includes('gagal') || titleLow.includes('error') || titleLow.includes('ditolak')) {
+    iconName = 'close-circle';
+    iconColor = '#ef4444';
+  } else if (state.type === 'warning' || titleLow.includes('peringatan') || titleLow.includes('maksimal')) {
+    iconName = 'warning';
+    iconColor = '#f59e0b';
+  }
+
+  return (
+    <Modal transparent visible={state.visible} animationType="none">
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Animated.View style={{ 
+            backgroundColor: '#18181b', 
+            borderRadius: 24, 
+            padding: 24, 
+            width: '100%', 
+            maxWidth: 400,
+            borderWidth: 1,
+            borderColor: '#27272a',
+            shadowColor: iconColor,
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.3,
+            shadowRadius: 20,
+            elevation: 10,
+            transform: [{ scale: scaleValue }],
+            opacity: opacityValue
+          }}>
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <Ionicons name={iconName as any} size={56} color={iconColor} style={{ marginBottom: 12 }} />
+            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>
+              {state.title}
+            </Text>
+            <Text style={{ color: '#a1a1aa', fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
+              {state.message}
+            </Text>
+          </View>
+          
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+            {state.buttons.map((btn, idx) => (
+              <TouchableOpacity 
+                key={idx}
+                onPress={() => {
+                   if (btn.onPress) {
+                       closeAlert(btn.onPress);
+                   } else {
+                       closeAlert();
+                   }
+                }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  backgroundColor: btn.style === 'cancel' ? '#27272a' : (btn.style === 'destructive' ? '#ef4444' : iconColor),
+                  alignItems: 'center'
+                }}
+              >
+                <Text style={{ 
+                  color: btn.style === 'cancel' ? '#fff' : '#fff', 
+                  fontWeight: '700', 
+                  fontSize: 15 
+                }}>
+                  {btn.text}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+};
+// ==========================================
 
 export default function App() {
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
@@ -281,7 +445,7 @@ export default function App() {
 
   const handleLogin = async () => {
     if (!username.trim() || !password) {
-      Alert.alert('Peringatan', 'Username dan password wajib diisi.');
+      showCustomAlert('Peringatan', 'Username dan password wajib diisi.');
       return;
     }
     setLoginLoading(true);
@@ -310,7 +474,7 @@ export default function App() {
 
   const handleRegisterTenant = async () => {
     if (!regStoreName.trim() || !regOwnerName.trim() || !regUsername.trim() || !regPassword) {
-      Alert.alert('Peringatan', 'Semua kolom pendaftaran wajib diisi.');
+      showCustomAlert('Peringatan', 'Semua kolom pendaftaran wajib diisi.');
       return;
     }
     setRegLoading(true);
@@ -323,7 +487,7 @@ export default function App() {
         regStoreType
       );
       setCurrentUserLocal(res.user);
-      Alert.alert(
+      showCustomAlert(
         'Pendaftaran Sukses! 🎉',
         `Toko "${regStoreName}" (${regStoreType.toUpperCase()}) berhasil didaftarkan sebagai Admin.`,
         [{
@@ -340,7 +504,7 @@ export default function App() {
         }]
       );
     } catch (e: any) {
-      Alert.alert('Pendaftaran Gagal', e.message || 'Gagal merestorasi data toko.');
+      showCustomAlert('Pendaftaran Gagal', e.message || 'Gagal merestorasi data toko.');
     } finally {
       setRegLoading(false);
     }
@@ -348,11 +512,11 @@ export default function App() {
 
   const handleCreateStaffUser = async () => {
     if (!newStaffUsername.trim() || !newStaffPassword) {
-      Alert.alert('Peringatan', 'Username dan Password wajib diisi.');
+      showCustomAlert('Peringatan', 'Username dan Password wajib diisi.');
       return;
     }
     await apiService.createUser(newStaffUsername.trim(), newStaffPassword, newStaffRole);
-    Alert.alert(
+    showCustomAlert(
       'Sukses',
       `Akun staf "${newStaffUsername}" (${newStaffRole.toUpperCase()}) berhasil dibuat.`,
       [{
@@ -391,7 +555,7 @@ export default function App() {
       const existing = prev.find(item => item.product.id === product.id && (item.selected_variants?.join(', ') || '') === variantStr);
       if (existing) {
         if (existing.qty >= product.stock) {
-          Alert.alert('Stok Maksimal', `Stok ${product.name} tersisa ${product.stock} pcs.`);
+          showCustomAlert('Stok Maksimal', `Stok ${product.name} tersisa ${product.stock} pcs.`);
           return prev;
         }
         
@@ -426,7 +590,7 @@ export default function App() {
             const newQty = item.qty + delta;
             if (newQty <= 0) return null;
             if (newQty > item.product.stock) {
-              Alert.alert('Stok Maksimal', `Stok tersisa ${item.product.stock} pcs.`);
+              showCustomAlert('Stok Maksimal', `Stok tersisa ${item.product.stock} pcs.`);
               return item;
             }
             
@@ -448,16 +612,16 @@ export default function App() {
   const handleCheckout = async () => {
     const paid = Number(paidAmount);
     if (paymentMethod !== 'KASBON' && (isNaN(paid) || paid < totalAmount)) {
-      Alert.alert('Pembayaran', `Nominal kurang dari total Rp ${totalAmount.toLocaleString('id-ID')}`);
+      showCustomAlert('Pembayaran', `Nominal kurang dari total Rp ${totalAmount.toLocaleString('id-ID')}`);
       return;
     }
     if (paymentMethod === 'KASBON' && !selectedCustomerId) {
-      Alert.alert('Data Kasbon', 'Silakan pilih Pelanggan dari daftar Kasbon!');
+      showCustomAlert('Data Kasbon', 'Silakan pilih Pelanggan dari daftar Kasbon!');
       return;
     }
     const finalPaid = paymentMethod === 'KASBON' ? 0 : paid;
     const res = await apiService.checkout(cart, finalPaid, paymentMethod, kasbonCustomerName, kasbonCustomerPhone, applyPB1, splitBillWays, spgName, selectedCustomerId || undefined);
-    Alert.alert(
+    showCustomAlert(
       'Transaksi Berhasil!',
       paymentMethod === 'KASBON' ? 'Tagihan berhasil dicatat ke buku Kasbon (Hutang).' : `Kembalian: Rp ${Number(res.change_amount || finalPaid - totalAmount).toLocaleString('id-ID')}`,
       [
@@ -492,10 +656,10 @@ export default function App() {
 
   const handleRefund = async (transactionId: string) => {
     if (currentUser?.role !== 'admin') {
-      Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak meretur barang/transaksi.');
+      showCustomAlert('Akses Ditolak', 'Hanya Admin Toko yang berhak meretur barang/transaksi.');
       return;
     }
-    Alert.alert(
+    showCustomAlert(
       'Konfirmasi Retur',
       `Apakah Anda yakin ingin membatalkan/meretur transaksi ${transactionId}?`,
       [
@@ -505,7 +669,7 @@ export default function App() {
           style: 'destructive',
           onPress: async () => {
             await apiService.refundTransaction(transactionId);
-            Alert.alert('Sukses', 'Transaksi berhasil diretur.');
+            showCustomAlert('Sukses', 'Transaksi berhasil diretur.');
             loadTransactions();
           }
         }
@@ -515,19 +679,19 @@ export default function App() {
 
   const handleMutasi = () => {
     if (!mutasiDestTenantId || !mutasiProductId || !mutasiQty) {
-      Alert.alert('Error', 'Harap isi Cabang Tujuan, Produk, dan Jumlah Mutasi!');
+      showCustomAlert('Error', 'Harap isi Cabang Tujuan, Produk, dan Jumlah Mutasi!');
       return;
     }
     const qty = parseInt(mutasiQty, 10);
     if (isNaN(qty) || qty <= 0) {
-      Alert.alert('Error', 'Jumlah mutasi tidak valid.');
+      showCustomAlert('Error', 'Jumlah mutasi tidak valid.');
       return;
     }
     
     // Find the product in current tenant
     const sourceProd = products.find(p => p.id === mutasiProductId);
     if (!sourceProd || sourceProd.stock < qty) {
-      Alert.alert('Error', 'Stok produk tidak mencukupi untuk dimutasi.');
+      showCustomAlert('Error', 'Stok produk tidak mencukupi untuk dimutasi.');
       return;
     }
 
@@ -551,7 +715,7 @@ export default function App() {
       MOCK_PRODUCTS.push(destProd);
     }
 
-    Alert.alert('Sukses', `Berhasil memindahkan ${qty} pcs ${sourceProd.name} ke cabang ID ${mutasiDestTenantId}.`);
+    showCustomAlert('Sukses', `Berhasil memindahkan ${qty} pcs ${sourceProd.name} ke cabang ID ${mutasiDestTenantId}.`);
     setMutasiModalVisible(false);
     setMutasiDestTenantId(null);
     setMutasiProductId(null);
@@ -561,14 +725,14 @@ export default function App() {
 
   const handleRestock = async () => {
     if (currentUser?.role !== 'admin') {
-      Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak merestock barang.');
+      showCustomAlert('Akses Ditolak', 'Hanya Admin Toko yang berhak merestock barang.');
       return;
     }
     if (!selectedProduct || !restockAmount) return;
     const delta = Number(restockAmount);
     if (isNaN(delta)) return;
     await apiService.updateStock(selectedProduct.id, delta, 'Restock');
-    Alert.alert('Sukses', `Stok ${selectedProduct.name} diperbarui.`);
+    showCustomAlert('Sukses', `Stok ${selectedProduct.name} diperbarui.`);
     setRestockModalVisible(false);
     setRestockAmount('');
     loadProducts();
@@ -576,11 +740,11 @@ export default function App() {
 
   const handleCreateProduct = async () => {
     if (currentUser?.role !== 'admin') {
-      Alert.alert('Akses Ditolak', 'Hanya Admin Toko yang berhak menambah produk.');
+      showCustomAlert('Akses Ditolak', 'Hanya Admin Toko yang berhak menambah produk.');
       return;
     }
     if (!newName.trim() || !newSalePrice) {
-      Alert.alert('Peringatan', 'Nama dan Harga Jual wajib diisi.');
+      showCustomAlert('Peringatan', 'Nama dan Harga Jual wajib diisi.');
       return;
     }
     await apiService.addProduct({
@@ -590,7 +754,7 @@ export default function App() {
       sale_price: Number(newSalePrice),
       stock: Number(newStock || 0),
     });
-    Alert.alert('Sukses', 'Produk baru ditambahkan.');
+    showCustomAlert('Sukses', 'Produk baru ditambahkan.');
     setAddProductModalVisible(false);
     setNewName('');
     setNewBarcode('');
@@ -604,7 +768,7 @@ export default function App() {
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert('Izin Kamera', 'Tolong berikan izin kamera untuk menggunakan fitur ini.');
+        showCustomAlert('Izin Kamera', 'Tolong berikan izin kamera untuk menggunakan fitur ini.');
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -621,7 +785,7 @@ export default function App() {
           setNewBarcode(aiData.barcode || '');
           setAddProductModalVisible(true);
         } catch (err: any) {
-          Alert.alert('AI Error', err.message || 'Gagal memproses gambar');
+          showCustomAlert('AI Error', err.message || 'Gagal memproses gambar');
         } finally {
           setAiProcessing(false);
         }
@@ -846,7 +1010,7 @@ export default function App() {
 
   const handleCreateIncomingLog = async () => {
     if (!incSupplier.trim() || !incItem.trim() || !incQty || !incPrice) {
-      Alert.alert('Peringatan', 'Supplier, Nama Barang, Jumlah, dan Harga Satuan wajib diisi.');
+      showCustomAlert('Peringatan', 'Supplier, Nama Barang, Jumlah, dan Harga Satuan wajib diisi.');
       return;
     }
     await apiService.addIncomingLog(
@@ -856,7 +1020,7 @@ export default function App() {
       parseFloat(incPrice) || 0,
       incNotes.trim()
     );
-    Alert.alert('Sukses 🎉', 'Barang masuk berhasil dicatat!');
+    showCustomAlert('Sukses 🎉', 'Barang masuk berhasil dicatat!');
     setAddIncomingModalVisible(false);
     setIncSupplier('');
     setIncItem('');
@@ -876,7 +1040,7 @@ export default function App() {
       const found = products.find(p => p.barcode === pCode || p.barcode === barcode);
       if (found) {
         addToCart(found, undefined, pPrice);
-        Alert.alert('✅ Barcode Timbangan!', `"${found.name}" ditambahkan dengan harga Rp${pPrice.toLocaleString('id-ID')}`);
+        showCustomAlert('✅ Barcode Timbangan!', `"${found.name}" ditambahkan dengan harga Rp${pPrice.toLocaleString('id-ID')}`);
         return;
       }
     }
@@ -884,10 +1048,10 @@ export default function App() {
     const found = products.find(p => p.barcode === barcode || p.name.toLowerCase().includes(barcode.toLowerCase()));
     if (found) {
       addToCart(found);
-      Alert.alert('✅ Barcode Terdeteksi!', `"${found.name}" ditambahkan ke keranjang (+1 pcs).`);
+      showCustomAlert('✅ Barcode Terdeteksi!', `"${found.name}" ditambahkan ke keranjang (+1 pcs).`);
     } else {
       loadProducts(barcode);
-      Alert.alert('🔍 Barcode Terbaca', `Mencari barang dengan barcode: ${barcode}`);
+      showCustomAlert('🔍 Barcode Terbaca', `Mencari barang dengan barcode: ${barcode}`);
     }
   };
 
@@ -1018,7 +1182,7 @@ export default function App() {
                 </Text>
                 <TouchableOpacity 
                   style={{ backgroundColor: '#047857', paddingVertical: 14, borderRadius: 16, alignItems: 'center' }}
-                  onPress={() => Alert.alert('Barcode Internal Dibuat!', `Kode: INT-${Math.floor(100000 + Math.random() * 900000)}\n\nSilahkan tempel barcode ini ke produk.`)}
+                  onPress={() => showCustomAlert('Barcode Internal Dibuat!', `Kode: INT-${Math.floor(100000 + Math.random() * 900000)}\n\nSilahkan tempel barcode ini ke produk.`)}
                 >
                   <Text style={{ color: '#10b981', fontWeight: '800' }}>BUAT BARCODE BARU</Text>
                 </TouchableOpacity>
@@ -1450,7 +1614,7 @@ export default function App() {
                           onPress={() => {
                             const message = `Halo ${item.customer_name || 'Kak'},\nIni dari SiKasir. Total tagihan Kasbon Anda adalah Rp${item.total_amount.toLocaleString('id-ID')}. Mohon untuk segera diselesaikan. Terima kasih.`;
                             Linking.openURL(`whatsapp://send?phone=${item.customer_phone}&text=${encodeURIComponent(message)}`).catch(() => {
-                              Alert.alert('Error', 'Gagal membuka WhatsApp. Pastikan aplikasi terinstall.');
+                              showCustomAlert('Error', 'Gagal membuka WhatsApp. Pastikan aplikasi terinstall.');
                             });
                           }}
                         >
