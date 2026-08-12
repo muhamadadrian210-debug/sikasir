@@ -2,7 +2,7 @@
   "expo": {
     "name": "SiKasir POS Mobile",
     "slug": "sikasir-mobile",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "sdkVersion": "54.0.0",
     "newArchEnabled": false,
     "orientation": "portrait",
