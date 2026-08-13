@@ -622,6 +622,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 function MainApp() {
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const isTablet = SCREEN_W >= 768;
+  const isDesktop = SCREEN_W >= 1024;
+  const isLargeDesktop = SCREEN_W >= 1440;
 
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
   const [currentUser, setCurrentUserLocal] = useState<User | null>(getCurrentUser());
@@ -1716,8 +1718,8 @@ function MainApp() {
       )}
 
       {activeTab === 'kasir' && shiftStatus === 'open' && (
-        <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
-          <View style={{ flex: isTablet ? 2 : 1 }}>
+        <View style={{ flex: 1, flexDirection: (isTablet || isDesktop || isLargeDesktop) ? 'row' : 'column' }}>
+          <View style={{ flex: (isLargeDesktop ? 3 : isDesktop ? 2.5 : isTablet ? 2 : 1) }}>
             {/* Search bar & Heavy Duty Camera Scanner Button */}
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, marginTop: 12, marginBottom: 8, gap: 8 }}>
             <View style={[styles.searchBarWrap, { flex: 1, margin: 0 }]}>
@@ -1774,13 +1776,13 @@ function MainApp() {
             <FlatList
               data={products}
               keyExtractor={(i) => i.id.toString()}
-              numColumns={isTablet ? 3 : 2}
-              key={isTablet ? 'tablet-grid' : 'mobile-grid'}
+              numColumns={isLargeDesktop ? 5 : isDesktop ? 4 : isTablet ? 3 : 2}
+              key={isLargeDesktop ? 'xlgrid' : isDesktop ? 'deskgrid' : isTablet ? 'tabgrid' : 'mobgrid'}
               contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
               style={{ flex: 1 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={[styles.gridProdCard, item.stock <= 0 && { opacity: 0.4 }]}
+                  style={[styles.gridProdCard, item.stock <= 0 && { opacity: 0.4 }, isLargeDesktop && { minHeight: 150 }, isDesktop && { minHeight: 130 }]}
                   onPress={() => addToCart(item)}
                   activeOpacity={0.7}
                 >
@@ -1803,7 +1805,7 @@ function MainApp() {
           </View>
 
           {/* Cart & Checkout Panel */}
-          <View style={[styles.cartPanel, isTablet && { flex: 1, height: '100%', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 1, borderLeftColor: '#334155' }]}>
+          <View style={[styles.cartPanel, (isTablet || isDesktop || isLargeDesktop) && { flex: 1, height: '100%', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 1, borderLeftColor: '#334155', padding: isLargeDesktop ? 24 : isDesktop ? 20 : 14 }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8' }}>
                 Keranjang POS ({cart.length} item)
@@ -2159,53 +2161,60 @@ function MainApp() {
         </ScrollView>
       )}
 
-      {/* BOTTOM TAB BAR — MAJOO-STYLE FIXED 5 TABS */}
-      <View style={styles.bottomTabBar}>
+      {/* BOTTOM TAB BAR — MODERN PILL STYLE WITH SAFE AREA */}
+      <View style={[styles.bottomTabBar, isDesktop && { paddingHorizontal: SCREEN_W > 1600 ? 120 : SCREEN_W > 1200 ? 80 : 40 }]}>
         {/* 1. Kasir POS */}
         <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'kasir' && styles.tabItemActive]}
+          style={styles.tabItem}
           onPress={() => setActiveTab('kasir')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="cash-register" size={24} color={activeTab === 'kasir' ? '#10b981' : '#64748b'} />
+          <View style={[styles.tabIconWrap, activeTab === 'kasir' && styles.tabIconWrapActive]}>
+            <MaterialCommunityIcons name="cash-register" size={22} color={activeTab === 'kasir' ? '#064e3b' : '#64748b'} />
+          </View>
           <Text style={[styles.tabLabel, activeTab === 'kasir' && styles.tabLabelActive]}>Kasir</Text>
         </TouchableOpacity>
 
         {/* 2. Riwayat */}
         <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'history' && styles.tabItemActive]}
+          style={styles.tabItem}
           onPress={() => setActiveTab('history')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name="receipt-outline" size={22} color={activeTab === 'history' ? '#10b981' : '#64748b'} />
+          <View style={[styles.tabIconWrap, activeTab === 'history' && styles.tabIconWrapActive]}>
+            <Ionicons name="receipt-outline" size={22} color={activeTab === 'history' ? '#064e3b' : '#64748b'} />
+          </View>
           <Text style={[styles.tabLabel, activeTab === 'history' && styles.tabLabelActive]}>Riwayat</Text>
         </TouchableOpacity>
 
         {/* 3. Stok */}
         <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'products' && styles.tabItemActive]}
+          style={styles.tabItem}
           onPress={() => setActiveTab('products')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name="cube-outline" size={22} color={activeTab === 'products' ? '#10b981' : '#64748b'} />
+          <View style={[styles.tabIconWrap, activeTab === 'products' && styles.tabIconWrapActive]}>
+            <Ionicons name="cube-outline" size={22} color={activeTab === 'products' ? '#064e3b' : '#64748b'} />
+          </View>
           <Text style={[styles.tabLabel, activeTab === 'products' && styles.tabLabelActive]}>Stok</Text>
         </TouchableOpacity>
 
         {/* 4. Dashboard/Laporan (Admin) or Barang Masuk (Kasir) */}
         <TouchableOpacity
-          style={[styles.tabItem, (isAdmin ? activeTab === 'dashboard' : activeTab === 'incoming') && styles.tabItemActive]}
+          style={styles.tabItem}
           onPress={() => setActiveTab(isAdmin ? 'dashboard' : 'incoming')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name={isAdmin ? "bar-chart-outline" : "log-in-outline"} size={22} color={(isAdmin ? activeTab === 'dashboard' : activeTab === 'incoming') ? '#10b981' : '#64748b'} />
+          <View style={[styles.tabIconWrap, (isAdmin ? activeTab === 'dashboard' : activeTab === 'incoming') && styles.tabIconWrapActive]}>
+            <Ionicons name={isAdmin ? "bar-chart-outline" : "log-in-outline"} size={22} color={(isAdmin ? activeTab === 'dashboard' : activeTab === 'incoming') ? '#064e3b' : '#64748b'} />
+          </View>
           <Text style={[styles.tabLabel, (isAdmin ? activeTab === 'dashboard' : activeTab === 'incoming') && styles.tabLabelActive]}>{isAdmin ? 'Laporan' : 'Masuk'}</Text>
         </TouchableOpacity>
 
         {/* 5. Lainnya */}
         <TouchableOpacity
-          style={[styles.tabItem, ['users', 'audit', 'cybersecurity', 'kds', 'incoming', 'adminTools'].includes(activeTab) && !(['kasir','history','products','dashboard'].includes(activeTab)) && styles.tabItemActive]}
+          style={styles.tabItem}
           onPress={() => {
-            // Toggle a "more menu" — cycle through extra tabs
             const moreTabs = isAdmin 
               ? ['incoming', 'users', 'audit', 'adminTools', ...((['cafe','resto','warteg','street_food','bakery'].includes(storeType)) ? ['kds'] : [])]
               : [...((['cafe','resto','warteg','street_food','bakery'].includes(storeType)) ? ['kds'] : [])];
@@ -2216,9 +2225,11 @@ function MainApp() {
             const nextIdx = (currentMoreIdx + 1) % moreTabs.length;
             setActiveTab(moreTabs[nextIdx]);
           }}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name="ellipsis-horizontal-circle-outline" size={22} color={['users','audit','cybersecurity','kds','incoming','adminTools'].includes(activeTab) && !['kasir','history','products','dashboard'].includes(activeTab) ? '#10b981' : '#64748b'} />
+          <View style={[styles.tabIconWrap, ['users', 'audit', 'cybersecurity', 'kds', 'incoming', 'adminTools'].includes(activeTab) && !(['kasir','history','products','dashboard'].includes(activeTab)) && styles.tabIconWrapActive]}>
+            <Ionicons name="ellipsis-horizontal-circle-outline" size={22} color={['users','audit','cybersecurity','kds','incoming','adminTools'].includes(activeTab) && !['kasir','history','products','dashboard'].includes(activeTab) ? '#064e3b' : '#64748b'} />
+          </View>
           <Text style={[styles.tabLabel, ['users','audit','cybersecurity','kds','incoming','adminTools'].includes(activeTab) && !['kasir','history','products','dashboard'].includes(activeTab) && styles.tabLabelActive]}>Lainnya</Text>
         </TouchableOpacity>
       </View>
@@ -2652,9 +2663,9 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
   },
   roleBadgeHeader: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   roleBadgeAdmin: {
     backgroundColor: '#10b98120',
@@ -2662,9 +2673,9 @@ const styles = StyleSheet.create({
     borderColor: '#10b981',
   },
   roleBadgeKasir: {
-    backgroundColor: '#10b98120',
+    backgroundColor: '#0ea5e920',
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#0ea5e9',
   },
   roleBadgeText: {
     fontSize: 9,
@@ -2674,21 +2685,26 @@ const styles = StyleSheet.create({
     color: '#10b981',
   },
   roleBadgeTextKasir: {
-    color: '#10b981',
+    color: '#38bdf8',
   },
   logoutBtn: {
-    padding: 6,
+    padding: 10,
+    minWidth: 40,
+    minHeight: 40,
     backgroundColor: '#ef444415',
-    borderRadius: 16,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   aiPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#10b981',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    minHeight: 40,
   },
   aiPillText: {
     fontSize: 11,
@@ -2699,6 +2715,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
+    maxWidth: 560,
+    width: '100%',
+    alignSelf: 'center',
   },
   loginHeader: {
     alignItems: 'center',
@@ -2744,24 +2763,30 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#047857',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
     marginRight: 6,
+    marginBottom: 4,
+    minHeight: 38,
+    justifyContent: 'center',
   },
   chipActive: {
     backgroundColor: '#10b98120',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#10b981',
   },
   chipText: {
     fontSize: 11,
     color: '#94a3b8',
+    fontWeight: '600',
   },
   chipTextActive: {
     color: '#10b981',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   roleSelectBtn: {
     flex: 1,
@@ -2769,8 +2794,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 38,
-    borderRadius: 10,
+    height: 46,
+    borderRadius: 14,
     backgroundColor: '#0f172a',
     borderWidth: 1,
     borderColor: '#334155',
@@ -2778,9 +2803,10 @@ const styles = StyleSheet.create({
   roleSelectBtnActive: {
     backgroundColor: '#10b98115',
     borderColor: '#10b981',
+    borderWidth: 1.5,
   },
   roleSelectText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#94a3b8',
     fontWeight: '700',
   },
@@ -2794,27 +2820,33 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#334155',
-    paddingHorizontal: 12,
-    height: 48,
-    marginBottom: 12,
+    paddingHorizontal: 14,
+    height: 50,
+    marginBottom: 14,
   },
   input: {
     flex: 1,
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 14,
   },
   primaryBtn: {
     backgroundColor: '#10b981',
     borderRadius: 16,
-    height: 48,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
   primaryBtnText: {
     color: '#064e3b',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '900',
+    letterSpacing: 0.2,
   },
   secondaryRegBtn: {
     flexDirection: 'row',
@@ -2823,93 +2855,112 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#10b98166',
     borderRadius: 16,
-    height: 48,
+    height: 50,
     marginTop: 12,
     backgroundColor: '#10b98110',
   },
   secondaryRegBtnText: {
     color: '#10b981',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
   },
   screenHeader: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: 10,
+    letterSpacing: -0.1,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#1e293b',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statVal: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
     color: '#fff',
-    marginVertical: 2,
+    marginVertical: 4,
   },
   statSub: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#94a3b8',
+    fontWeight: '600',
   },
   critRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#334155',
   },
   gridProdCard: {
     flex: 1,
     backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 16,
+    padding: 14,
     margin: 5,
     borderWidth: 1,
     borderColor: '#334155',
-    minHeight: 100,
+    minHeight: 120,
     justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 1,
   },
   gridProdStockBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#047857',
-    borderRadius: 6,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    marginBottom: 6,
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginBottom: 8,
   },
   gridProdName: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#ffffff',
-    lineHeight: 17,
+    lineHeight: 18,
     flex: 1,
   },
   gridProdPrice: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '900',
     color: '#10b981',
-    marginTop: 6,
+    marginTop: 8,
   },
   searchBarWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1e293b',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#334155',
     paddingHorizontal: 14,
-    height: 48,
+    height: 50,
     margin: 12,
     marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   emptyState: {
     flex: 1,
@@ -2926,7 +2977,7 @@ const styles = StyleSheet.create({
   },
   emptyStateDesc: {
     fontSize: 13,
-    color: '#334155',
+    color: '#64748b',
     textAlign: 'center',
     marginTop: 10,
     lineHeight: 20,
@@ -2935,27 +2986,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0e17',
     borderTopWidth: 1.5,
     borderTopColor: '#334155',
-    padding: 14,
+    padding: 16,
+    gap: 8,
   },
   cartRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(51, 65, 85, 0.5)',
   },
   qtyBtn: {
     backgroundColor: '#047857',
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 34,
+    minHeight: 34,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   checkoutBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
-    marginTop: 6,
+    paddingTop: 10,
+    marginTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#334155',
   },
@@ -2966,14 +3028,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 6,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
   },
   avatarBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2981,50 +3048,78 @@ const styles = StyleSheet.create({
     backgroundColor: '#10b98133',
   },
   avatarKasir: {
-    backgroundColor: '#10b98133',
+    backgroundColor: '#0ea5e922',
   },
   smallAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#10b981',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    minHeight: 38,
+    justifyContent: 'center',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
   restockSmallBtn: {
     backgroundColor: '#047857',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginTop: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginTop: 6,
+    minWidth: 68,
+    minHeight: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottomTabBar: {
     flexDirection: 'row',
     backgroundColor: '#0d1117',
     borderTopWidth: 1,
-    borderTopColor: '#334155',
-    // Tall enough to be tappable + extra for Android nav bar
-    paddingBottom: Platform.OS === 'android' ? 8 : 20,
-    paddingTop: 6,
-    minHeight: 64,
+    borderTopColor: '#1e293b',
+    paddingBottom: Platform.OS === 'android' ? 10 : 24,
+    paddingTop: 8,
+    minHeight: 70,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   tabItem: {
     flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingVertical: 4,
+    minHeight: 56,
+    gap: 3,
+  },
+  tabIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 6,
-    minHeight: 52,
   },
-  tabItemActive: {
-    borderTopWidth: 2.5,
-    borderTopColor: '#10b981',
+  tabIconWrapActive: {
+    backgroundColor: '#10b981',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#64748b',
-    marginTop: 3,
+    marginTop: 2,
     fontWeight: '600',
+    letterSpacing: 0.1,
   },
   tabLabelActive: {
     color: '#10b981',
@@ -3032,40 +3127,53 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
   modalCard: {
     backgroundColor: '#1e293b',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 22,
+    padding: 22,
     borderWidth: 1,
     borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
+    maxWidth: 560,
+    width: '100%',
+    alignSelf: 'center',
+    maxHeight: '92%',
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: 10,
+    letterSpacing: -0.1,
   },
   modalInput: {
     backgroundColor: '#0f172a',
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#334155',
     color: '#ffffff',
-    paddingHorizontal: 12,
-    height: 42,
-    fontSize: 13,
+    paddingHorizontal: 14,
+    height: 48,
+    fontSize: 14,
+    marginBottom: 2,
   },
   cancelBtn: {
     flex: 1,
-    height: 42,
-    borderRadius: 10,
-    backgroundColor: '#047857',
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#334155',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#475569',
   },
 });
 
