@@ -231,7 +231,6 @@ function normalizeMode() {
 
 const storedMode = normalizeMode();
 localStorage.setItem(MODE_KEY, storedMode);
-
 const NAV_ADMIN = [
   { id: 'pos', label: 'Kasir', title: 'Kasir', icon: '🛒' },
   { id: 'scan', label: 'Scan & Daftarkan', title: 'Scan & Daftarkan Barang', icon: '📷' },
@@ -252,12 +251,13 @@ const NAV_KASIR = [
   { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
 ];
 
-const TITLE_LOOKUP = {};
+const TITLE_LOOKUP = {
+  expenses: 'Bayar Nota & Kas Keluar',
+};
+
 [NAV_ADMIN, NAV_KASIR].forEach((arr) => {
   arr.forEach((it) => {
     if (!TITLE_LOOKUP[it.id]) TITLE_LOOKUP[it.id] = it.title;
-  });
-  TITLE_LOOKUP['expenses'] = 'Bayar Nota & Kas Keluar';
   });
 });
 
