@@ -123,7 +123,7 @@ router.get('/logs', authMiddleware, requireTenant, requireRole('admin'), async (
 router.post('/toggle-loop', authMiddleware, requireTenant, requireRole('admin'), async (req, res) => {
   const tenantId = req.user.tenant_id;
   const { enabled } = req.body;
-  
+
   if (typeof enabled === 'boolean') {
     await setLoopEnabled(tenantId, enabled);
     return res.json({ success: true, loopEnabled: getLoopEnabled(tenantId) });
@@ -374,7 +374,7 @@ router.post('/ai-heal', authMiddleware, requireTenant, requireRole('admin'), asy
       await pool.execute(
         'INSERT INTO audit_logs (tenant_id, user_id, action, resource_meta) VALUES (?, ?, ?, ?)',
         [tenantId, req.user?.id || 0, 'ai.cyber_self_heal', JSON.stringify({ healedActions, timestamp: new Date().toISOString() })]
-      ).catch(() => {});
+      ).catch(() => { });
     }
 
     // 5. Generate AI Assessment using Gemini if API Key available

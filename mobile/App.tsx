@@ -133,7 +133,6 @@ export const showCustomAlert = (title: string, message: string, buttons?: {text:
   if (showCustomAlertFn) {
     showCustomAlertFn(title, message, buttons, options);
   } else {
-    // Fallback if component not mounted yet - use native Alert
     Alert.alert(title, message);
   }
 };
@@ -147,8 +146,30 @@ const CustomAlertComponent = () => {
     buttons: []
   });
 
-  const scaleValue = useRef(new Animated.Value(0.8)).current;
+  const scaleValue = useRef(new Animated.Value(0.7)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
+  const pulseValue = useRef(new Animated.Value(1)).current;
+  const checkmarkScale = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    // Pulse halo animation for success checkmark
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseValue, {
+          toValue: 1.15,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseValue, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        })
+      ])
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
+  }, []);
 
   useEffect(() => {
     showCustomAlertFn = (title, message, buttons, options) => {
@@ -157,19 +178,27 @@ const CustomAlertComponent = () => {
         title,
         message,
         type: options?.type || 'info',
-        buttons: buttons || [{ text: 'OK', onPress: () => closeAlert() }]
+        buttons: buttons || [{ text: 'Selesai & Lanjutkan', onPress: () => closeAlert() }]
       });
-      
+
+      checkmarkScale.setValue(0.3);
+
       Animated.parallel([
         Animated.spring(scaleValue, {
           toValue: 1,
           friction: 6,
-          tension: 40,
+          tension: 50,
           useNativeDriver: true
         }),
         Animated.timing(opacityValue, {
           toValue: 1,
-          duration: 200,
+          duration: 220,
+          useNativeDriver: true
+        }),
+        Animated.spring(checkmarkScale, {
+          toValue: 1,
+          friction: 4,
+          tension: 60,
           useNativeDriver: true
         })
       ]).start();
@@ -179,90 +208,135 @@ const CustomAlertComponent = () => {
   const closeAlert = (callback?: () => void) => {
     Animated.parallel([
       Animated.timing(scaleValue, {
-        toValue: 0.8,
-        duration: 150,
+        toValue: 0.85,
+        duration: 160,
         useNativeDriver: true
       }),
       Animated.timing(opacityValue, {
         toValue: 0,
-        duration: 150,
+        duration: 160,
         useNativeDriver: true
       })
     ]).start(() => {
       setState(prev => ({ ...prev, visible: false }));
-      if (callback) callback();
+      if (callback) {
+        setTimeout(() => callback(), 50);
+      }
     });
   };
 
   if (!state.visible) return null;
 
+  let isSuccess = false;
   let iconName = 'information-circle';
-  let iconColor = '#3b82f6';
-  
-  const titleLow = state.title.toLowerCase();
-  if (state.type === 'success' || titleLow.includes('sukses') || titleLow.includes('✅') || titleLow.includes('🎉')) {
+  let iconColor = '#10b981';
+  let haloBg = 'rgba(16, 185, 129, 0.16)';
+  let borderColor = 'rgba(16, 185, 129, 0.35)';
+
+  const titleLow = (state.title + ' ' + state.message).toLowerCase();
+  if (state.type === 'success' || titleLow.includes('sukses') || titleLow.includes('berhasil') || titleLow.includes('✅') || titleLow.includes('🎉')) {
+    isSuccess = true;
     iconName = 'checkmark-circle';
     iconColor = '#10b981';
+    haloBg = 'rgba(16, 185, 129, 0.2)';
+    borderColor = 'rgba(16, 185, 129, 0.4)';
   } else if (state.type === 'error' || titleLow.includes('gagal') || titleLow.includes('error') || titleLow.includes('ditolak')) {
     iconName = 'close-circle';
     iconColor = '#ef4444';
+    haloBg = 'rgba(239, 68, 68, 0.16)';
+    borderColor = 'rgba(239, 68, 68, 0.35)';
   } else if (state.type === 'warning' || titleLow.includes('peringatan') || titleLow.includes('maksimal')) {
     iconName = 'warning';
     iconColor = '#f59e0b';
+    haloBg = 'rgba(245, 158, 11, 0.16)';
+    borderColor = 'rgba(245, 158, 11, 0.35)';
   }
 
   return (
-    <Modal transparent visible={state.visible} animationType="none" onRequestClose={() => setState(s => ({ ...s, visible: false }))}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Animated.View style={{ 
-            backgroundColor: '#0f172a', 
-            borderRadius: 24, 
-            padding: 24, 
-            width: '100%', 
-            maxWidth: 400,
-            borderWidth: 1,
-            borderColor: '#27272a',
-            shadowColor: iconColor,
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.3,
-            shadowRadius: 20,
-            elevation: 10,
-            transform: [{ scale: scaleValue }],
-            opacity: opacityValue
-          }}>
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <Ionicons name={iconName as any} size={56} color={iconColor} style={{ marginBottom: 12 }} />
-            <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>
-              {state.title}
-            </Text>
-            <Text style={{ color: '#a1a1aa', fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
-              {state.message}
-            </Text>
+    <Modal transparent visible={state.visible} animationType="none" onRequestClose={() => closeAlert()}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(3, 7, 18, 0.82)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Animated.View style={{
+          backgroundColor: '#0f172a',
+          borderRadius: 26,
+          paddingVertical: 28,
+          paddingHorizontal: 24,
+          width: '100%',
+          maxWidth: 380,
+          borderWidth: 1.5,
+          borderColor: borderColor,
+          shadowColor: iconColor,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.35,
+          shadowRadius: 24,
+          elevation: 16,
+          transform: [{ scale: scaleValue }],
+          opacity: opacityValue,
+          alignItems: 'center'
+        }}>
+          {/* Animated Glowing Halo Icon */}
+          <View style={{ position: 'relative', width: 88, height: 88, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Animated.View style={{
+              position: 'absolute',
+              width: 84,
+              height: 84,
+              borderRadius: 42,
+              backgroundColor: haloBg,
+              borderWidth: 1,
+              borderColor: borderColor,
+              transform: [{ scale: pulseValue }]
+            }} />
+            <Animated.View style={{ transform: [{ scale: checkmarkScale }] }}>
+              {isSuccess ? (
+                <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#10b981', justifyContent: 'center', alignItems: 'center', shadowColor: '#10b981', shadowOpacity: 0.5, shadowRadius: 12, elevation: 8 }}>
+                  <Ionicons name="checkmark-sharp" size={40} color="#064e3b" />
+                </View>
+              ) : (
+                <Ionicons name={iconName as any} size={64} color={iconColor} />
+              )}
+            </Animated.View>
           </View>
-          
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+
+          {/* Title & Message */}
+          <Text style={{ color: '#ffffff', fontSize: 21, fontWeight: '900', textAlign: 'center', marginBottom: 10, letterSpacing: -0.3 }}>
+            {state.title}
+          </Text>
+          <Text style={{ color: '#94a3b8', fontSize: 13.5, textAlign: 'center', lineHeight: 22, paddingHorizontal: 6, marginBottom: 24 }}>
+            {state.message}
+          </Text>
+
+          {/* Action Buttons */}
+          <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
             {state.buttons.map((btn, idx) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={idx}
+                activeOpacity={0.8}
                 onPress={() => {
-                   if (btn.onPress) {
-                       closeAlert(btn.onPress);
-                   } else {
-                       closeAlert();
-                   }
+                  if (btn.onPress) {
+                    closeAlert(btn.onPress);
+                  } else {
+                    closeAlert();
+                  }
                 }}
                 style={{
                   flex: 1,
                   paddingVertical: 14,
-                  borderRadius: 12,
-                  backgroundColor: btn.style === 'cancel' ? '#27272a' : (btn.style === 'destructive' ? '#ef4444' : iconColor),
-                  alignItems: 'center'
+                  borderRadius: 14,
+                  backgroundColor: btn.style === 'cancel' ? '#1e293b' : (btn.style === 'destructive' ? '#ef4444' : '#10b981'),
+                  borderWidth: btn.style === 'cancel' ? 1 : 0,
+                  borderColor: '#334155',
+                  alignItems: 'center',
+                  shadowColor: btn.style === 'cancel' ? 'transparent' : '#10b981',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 10,
+                  elevation: 6
                 }}
               >
-                <Text style={{ 
-                  color: btn.style === 'cancel' ? '#fff' : '#fff', 
-                  fontWeight: '700', 
-                  fontSize: 15 
+                <Text style={{
+                  color: btn.style === 'cancel' ? '#94a3b8' : (btn.style === 'destructive' ? '#fff' : '#064e3b'),
+                  fontWeight: '900',
+                  fontSize: 14.5,
+                  letterSpacing: 0.2
                 }}>
                   {btn.text}
                 </Text>
@@ -2864,6 +2938,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <MainApp />
+      <CustomAlertComponent />
+      <ScanSuccessOverlay />
     </ErrorBoundary>
   );
 }
