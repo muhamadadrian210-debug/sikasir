@@ -3,153 +3,194 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0369a1" />
-    <title>Masuk — SiKasir</title>
+    <meta name="theme-color" content="#090d16" />
+    <title>SiKasir — Modern Cloud & Native POS System</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
     <link rel="apple-touch-icon" href="/icons/logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/css/app.css?v=1.0.5" />
+    <link rel="stylesheet" href="/css/app.css?v=1.0.6" />
   </head>
   <body>
     <div class="login-page">
-      <div class="login-card">
-        <div class="login-brand">
-          <img src="/icons/logo.svg" alt="" width="48" height="48" />
-          <div>
-            <h1>SiKasir</h1>
-            <p style="margin: 0; color: var(--text); font-size: 0.9rem">
-              Kasir supermarket &amp; stok
-            </p>
+      <div class="landing-split-container">
+        <!-- Left Side: Hero Showcase -->
+        <div class="landing-hero">
+          <div class="hero-pill-badge">
+            <span style="font-size: 1rem;">✨</span> SiKasir POS Pro v1.0.6
+          </div>
+          <h1 class="hero-title">
+            Kelola Transaksi Toko <span>Lebih Cepat, Rapi &amp; Pintar</span>
+          </h1>
+          <p class="hero-subtitle">
+            Aplikasi kasir pintar serba bisa untuk Minimarket, Warung Sembako, Cafe, Apotek, hingga Toko Fashion dengan sinkronisasi multi-cabang realtime.
+          </p>
+
+          <div class="hero-features-grid">
+            <div class="hero-feat-card">
+              <div class="hero-feat-icon">⚡</div>
+              <div>
+                <div class="hero-feat-title">Scan Barcode Cepat</div>
+                <div class="hero-feat-desc">Kamera HP/Web &amp; Scanner USB hardware responsif</div>
+              </div>
+            </div>
+            <div class="hero-feat-card">
+              <div class="hero-feat-icon">🏢</div>
+              <div>
+                <div class="hero-feat-title">Multi-Cabang &amp; Mutasi</div>
+                <div class="hero-feat-desc">Transfer stok antar cabang dalam 1 akun perusahaan</div>
+              </div>
+            </div>
+            <div class="hero-feat-card">
+              <div class="hero-feat-icon">📈</div>
+              <div>
+                <div class="hero-feat-title">Laba Rugi Otomatis</div>
+                <div class="hero-feat-desc">Hitung omset, modal, dan profit harian seketika</div>
+              </div>
+            </div>
+            <div class="hero-feat-card">
+              <div class="hero-feat-icon">📶</div>
+              <div>
+                <div class="hero-feat-title">Mode Offline PWA</div>
+                <div class="hero-feat-desc">Tetap bisa transaksi kasir walau koneksi terputus</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="login-alert" class="alert alert-error hidden"></div>
-        <a class="btn-apk-download btn-block" href="/downloads/sikasir-v2-native.apk" download>
-          📱 Unduh SiKasir (Native React)
-        </a>
-        <div class="auth-tabs" role="tablist">
-          <button type="button" class="auth-tab active" id="tab-login" data-panel="login" aria-selected="true">
-            Masuk
-          </button>
-          <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
-            Daftar Toko
-          </button>
+
+        <!-- Right Side: Auth Card -->
+        <div class="login-card">
+          <div class="login-brand">
+            <img src="/icons/logo.svg" alt="SiKasir Logo" width="44" height="44" />
+            <div>
+              <h1>SiKasir</h1>
+              <p style="margin: 0; font-size: 0.84rem; color: var(--text-muted);">
+                Masuk ke Kios atau Daftarkan Toko Baru
+              </p>
+            </div>
+          </div>
+
+          <a class="btn-apk-download btn-block" href="/downloads/sikasir-v2-native.apk" download>
+            📱 Unduh APK Android (Native React)
+          </a>
+
+          <div id="login-alert" class="alert alert-error hidden"></div>
+
+          <div class="auth-tabs" role="tablist">
+            <button type="button" class="auth-tab active" id="tab-login" data-panel="login" aria-selected="true">
+              🔑 Masuk Akun
+            </button>
+            <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
+              🏪 Daftar Toko
+            </button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="login-form" class="auth-panel" data-panel="login">
+            <div class="field">
+              <label for="company-id-login">Company ID (Opsional Multi-Cabang)</label>
+              <input id="company-id-login" name="company_id" placeholder="Kosongkan jika toko tunggal" />
+            </div>
+            <div class="field">
+              <label for="username">Username</label>
+              <input id="username" name="username" autocomplete="username" required placeholder="Username akun Anda" />
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <div class="password-field">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  placeholder="Password akun"
+                />
+                <button type="button" class="btn-pw-toggle" data-pw-target="password">
+                  Lihat
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem;">
+              MASUK KE DASHBOARD
+            </button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-form" class="auth-panel hidden" data-panel="register">
+            <p class="auth-hint">Buat toko baru dan otomatis menjadi Admin Utama.</p>
+            <div class="field">
+              <label for="reg-store-name">Nama Toko / Kios</label>
+              <input id="reg-store-name" name="store_name" required placeholder="Contoh: Minimarket Berkah" />
+            </div>
+            <div class="field">
+              <label for="reg-store-type">Jenis Toko / Bisnis</label>
+              <select id="reg-store-type" name="store_type" required>
+                <option value="">— Pilih jenis bisnis —</option>
+                <optgroup label="Retail &amp; Toko Kelontong">
+                  <option value="Minimarket">🛒 Minimarket</option>
+                  <option value="Toko Kelontong">🏪 Toko Kelontong</option>
+                  <option value="Warung Sembako">🌾 Warung Sembako</option>
+                  <option value="Toko Pakaian / Fashion">👗 Toko Pakaian / Fashion</option>
+                  <option value="Toko Elektronik">📱 Toko Elektronik / HP</option>
+                  <option value="Toko Peralatan Rumah Tangga">🍳 Peralatan Rumah Tangga</option>
+                  <option value="Toko Alat Tulis / ATK">✏️ Toko Alat Tulis / ATK</option>
+                  <option value="Toko Kosmetik / Kecantikan">💄 Kosmetik &amp; Kecantikan</option>
+                  <option value="Pet Shop">🐾 Pet Shop</option>
+                </optgroup>
+                <optgroup label="Kuliner (F&amp;B)">
+                  <option value="Cafe / Kedai Kopi">☕ Cafe / Kedai Kopi</option>
+                  <option value="Restoran">🍽️ Restoran</option>
+                  <option value="Warung Makan / Tegal">🍲 Warung Makan / Tegal</option>
+                  <option value="Toko Kue / Bakery">🍞 Toko Kue / Bakery</option>
+                </optgroup>
+                <optgroup label="Kesehatan &amp; Jasa">
+                  <option value="Apotek / Toko Obat">💊 Apotek / Toko Obat</option>
+                  <option value="Klinik Kesehatan">🩺 Klinik Kesehatan</option>
+                  <option value="Barbershop / Pangkas Rambut">✂️ Barbershop / Pangkas Rambut</option>
+                  <option value="Salon Kecantikan">💅 Salon Kecantikan</option>
+                  <option value="Laundry">🧺 Laundry Kiloan / Satuan</option>
+                  <option value="Bengkel Motor / Mobil">🔧 Bengkel Motor / Mobil</option>
+                </optgroup>
+                <optgroup label="Material &amp; Agen">
+                  <option value="Toko Bangunan / Material">🧱 Toko Bangunan / Material</option>
+                  <option value="Agen Gas &amp; Galon">💧 Agen Gas &amp; Galon</option>
+                  <option value="Lainnya">📦 Lainnya</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="field">
+              <label for="reg-company-id">Company ID (Opsional)</label>
+              <input id="reg-company-id" name="company_id" placeholder="Hanya untuk holding / multi-cabang" />
+            </div>
+            <div class="field">
+              <label for="reg-username">Username Admin</label>
+              <input id="reg-username" name="username" required placeholder="Contoh: admin" />
+            </div>
+            <div class="field">
+              <label for="reg-password">Password</label>
+              <div class="password-field">
+                <input id="reg-password" name="password" type="password" required placeholder="Minimal 8 karakter" />
+                <button type="button" class="btn-pw-toggle" data-pw-target="reg-password">
+                  Lihat
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="reg-password-confirm">Konfirmasi Password</label>
+              <div class="password-field">
+                <input id="reg-password-confirm" name="password_confirm" type="password" required placeholder="Ulangi password" />
+                <button type="button" class="btn-pw-toggle" data-pw-target="reg-password-confirm">
+                  Lihat
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem;">
+              DAFTAR &amp; MASUK TOKO
+            </button>
+          </form>
         </div>
-
-        <form id="login-form" class="auth-panel" data-panel="login">
-          <div class="field">
-            <label for="company-id-login">Company ID (Opsional)</label>
-            <input id="company-id-login" name="company_id" placeholder="Kosongkan jika bukan Multi-Cabang" />
-          </div>
-          <div class="field">
-            <label for="username">Username</label>
-            <input id="username" name="username" autocomplete="username" required />
-          </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <div class="password-field">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                required
-              />
-              <button type="button" class="btn-pw-toggle" data-pw-target="password">
-                Tampilkan
-              </button>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Masuk</button>
-        </form>
-
-        <form id="register-form" class="auth-panel hidden" data-panel="register">
-          <p class="auth-hint">Daftarkan kios/toko baru dan buat akun admin Anda.</p>
-          <div class="field">
-            <label for="reg-store-name">Nama Toko / Kios</label>
-            <input id="reg-store-name" name="store_name" required placeholder="Contoh: Kios Abizar" />
-          </div>
-          <div class="field">
-            <label for="reg-store-type">Jenis Toko / Kios</label>
-            <select id="reg-store-type" name="store_type" required>
-              <option value="">— Pilih jenis toko —</option>
-              <optgroup label="Retail & Dagang">
-                <option value="Minimarket">Minimarket</option>
-                <option value="Toko Kelontong">Toko Kelontong</option>
-                <option value="Warung Sembako">Warung Sembako</option>
-                <option value="Toko Pakaian / Fashion">Toko Pakaian / Fashion</option>
-                <option value="Toko Elektronik">Toko Elektronik</option>
-                <option value="Toko Komputer / HP">Toko Komputer / HP</option>
-                <option value="Toko Peralatan Rumah Tangga">Toko Peralatan Rumah Tangga</option>
-                <option value="Toko Alat Tulis / ATK">Toko Alat Tulis / ATK</option>
-                <option value="Toko Mainan">Toko Mainan</option>
-                <option value="Toko Buku">Toko Buku</option>
-                <option value="Pet Shop">Pet Shop</option>
-                <option value="Toko Kosmetik / Kecantikan">Toko Kosmetik / Kecantikan</option>
-                <option value="Toko Parfum">Toko Parfum</option>
-                <option value="Toko Plastik / Kemasan">Toko Plastik / Kemasan</option>
-              </optgroup>
-              <optgroup label="Makanan & Minuman">
-                <option value="Cafe / Kedai Kopi">Cafe / Kedai Kopi</option>
-                <option value="Restoran">Restoran</option>
-                <option value="Rumah Makan">Rumah Makan</option>
-                <option value="Warung Makan / Tegal">Warung Makan / Tegal</option>
-                <option value="Kedai Teh / Minuman">Kedai Teh / Minuman</option>
-                <option value="Toko Kue / Bakery">Toko Kue / Bakery</option>
-                <option value="Toko Daging / Seafood">Toko Daging / Seafood</option>
-              </optgroup>
-              <optgroup label="Jasa & Kesehatan">
-                <option value="Apotek / Toko Obat">Apotek / Toko Obat</option>
-                <option value="Klinik Kesehatan">Klinik Kesehatan</option>
-                <option value="Klinik Gigi">Klinik Gigi</option>
-                <option value="Barbershop / Pangkas Rambut">Barbershop / Pangkas Rambut</option>
-                <option value="Salon Kecantikan">Salon Kecantikan</option>
-                <option value="Laundry">Laundry</option>
-                <option value="Cuci Mobil / Motor">Cuci Mobil / Motor</option>
-                <option value="Bengkel Motor / Mobil">Bengkel Motor / Mobil</option>
-              </optgroup>
-              <optgroup label="Material & Agrikultur">
-                <option value="Toko Bangunan / Material">Toko Bangunan / Material</option>
-                <option value="Toko Otomotif / Spare Part">Toko Otomotif / Spare Part</option>
-                <option value="Toko Pertanian / Pupuk">Toko Pertanian / Pupuk</option>
-                <option value="Agen Gas & Galon">Agen Gas & Galon</option>
-                <option value="Lainnya">Lainnya</option>
-              </optgroup>
-            </select>
-          </div>
-          <div class="field">
-            <label for="reg-company-id">Company ID (Corporate)</label>
-            <input id="reg-company-id" name="company_id" placeholder="Opsional untuk Holding / Multi-Cabang" />
-          </div>
-          <div class="field">
-            <label for="reg-username">Username Admin</label>
-            <input id="reg-username" name="username" required placeholder="Contoh: admin" />
-          </div>
-          <div class="field">
-            <label for="reg-password">Password</label>
-            <div class="password-field">
-              <input id="reg-password" name="password" type="password" required placeholder="Minimal 8 karakter" />
-              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password">
-                Tampilkan
-              </button>
-            </div>
-          </div>
-          <div class="field">
-            <label for="reg-password-confirm">Ulangi Password</label>
-            <div class="password-field">
-              <input id="reg-password-confirm" name="password_confirm" type="password" required placeholder="Ulangi password" />
-              <button type="button" class="btn-pw-toggle" data-pw-target="reg-password-confirm">
-                Tampilkan
-              </button>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Daftar &amp; Masuk</button>
-        </form>
       </div>
     </div>
     <footer class="app-footer-watermark">Copyright © 2026 Muhamad Adrian. All rights reserved. Owned and Published by Sivilize Corp.</footer>
@@ -157,4 +198,3 @@
     <script type="module" src="/js/login.js"></script>
   </body>
 </html>
-

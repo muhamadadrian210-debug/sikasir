@@ -3,18 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0369a1" />
-    <title>Dashboard — SiKasir</title>
+    <meta name="theme-color" content="#090d16" />
+    <title>SiKasir — Modern POS Dashboard</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
     <link rel="apple-touch-icon" href="/icons/logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/css/app.css?v=1.0.5" />
+    <link rel="stylesheet" href="/css/app.css?v=1.0.6" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -22,36 +18,53 @@
   <body>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <div class="app-layout">
+      <!-- Sidebar Navigation -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-          <img src="/icons/logo.svg" alt="" width="36" height="36" />
-          <strong>SiKasir</strong>
+          <img src="/icons/logo.svg" alt="SiKasir" width="36" height="36" />
+          <div>
+            <strong>SiKasir</strong>
+            <div style="font-size: 0.72rem; color: var(--primary); font-weight: 700; letter-spacing: 0.05em;">CLOUD POS</div>
+          </div>
         </div>
+
         <nav class="sidebar-nav" id="sidebar-nav"></nav>
+
         <div class="sidebar-footer">
           <div id="sidebar-mode-label" class="sidebar-mode-hint"></div>
           <div id="user-badge"></div>
-          <button type="button" class="btn btn-secondary btn-block mt-1" id="btn-change-mode">
-            Ganti mode
+          <button type="button" class="btn btn-secondary btn-block mt-1" id="btn-change-mode" style="padding: 0.6rem 1rem; font-size: 0.85rem;">
+            🔄 Ganti Mode
           </button>
-          <a class="btn-apk-download btn-block mt-1" id="btn-download-apk" href="/downloads/sikasir-v2-native.apk" download>
-            📱 Unduh SiKasir (Native React)
+          <a class="btn-apk-download btn-block mt-1" id="btn-download-apk" href="/downloads/sikasir-v2-native.apk" download style="margin-bottom: 0.5rem; font-size: 0.82rem; padding: 0.65rem 0.75rem;">
+            📱 Unduh APK Android
           </a>
-          <button type="button" class="btn btn-secondary btn-block mt-1" id="btn-logout">
-            Keluar
+          <button type="button" class="btn btn-secondary btn-block" id="btn-logout" style="padding: 0.6rem 1rem; font-size: 0.85rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.25);">
+            🚪 Keluar
           </button>
         </div>
       </aside>
+
+      <!-- Main Application Wrapper -->
       <div class="main-wrap">
         <header class="topbar">
-          <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Menu">☰</button>
-          <h2 id="page-title">Kasir</h2>
-          <div id="topbar-store-name" style="margin-left: auto; font-weight: 700; font-size: 1.05rem; color: var(--primary);"></div>
+          <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Buka Menu">☰</button>
+          <h2 id="page-title">Kasir POS</h2>
+          
+          <div style="display:flex; align-items:center; gap: 0.75rem; margin-left: auto;">
+            <div style="display:flex; align-items:center; gap: 6px; font-size: 0.82rem; font-weight: 700; color: var(--primary); background: rgba(16, 185, 129, 0.12); padding: 0.35rem 0.75rem; border-radius: var(--radius-full); border: 1px solid rgba(16, 185, 129, 0.25);">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); display: inline-block;"></span>
+              ONLINE
+            </div>
+            <div id="topbar-store-name"></div>
+          </div>
         </header>
+
         <main class="content">
           <div id="global-alert"></div>
 
-          <section id="view-pos" class="view panel"></section>
+          <!-- Section Views -->
+          <section id="view-pos" class="view"></section>
           <section id="view-scan" class="view panel hidden"></section>
           <section id="view-products" class="view panel hidden"></section>
           <section id="view-reports" class="view panel hidden"></section>
@@ -64,82 +77,55 @@
           <section id="view-history" class="view panel hidden"></section>
           <section id="view-cybersecurity" class="view panel hidden"></section>
         </main>
-        <footer class="app-footer-watermark">Copyright © 2026 Muhamad Adrian. All rights reserved. Owned and Published by Sivilize Corp.</footer>
+
+        <footer class="app-footer-watermark">
+          Copyright © 2026 Muhamad Adrian. All rights reserved. Owned and Published by Sivilize Corp.
+        </footer>
       </div>
     </div>
 
+    <!-- Scan Barcode Modal -->
     <div class="modal-backdrop" id="modal-scan">
       <div class="modal">
-        <h3>Scan barcode</h3>
+        <h3>📷 Scan Barcode Kamera</h3>
         <div id="scan-video-host" class="scan-video-wrap"></div>
         <div id="scan-product-preview"></div>
-        <p class="mt-1" style="font-size: 0.85rem;color:var(--text);opacity:0.8;">Arahkan kamera ke barcode. Izinkan akses kamera jika diminta.</p>
+        <p class="mt-1" style="font-size: 0.85rem; color: var(--text-muted);">
+          Arahkan kamera ke barcode produk. Pastikan pencahayaan cukup.
+        </p>
         <div class="scan-upload-area mt-1">
-          <label for="modal-scan-upload" class="btn btn-secondary btn-block" style="cursor:pointer;text-align:center;">
-            🖼️ Upload foto dari galeri
+          <label for="modal-scan-upload" class="btn btn-secondary btn-block" style="cursor:pointer; text-align:center;">
+            🖼️ Upload Foto dari Galeri
           </label>
           <input type="file" id="modal-scan-upload" accept="image/*" style="display:none"/>
           <div id="scan-file-temp-id" style="display:none"></div>
         </div>
         <div class="actions-inline mt-1">
-          <button type="button" class="btn btn-secondary" id="modal-scan-close">✕ Tutup</button>
+          <button type="button" class="btn btn-secondary btn-block" id="modal-scan-close">✕ Tutup Kamera</button>
         </div>
       </div>
     </div>
 
-    <script>
-      // PWA install prompt
-      let deferredPrompt = null;
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        const btn = document.getElementById('btn-install-pwa');
-        if (btn) btn.style.display = '';
-      });
-      window.addEventListener('appinstalled', () => {
-        deferredPrompt = null;
-        const btn = document.getElementById('btn-install-pwa');
-        if (btn) btn.style.display = 'none';
-      });
-      if ('serviceWorker' in navigator) {
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (refreshing) return;
-          refreshing = true;
-          window.location.reload();
-        });
-      }
-      window.__installPWA = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        if (outcome === 'accepted') {
-          const btn = document.getElementById('btn-install-pwa');
-          if (btn) btn.style.display = 'none';
-        }
-      };
-    </script>
-
+    <!-- AI Chat Widget Floating -->
     <div id="ai-chat-widget">
-      <button id="ai-chat-btn" aria-label="Buka AI Assistant">✨ AI</button>
+      <button id="ai-chat-btn" aria-label="Buka AI Assistant">✨ AI Assistant</button>
       <div id="ai-chat-window" class="hidden">
         <div class="ai-chat-header">
           <span>SiKasir AI Assistant</span>
           <button id="ai-chat-close">✕</button>
         </div>
         <div class="ai-chat-messages" id="ai-chat-messages">
-          <div class="ai-msg bot-msg">Halo Bos! Ada yang bisa gue bantu soal nambah atau ngurangin stok hari ini?</div>
+          <div class="ai-msg bot-msg">Halo! Ada yang bisa saya bantu terkait stok, kasir, atau laporan hari ini?</div>
         </div>
         <form class="ai-chat-input" id="ai-chat-form">
-          <input type="text" id="ai-chat-input" placeholder="Ketik perintah (misal: hoodie nambah 10)..." autocomplete="off" required />
+          <input type="text" id="ai-chat-input" placeholder="Ketik perintah (misal: cek stok indomie)..." autocomplete="off" required />
           <button type="submit">Kirim</button>
         </form>
       </div>
     </div>
 
     <script src="/js/samsung-redirect.js"></script>
-    <script type="module" src="/js/app.js?v=1.0.5"></script>
+    <script type="module" src="/js/app.js?v=1.0.6"></script>
     <script type="module" src="/js/ai-chat.js"></script>
   </body>
 </html>

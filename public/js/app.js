@@ -346,22 +346,71 @@ function showView(id) {
 
 function buildSidebar() {
   const nav = document.getElementById('sidebar-nav');
-  const items = getNavItems();
   const modeLabels = {
-    kasir: 'Mode: Kasir',
-    admin: 'Mode: Admin',
-    both: 'Mode: Kasir + Admin',
+    kasir: 'MODE: STAF KASIR',
+    admin: 'MODE: ADMIN TOKO',
+    both: 'MODE: KASIR + ADMIN',
   };
   document.getElementById('sidebar-mode-label').textContent = modeLabels[storedMode] || '';
 
-  nav.innerHTML = items
-    .map(
-      (it) =>
-        `<button type="button" data-view="${it.id}" data-title="${it.title}">
-          <span class="nav-icon">${it.icon}</span>${it.label}
-        </button>`
-    )
-    .join('');
+  const groups = [
+    {
+      title: 'Operasional',
+      items: [
+        { id: 'pos', label: 'Kasir POS', icon: '🛒' },
+        { id: 'history', label: 'Riwayat Transaksi', icon: '🕐' },
+        { id: 'incoming', label: StoreConfig.getMenuLabel('incoming', 'Barang Masuk'), icon: '📥' },
+      ]
+    },
+    {
+      title: 'Inventori & Stok',
+      items: [
+        { id: 'products', label: StoreConfig.getMenuLabel('products', 'Produk & Katalog'), icon: '📦' },
+        { id: 'stock', label: StoreConfig.getMenuLabel('stock', 'Stok & Opname'), icon: '🗃️' },
+        { id: 'mutasi', label: 'Mutasi Cabang', icon: '🔄' },
+        { id: 'scan', label: 'Scan & Daftarkan', icon: '📷' },
+      ]
+    },
+    {
+      title: 'Keuangan',
+      items: [
+        { id: 'reports', label: 'Laporan & Untung', icon: '📈' },
+        { id: 'kasbon-global', label: 'Kasbon Pelanggan', icon: '💳' },
+      ]
+    },
+    {
+      title: 'Sistem & Akses',
+      items: [
+        { id: 'users', label: 'Staf Kasir', icon: '👥' },
+        { id: 'audit', label: 'Log Audit', icon: '📝' },
+        { id: 'cybersecurity', label: 'Keamanan Toko', icon: '🛡️' },
+      ]
+    }
+  ];
+
+  let html = '';
+  groups.forEach(g => {
+    let visibleItems = g.items;
+    if (storedMode === 'kasir') {
+      visibleItems = visibleItems.filter(it => it.id === 'pos' || it.id === 'history');
+    } else if (storedMode === 'admin') {
+      visibleItems = visibleItems.filter(it => it.id !== 'pos');
+    }
+
+    if (visibleItems.length > 0) {
+      html += `<div class="nav-group-title">${g.title}</div>`;
+      visibleItems.forEach(it => {
+        html += `
+          <button type="button" data-view="${it.id}" data-title="${it.label}">
+            <span class="nav-icon">${it.icon}</span>${it.label}
+          </button>
+        `;
+      });
+    }
+  });
+
+  nav.innerHTML = html;
+
   nav.querySelectorAll('button').forEach((btn) => {
     btn.addEventListener('click', () => {
       showView(btn.dataset.view);
@@ -380,9 +429,13 @@ function buildSidebar() {
       if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
     });
   });
+
   document.getElementById('user-badge').innerHTML = `
-    <span class="badge ${isAdmin ? 'badge-admin' : 'badge-kasir'}">${user.username}</span>
-    <span style="opacity:.85"> · ${isAdmin ? 'Admin' : 'Kasir'}</span>`;
+    <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.15);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;">${(user.username || 'K')[0].toUpperCase()}</div>
+    <div>
+      <div style="font-weight:700;font-size:0.88rem;color:var(--text-bright);">${user.username}</div>
+      <span class="badge ${isAdmin ? 'badge-admin' : 'badge-kasir'}" style="font-size:0.68rem;padding:0.1rem 0.45rem;">${isAdmin ? 'ADMIN' : 'KASIR'}</span>
+    </div>`;
 }
 
 /* -------- POS (MAJOO-STYLE INTERACTIVE CATALOG & CHECKOUT) -------- */
@@ -1054,21 +1107,76 @@ function debounce(fn, ms) {
   };
 }
 
-/* -------- Reports -------- */
+/* -------- Reports (EXECUTIVE KPI DASHBOARD) -------- */
 async function loadReports() {
   const el = document.getElementById('view-reports');
   el.innerHTML = `
-    <div class="actions-inline" style="margin-bottom:1rem">
-      <label>Periode <select id="rep-period"><option value="daily">Harian</option><option value="weekly">Mingguan</option><option value="monthly">Bulanan</option></select></label>
-      <button type="button" class="btn btn-secondary" id="rep-export-pdf">Simpan PDF</button>
-      <button type="button" class="btn btn-secondary" id="rep-export-csv">Simpan Excel</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <label style="font-weight:700; font-size:0.9rem; color:var(--text-bright);">Rentang Waktu:</label>
+        <select id="rep-period" class="pos-search-input" style="padding:0.5rem 1rem; width:auto; border-radius:10px;">
+          <option value="daily">📅 Hari Ini</option>
+          <option value="weekly">📅 Minggu Ini</option>
+          <option value="monthly">📅 Bulan Ini</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button type="button" class="btn btn-secondary" id="rep-export-pdf" style="font-size:0.85rem;">📄 Cetak PDF</button>
+        <button type="button" class="btn btn-secondary" id="rep-export-csv" style="font-size:0.85rem;">📊 Ekspor Excel</button>
+      </div>
     </div>
-    <div class="grid-2">
-      <div class="panel"><h4 style="margin-top:0">Grafik penjualan</h4><div class="chart-box"><canvas id="chart-sales"></canvas></div></div>
-      <div class="panel"><h4 style="margin-top:0">Ringkasan untung</h4><div id="rep-margin-summary"></div></div>
+
+    <!-- Executive KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.15); color:#10b981;">💰</div>
+        <div>
+          <div class="kpi-label">Omset Penjualan</div>
+          <div class="kpi-val" id="kpi-revenue" style="color:#10b981;">Rp 0</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.15); color:#3b82f6;">📈</div>
+        <div>
+          <div class="kpi-label">Laba Bersih</div>
+          <div class="kpi-val" id="kpi-profit" style="color:#60a5fa;">Rp 0</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" style="background:rgba(245,158,11,0.15); color:#f59e0b;">📦</div>
+        <div>
+          <div class="kpi-label">Modal Barang</div>
+          <div class="kpi-val" id="kpi-cost" style="color:#fbbf24;">Rp 0</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" style="background:rgba(139,92,246,0.15); color:#8b5cf6;">🛒</div>
+        <div>
+          <div class="kpi-label">Total Item Terjual</div>
+          <div class="kpi-val" id="kpi-items" style="color:#c084fc;">0 pcs</div>
+        </div>
+      </div>
     </div>
-    <div class="panel"><h4 style="margin-top:0">Untung per barang</h4><div id="rep-margin-table"></div></div>
-    <div class="panel"><h4 style="margin-top:0">Stok menipis (≤10)</h4><div id="rep-low-stock"></div></div>`;
+
+    <!-- Chart & Profit Breakdown -->
+    <div style="display:grid; grid-template-columns:1fr; gap:1.5rem; margin-bottom:1.5rem;">
+      <div class="panel">
+        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">📊 Grafik Tren Penjualan</h4>
+        <div class="chart-box" style="height:280px;"><canvas id="chart-sales"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Profit per product table -->
+    <div class="panel">
+      <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">🏆 Rincian Laba per Produk</h4>
+      <div id="rep-margin-table"></div>
+    </div>
+
+    <!-- Critical low stock -->
+    <div class="panel">
+      <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">⚠️ Peringatan Stok Menipis (&le;10 pcs)</h4>
+      <div id="rep-low-stock"></div>
+    </div>`;
 
   const periodEl = document.getElementById('rep-period');
   const refresh = async () => {
@@ -1079,6 +1187,14 @@ async function loadReports() {
       api('/reports/low-stock?threshold=10'),
     ]);
 
+    // Update KPIs
+    document.getElementById('kpi-revenue').textContent = money(margin.total_revenue || 0);
+    document.getElementById('kpi-profit').textContent = money(margin.total_profit || 0);
+    document.getElementById('kpi-cost').textContent = money(margin.total_cost || 0);
+    const totalQtySold = (margin.products || []).reduce((s, p) => s + Number(p.qty_sold || 0), 0);
+    document.getElementById('kpi-items').textContent = `${totalQtySold} pcs`;
+
+    // Render Chart
     const ctx = document.getElementById('chart-sales');
     if (salesChart) salesChart.destroy();
     const labels = sales.length ? sales.map((s) => s.day) : ['—'];
@@ -1087,40 +1203,67 @@ async function loadReports() {
       type: 'bar',
       data: {
         labels,
-        datasets: [{ label: 'Total penjualan', data: values, backgroundColor: '#38bdf8' }],
+        datasets: [{ 
+          label: 'Penjualan (Rp)', 
+          data: values, 
+          backgroundColor: '#10b981',
+          borderRadius: 8,
+        }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } },
+        scales: { 
+          y: { 
+            beginAtZero: true,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#94a3b8' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#94a3b8' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#f8fafc', font: { family: 'Plus Jakarta Sans', weight: '700' } } }
+        }
       },
     });
 
-    document.getElementById('rep-margin-summary').innerHTML = `
-      <p>Total penjualan: <strong>${money(margin.total_revenue)}</strong></p>
-      <p>Modal barang: ${money(margin.total_cost)}</p>
-      <p>Untung: <strong style="color:var(--success)">${money(margin.total_profit)}</strong></p>`;
-
-    document.getElementById('rep-margin-table').innerHTML = `
-      <div class="table-wrap"><table class="data">
-        <thead><tr><th>Barcode</th><th>Nama</th><th>Jumlah terjual</th><th>Total penjualan</th><th>Untung</th></tr></thead>
+    // Render Profit table
+    document.getElementById('rep-margin-table').innerHTML = (margin.products && margin.products.length)
+      ? `<div class="table-wrap"><table class="data">
+        <thead><tr><th>Barcode</th><th>Nama Produk</th><th>Terjual</th><th>Total Omset</th><th>Laba Bersih</th></tr></thead>
         <tbody>
         ${margin.products
           .map(
             (r) =>
-              `<tr><td class="mono">${r.barcode}</td><td>${r.name}</td><td>${r.qty_sold}</td><td class="mono">${money(r.revenue)}</td><td class="mono">${money(r.profit)}</td></tr>`
+              `<tr>
+                <td class="mono">${r.barcode || '-'}</td>
+                <td style="font-weight:700;">${r.name}</td>
+                <td><span class="badge" style="background:rgba(255,255,255,0.06); color:var(--text-bright);">${r.qty_sold} pcs</span></td>
+                <td class="mono">${money(r.revenue)}</td>
+                <td class="mono" style="color:var(--primary); font-weight:800;">${money(r.profit)}</td>
+              </tr>`
           )
           .join('')}
         </tbody>
-      </table></div>`;
+      </table></div>`
+      : '<p style="text-align:center; padding:1.5rem; color:var(--text-muted);">Belum ada transaksi pada periode ini.</p>';
 
+    // Low stock
     document.getElementById('rep-low-stock').innerHTML = low.length
       ? `<div class="table-wrap"><table class="data">
-        <thead><tr><th>Barcode</th><th>Nama</th><th>Stok</th></tr></thead>
+        <thead><tr><th>Barcode</th><th>Nama Produk</th><th>Sisa Stok</th><th>Status</th></tr></thead>
         <tbody>
-        ${low.map((r) => `<tr><td class="mono">${r.barcode}</td><td>${r.name}</td><td><span class="badge badge-warn">${r.stock}</span></td></tr>`).join('')}
+        ${low.map((r) => `<tr>
+          <td class="mono">${r.barcode || '-'}</td>
+          <td style="font-weight:700;">${r.name}</td>
+          <td class="mono" style="font-weight:800; color:${r.stock <= 0 ? 'var(--danger)' : 'var(--warning)'}">${r.stock} pcs</td>
+          <td><span class="badge ${r.stock <= 0 ? 'badge-danger' : 'badge-warn'}">${r.stock <= 0 ? 'HABIS' : 'MENIPIS'}</span></td>
+        </tr>`).join('')}
         </tbody></table></div>`
-      : '<p>Tidak ada stok menipis.</p>';
+      : '<p style="color:var(--primary); padding:0.5rem 0;">✓ Semua stok barang dalam batas aman.</p>';
 
     window.__lastReport = { sales, margin, low, period };
   };
@@ -1137,25 +1280,26 @@ async function loadReports() {
       return;
     }
     const doc = new jsPDFLib();
-    let y = 10;
-    doc.text('SiKasir — Laporan', 14, y);
+    let y = 12;
+    doc.setFontSize(14);
+    doc.text('SiKasir — Laporan Penjualan', 14, y);
     y += 8;
     doc.setFontSize(10);
     doc.text(`Periode: ${r.period}`, 14, y);
     y += 6;
-    doc.text(`Total penjualan: ${money(r.margin.total_revenue)} | Untung: ${money(r.margin.total_profit)}`, 14, y);
+    doc.text(`Total Omset: ${money(r.margin.total_revenue)} | Laba Bersih: ${money(r.margin.total_profit)}`, 14, y);
     y += 10;
-    r.margin.products.slice(0, 40).forEach((p) => {
-      doc.text(`${p.barcode} ${p.name.substring(0, 40)} — ${money(p.profit)}`, 14, y);
+    (r.margin.products || []).slice(0, 40).forEach((p) => {
+      doc.text(`${p.barcode || ''} ${p.name.substring(0, 35)} — Laba: ${money(p.profit)}`, 14, y);
       y += 5;
       if (y > 280) {
         doc.addPage();
-        y = 10;
+        y = 12;
       }
     });
     doc.setFontSize(8);
-    doc.setTextColor(100);
-    doc.text('Product by Sivilize Corp', 105, 285, { align: 'center' });
+    doc.setTextColor(120);
+    doc.text('Published by SiKasir Cloud POS', 105, 285, { align: 'center' });
     doc.save(`laporan-${r.period}.pdf`);
   };
 
@@ -1163,9 +1307,9 @@ async function loadReports() {
     const r = window.__lastReport;
     if (!r) return;
     const header = 'barcode,nama,qty_terjual,omzet,profit\n';
-    const rows = r.margin.products
+    const rows = (r.margin.products || [])
       .map((p) =>
-        [p.barcode, `"${String(p.name).replace(/"/g, '""')}"`, p.qty_sold, p.revenue, p.profit].join(',')
+        [p.barcode || '', `"${String(p.name).replace(/"/g, '""')}"`, p.qty_sold, p.revenue, p.profit].join(',')
       )
       .join('\n');
     const bom = '\ufeff';

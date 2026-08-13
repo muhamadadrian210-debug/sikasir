@@ -15,29 +15,29 @@ const isAdmin = user.role === 'admin';
 const hint = document.getElementById('mode-user-hint');
 const grid = document.getElementById('mode-grid');
 
-hint.textContent = `Masuk sebagai ${user.username} (${isAdmin ? 'Admin' : 'Kasir'}).`;
+hint.innerHTML = `👤 Pengguna: <strong>${user.username}</strong> &bull; Peran: <span class="badge ${isAdmin ? 'badge-admin' : 'badge-kasir'}">${isAdmin ? 'Admin Toko' : 'Staf Kasir'}</span>`;
 
 const options = [
   {
     mode: 'kasir',
-    title: 'Kasir',
-    desc: 'Untuk melayani pembeli dan melihat transaksi.',
+    title: 'Staf Kasir (POS Register)',
+    desc: 'Fokus melayani pelanggan, pencarian cepat, scan barcode, dan cetak struk nota.',
     icon: '🛒',
     show: true,
   },
   {
     mode: 'admin',
-    title: 'Admin',
-    desc: 'Untuk mengatur barang, stok, laporan, dan akun.',
+    title: 'Admin Toko (Backoffice)',
+    desc: 'Kelola stok, barang masuk, laporan laba rugi, mutasi cabang, staf & keamanan.',
     icon: '📊',
-    show: true,
+    show: isAdmin,
   },
   {
     mode: 'both',
-    title: 'Keduanya',
-    desc: 'Untuk memakai fitur kasir dan admin.',
+    title: 'Mode Lengkap (Kasir + Admin)',
+    desc: 'Akses penuh tanpa batas untuk melayani kasir sekaligus memantau inventori toko.',
     icon: '⚡',
-    show: true,
+    show: isAdmin,
   },
 ];
 
@@ -46,9 +46,11 @@ grid.innerHTML = options
   .map(
     (o) => `
     <button type="button" class="mode-card" data-mode="${o.mode}">
-      <span class="mode-card-icon" aria-hidden="true">${o.icon}</span>
-      <span class="mode-card-title">${o.title}</span>
-      <span class="mode-card-desc">${o.desc}</span>
+      <div class="mode-card-icon" aria-hidden="true">${o.icon}</div>
+      <div>
+        <div class="mode-card-title">${o.title}</div>
+        <div class="mode-card-desc">${o.desc}</div>
+      </div>
     </button>`
   )
   .join('');
