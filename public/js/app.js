@@ -385,80 +385,47 @@ function buildSidebar() {
     <span style="opacity:.85"> · ${isAdmin ? 'Admin' : 'Kasir'}</span>`;
 }
 
-/* -------- POS -------- */
+/* -------- POS (MAJOO-STYLE INTERACTIVE CATALOG & CHECKOUT) -------- */
 let cart = [];
 
-function renderPOS() {
-  const el = document.getElementById('view-pos');
-  el.innerHTML = `
-    <div class="grid-2">
-      <div>
-        <h3 style="margin-top:0">Keranjang</h3>
-        <div class="field">
-          <label>Barcode manual</label>
-          <div class="actions-inline">
-            <input type="text" id="pos-barcode-input" placeholder="Scan atau ketik" class="mono" style="flex:1;min-width:120px;padding:.6rem;border:1px solid var(--border);border-radius:8px"/>
-            <button type="button" class="btn btn-secondary" id="pos-btn-scan">📷 Scan</button>
-            <button type="button" class="btn btn-primary" id="pos-add-manual">Tambah</button>
-          </div>
-        </div>
-        <div id="pos-cart-list"></div>
-        <div class="cart-total mt-1">Total: <span class="mono" id="pos-total">${money(0)}</span></div>
-      </div>
-      <div>
-        <h3 style="margin-top:0">Pembayaran</h3>
-        <div class="field">
-          <label>Uang dibayar</label>
-          <input type="number" id="pos-paid" min="0" step="500" placeholder="0" />
-        </div>
-        <p>Kembalian: <strong class="mono" id="pos-change">${money(0)}</strong></p>
-        <div class="actions-inline mt-1">
-          <button type="button" class="btn btn-success" id="pos-checkout">Proses bayar</button>
-          <button type="button" class="btn btn-secondary" id="pos-clear">Kosongkan</button>
-          <button type="button" class="btn btn-secondary" id="pos-print-last" disabled>Struk PDF</button>
-        </div>
-        <p id="pos-offline-note" class="mt-1" style="font-size:.85rem;color:var(--secondary)"></p>
-      </div>
-    </div>`;
+function renderPosCatalog(filterText = '') {
+  const grid = document.getElementById('pos-catalog-grid');
+  if (!grid) return;
+  
+  const q = String(filterText || '').toLowerCase().trim();
+  const list = (productsCache || []).filter(p => !q || p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q)));
 
-  const paidEl = document.getElementById('pos-paid');
-  const updateChange = () => {
-    const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
-    const paid = Number(paidEl.value) || 0;
-    document.getElementById('pos-change').textContent = money(Math.max(0, paid - total));
-  };
-  paidEl.addEventListener('input', updateChange);
-
-  function openScanModal(onCode) {
-    openWebBarcodeScanner(onCode);
+  if (!list.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text);">Tidak ada produk yang cocok.</div>';
+    return;
   }
 
-  document.getElementById('pos-btn-scan').onclick = () => openScanModal(onPosScan);
-  document.getElementById('pos-add-manual').onclick = () => {
-    const code = document.getElementById('pos-barcode-input').value.trim();
-    if (!code) return;
-    onPosScan(code);
-    document.getElementById('pos-barcode-input').value = '';
-  };
-  document.getElementById('pos-clear').onclick = () => {
-    cart = [];
-    renderCart();
-    lastReceipt = null;
-    document.getElementById('pos-print-last').disabled = true;
-  };
-  document.getElementById('pos-checkout').onclick = checkout;
-  document.getElementById('pos-print-last').onclick = () => lastReceipt && printReceiptPdf(lastReceipt);
+  grid.innerHTML = list.map(p => `
+    <div class="pos-product-card ${p.stock <= 0 ? 'out-of-stock' : ''}" data-barcode="${p.barcode || ''}" data-id="${p.id}">
+      <div class="pos-product-name">${p.name}</div>
+      <div class="pos-product-meta">
+        <div class="pos-product-price">${money(p.sale_price)}</div>
+        <div class="pos-product-stock" style="color: ${p.stock > 5 ? 'var(--primary)' : p.stock > 0 ? 'var(--warning)' : 'var(--danger)'}">
+          ${p.stock > 0 ? p.stock + ' pcs' : 'Habis'}
+        </div>
+      </div>
+    </div>
+  `).join('');
 
-  renderCart();
-  fetchProductsCached()
-    .then(() => {
-      document.getElementById('pos-offline-note').textContent =
-        'Produk di-cache untuk mode offline kasir.';
-    })
-    .catch(() => {
-      document.getElementById('pos-offline-note').textContent =
-        'Gunakan koneksi sekali untuk mengunduh daftar produk.';
-    });
+  grid.querySelectorAll('.pos-product-card').forEach(card => {
+    card.onclick = () => {
+      const b = card.dataset.barcode;
+      const pid = Number(card.dataset.id);
+      const prod = productsCache.find(p => p.id === pid || (b && p.barcode === b));
+      if (prod) {
+        if (prod.stock < 1) {
+          showAlert(`Stok "${prod.name}" habis.`, 'warn');
+          return;
+        }
+        onPosScan(prod.barcode || prod.name);
+      }
+    };
+  });
 }
 
 function renderCart(newItemName) {
@@ -470,22 +437,22 @@ function renderCart(newItemName) {
   document.getElementById('pos-paid')?.dispatchEvent(new Event('input'));
 
   if (!cart.length) {
-    list.innerHTML = '<p style="opacity:.7">Belum ada barang.</p>';
+    list.innerHTML = '<p style="opacity:.6; text-align:center; padding:1.5rem 0; font-size:0.88rem;">Belum ada barang di keranjang.<br><span style="font-size:0.8rem">Klik barang di katalog untuk menambahkan.</span></p>';
     return;
   }
   list.innerHTML = cart
     .map(
       (i, idx) => `
-    <div class="cart-row">
-      <div>
-        <div>${i.name}</div>
-        <span class="mono" style="font-size:.85rem">${i.barcode}</span>
+    <div class="pos-cart-item">
+      <div class="pos-cart-item-info">
+        <div class="pos-cart-item-name">${i.name}</div>
+        <div class="pos-cart-item-price">${money(i.sale_price)} × ${i.qty} = <strong>${money(i.sale_price * i.qty)}</strong></div>
       </div>
-      <div class="text-right">
-        <div>${money(i.sale_price)} × ${i.qty}</div>
-        <button type="button" class="btn btn-secondary" style="padding:.25rem .5rem;font-size:.8rem" data-idx="${idx}" data-act="minus">−</button>
-        <button type="button" class="btn btn-secondary" style="padding:.25rem .5rem;font-size:.8rem" data-idx="${idx}" data-act="plus">+</button>
-        <button type="button" class="btn btn-danger" style="padding:.25rem .5rem;font-size:.8rem" data-idx="${idx}" data-act="remove">×</button>
+      <div class="pos-qty-controls">
+        <button type="button" class="pos-qty-btn" data-idx="${idx}" data-act="minus">−</button>
+        <span class="pos-qty-val">${i.qty}</span>
+        <button type="button" class="pos-qty-btn" data-idx="${idx}" data-act="plus">+</button>
+        <button type="button" class="pos-qty-btn" style="color:var(--danger); border-color:rgba(239,68,68,0.3)" data-idx="${idx}" data-act="remove">✕</button>
       </div>
     </div>`
     )
@@ -503,6 +470,131 @@ function renderCart(newItemName) {
       renderCart();
     };
   });
+}
+
+function renderPOS() {
+  const el = document.getElementById('view-pos');
+  el.innerHTML = `
+    <div class="pos-layout">
+      <!-- Left: Majoo Catalog Grid -->
+      <div class="pos-catalog-panel">
+        <div class="pos-search-bar-wrap">
+          <input type="text" id="pos-search-catalog" class="pos-search-input" placeholder="🔍 Cari nama barang atau scan barcode..." />
+          <button type="button" class="btn btn-secondary" id="pos-btn-scan" style="white-space:nowrap;">📷 Scan Kamera</button>
+        </div>
+        <div id="pos-catalog-grid" class="pos-grid">
+          <div style="grid-column: 1/-1; text-align:center; padding: 2rem; color: var(--text);">Memuat produk...</div>
+        </div>
+      </div>
+
+      <!-- Right: Cart & Checkout Panel -->
+      <div class="pos-cart-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+          <h3 style="margin:0; font-size:1.1rem; color:var(--heading);">🛒 Keranjang Kasir</h3>
+          <button type="button" class="btn btn-secondary" id="pos-clear" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Kosongkan</button>
+        </div>
+
+        <div id="pos-cart-list" class="pos-cart-items"></div>
+
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1rem; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.9rem; color:var(--text);">Total Tagihan</span>
+            <span class="mono" id="pos-total" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${money(0)}</span>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0.5rem;">
+          <label style="font-size:0.85rem; color:var(--text);">Uang Diterima (Rp)</label>
+          <input type="number" id="pos-paid" min="0" step="500" placeholder="0" class="pos-search-input" style="font-weight:700; font-size:1.1rem;" />
+        </div>
+
+        <!-- Quick Cash Buttons -->
+        <div class="pos-quick-cash">
+          <button type="button" class="pos-quick-cash-btn" data-preset="exact">Uang Pas</button>
+          <button type="button" class="pos-quick-cash-btn" data-preset="10000">10rb</button>
+          <button type="button" class="pos-quick-cash-btn" data-preset="20000">20rb</button>
+          <button type="button" class="pos-quick-cash-btn" data-preset="50000">50rb</button>
+          <button type="button" class="pos-quick-cash-btn" data-preset="100000">100rb</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; margin-bottom:0.75rem;">
+          <span style="font-size:0.9rem; color:var(--text);">Kembalian:</span>
+          <strong class="mono" id="pos-change" style="font-size:1.1rem; color:var(--heading);">${money(0)}</strong>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block" id="pos-checkout" style="padding:0.9rem; font-size:1.05rem; font-weight:800; letter-spacing:0.5px;">
+          PROSES BAYAR
+        </button>
+        <button type="button" class="btn btn-secondary btn-block mt-1" id="pos-print-last" disabled style="font-size:0.85rem;">
+          🖨️ Cetak Struk Terakhir (PDF)
+        </button>
+        <p id="pos-offline-note" class="mt-1" style="font-size:.78rem; color:var(--text); text-align:center; margin-bottom:0;"></p>
+      </div>
+    </div>`;
+
+  const paidEl = document.getElementById('pos-paid');
+  const updateChange = () => {
+    const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
+    const paid = Number(paidEl.value) || 0;
+    document.getElementById('pos-change').textContent = money(Math.max(0, paid - total));
+  };
+  paidEl.addEventListener('input', updateChange);
+
+  function openScanModal(onCode) {
+    openWebBarcodeScanner(onCode);
+  }
+
+  document.getElementById('pos-btn-scan').onclick = () => openScanModal(onPosScan);
+  document.getElementById('pos-clear').onclick = () => {
+    cart = [];
+    renderCart();
+    lastReceipt = null;
+    document.getElementById('pos-print-last').disabled = true;
+  };
+  document.getElementById('pos-checkout').onclick = checkout;
+  document.getElementById('pos-print-last').onclick = () => lastReceipt && printReceiptPdf(lastReceipt);
+
+  // Search catalog listener
+  const searchInput = document.getElementById('pos-search-catalog');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      renderPosCatalog(e.target.value);
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = e.target.value.trim();
+        if (val) onPosScan(val);
+        e.target.value = '';
+        renderPosCatalog('');
+      }
+    });
+  }
+
+  // Quick cash buttons
+  document.querySelectorAll('.pos-quick-cash-btn').forEach(btn => {
+    btn.onclick = () => {
+      const preset = btn.dataset.preset;
+      const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
+      if (preset === 'exact') {
+        paidEl.value = total;
+      } else {
+        paidEl.value = Number(preset);
+      }
+      updateChange();
+    };
+  });
+
+  renderCart();
+  fetchProductsCached()
+    .then(() => {
+      renderPosCatalog();
+      document.getElementById('pos-offline-note').textContent =
+        '✓ Produk tersinkronisasi';
+    })
+    .catch(() => {
+      document.getElementById('pos-offline-note').textContent =
+        'Gunakan koneksi sekali untuk mengunduh daftar produk.';
+    });
 }
 
 async function onPosScan(code) {
@@ -1565,8 +1657,8 @@ async function init() {
 
   try {
     await loadCategories();
-  } catch {
-    showAlert('Gagal memuat kategori. Periksa server & DB.', 'error');
+  } catch (e) {
+    // Silently ignore category load error
   }
 
   const start = getDefaultStartView();

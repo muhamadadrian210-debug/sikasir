@@ -1,12 +1,13 @@
-const CACHE_SHELL = 'sikasir-shell-v5';
-const CACHE_DATA = 'sikasir-data';
+const CACHE_SHELL = 'sikasir-shell-v6';
+const CACHE_DATA = 'sikasir-data-v6';
 const ACTIVE_CACHES = [CACHE_SHELL, CACHE_DATA];
 
 const SHELL = ['/', '/index.html', '/app.html', '/css/app.css', '/js/app.js', '/js/api.js', '/js/scanner.js', '/manifest.json', '/icons/logo.svg'];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_SHELL).then((cache) => cache.addAll(SHELL.filter(Boolean))).then(() => self.skipWaiting())
+    caches.open(CACHE_SHELL).then((cache) => cache.addAll(SHELL.filter(Boolean)))
   );
 });
 
