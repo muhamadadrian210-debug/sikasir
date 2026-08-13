@@ -1,5 +1,5 @@
-const CACHE_SHELL = 'sikasir-shell-v10';
-const CACHE_DATA = 'sikasir-data-v10';
+const CACHE_SHELL = 'sikasir-shell-v11';
+const CACHE_DATA = 'sikasir-data-v11';
 const ACTIVE_CACHES = [CACHE_SHELL, CACHE_DATA];
 
 const SHELL = ['/', '/index.html', '/app.html', '/css/app.css', '/js/app.js', '/js/api.js', '/js/scanner.js', '/manifest.json', '/icons/logo.svg'];

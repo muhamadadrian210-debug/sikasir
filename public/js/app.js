@@ -1737,10 +1737,29 @@ async function loadCybersecurityPanel() {
   el.innerHTML = `
     <div class="cyber-page-head">
       <div>
-        <h3>🛡️ Keamanan Toko & Anti-Fraud Center</h3>
-        <p>Pantau ancaman siber, serangan SQLi/XSS, dan upaya pembobolan sistem secara realtime.</p>
+        <h3>🛡️ Keamanan Toko & AI Anti-Fraud Center</h3>
+        <p>Pantau ancaman siber secara realtime dengan kemampuan <strong>AI Self-Healing & Auto-Recovery</strong> otonom.</p>
       </div>
-      <button type="button" class="btn btn-secondary" id="cyber-refresh">🔄 Refresh Data</button>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn" id="cyber-ai-heal" style="background:linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color:#fff; border:none; font-weight:800; padding:0.6rem 1.1rem; box-shadow:0 4px 15px rgba(99,102,241,0.35);">
+          ✨ 🩺 AI Self-Heal & Pulihkan Sistem
+        </button>
+        <button type="button" class="btn btn-secondary" id="cyber-refresh">🔄 Refresh Data</button>
+      </div>
+    </div>
+
+    <!-- AI Self-Healing Live Status Card -->
+    <div class="cyber-section" id="cyber-ai-heal-section" style="background:linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.08) 100%); border-color:rgba(168,85,247,0.4); margin-bottom:1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
+        <h4 style="margin:0; color:#c084fc; display:flex; align-items:center; gap:6px;">
+          <span>🤖</span> AI Autonomous Self-Healing & Diagnostic Engine
+        </h4>
+        <span class="cyber-badge cyber-badge-safe" id="cyber-ai-heal-badge">🛡️ Siap Memulihkan</span>
+      </div>
+      <div id="cyber-ai-heal-report" style="font-size:0.9rem; line-height:1.55; color:var(--text-bright);">
+        Klik tombol <strong>"✨ 🩺 AI Self-Heal & Pulihkan Sistem"</strong> untuk menganalisis log ancaman, mengkarantina IP penyerang secara otomatis, memverifikasi integritas database, dan memulihkan kondisi operasional toko.
+      </div>
+      <div id="cyber-ai-heal-actions" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:4px;"></div>
     </div>
 
     <!-- Security Stat Cards -->
@@ -1789,6 +1808,48 @@ async function loadCybersecurityPanel() {
       <h4>📜 Catatan Kejadian & Log Audit Serangan</h4>
       <div id="cyber-log-list">Memuat log kejadian...</div>
     </div>`;
+
+  async function runAiSelfHeal() {
+    const healBtn = document.getElementById('cyber-ai-heal');
+    const badgeEl = document.getElementById('cyber-ai-heal-badge');
+    const reportEl = document.getElementById('cyber-ai-heal-report');
+    const actionsEl = document.getElementById('cyber-ai-heal-actions');
+
+    if (healBtn) healBtn.disabled = true;
+    if (badgeEl) {
+      badgeEl.className = 'cyber-badge cyber-badge-warn';
+      badgeEl.textContent = '⏳ AI Sedang Mendiagnosis...';
+    }
+    if (reportEl) reportEl.innerHTML = '<span style="color:#a855f7;">✨ AI sedang memindai kerentanan, mengisolasi ancaman, dan memulihkan integritas data toko...</span>';
+    if (actionsEl) actionsEl.innerHTML = '';
+
+    try {
+      const res = await api('/cybersecurity/ai-heal', { method: 'POST' });
+      if (badgeEl) {
+        badgeEl.className = 'cyber-badge cyber-badge-safe';
+        badgeEl.textContent = '✓ Sistem Berhasil Dipulihkan';
+      }
+      if (reportEl) {
+        reportEl.innerHTML = `<strong>Diagnosa AI:</strong> ${escapeHtml(res.aiDiagnosis || '')}`;
+      }
+      if (actionsEl && Array.isArray(res.healedActions)) {
+        actionsEl.innerHTML = res.healedActions
+          .map(act => `<div style="font-size:0.84rem; color:#10b981; display:flex; align-items:center; gap:6px;">${escapeHtml(act)}</div>`)
+          .join('');
+      }
+      showAlert('✨ Pemulihan Keamanan AI Berhasil Dijalankan!', 'success');
+      await refresh();
+    } catch (e) {
+      if (badgeEl) {
+        badgeEl.className = 'cyber-badge cyber-badge-danger';
+        badgeEl.textContent = '❌ Gagal Pemulihan';
+      }
+      if (reportEl) reportEl.textContent = 'Error: ' + e.message;
+      showAlert(e.message || 'Gagal menjalankan AI Self-Heal', 'error');
+    } finally {
+      if (healBtn) healBtn.disabled = false;
+    }
+  }
 
   async function refresh() {
     try {
@@ -1863,6 +1924,9 @@ async function loadCybersecurityPanel() {
   }
 
   document.getElementById('cyber-refresh').onclick = refresh;
+  const healBtn = document.getElementById('cyber-ai-heal');
+  if (healBtn) healBtn.onclick = runAiSelfHeal;
+
   document.getElementById('cyber-auto-block').onchange = async (e) => {
     await api('/cybersecurity/toggle-loop', { method: 'POST', body: { enabled: e.target.checked } });
     showAlert(e.target.checked ? 'Blokir otomatis diaktifkan.' : 'Blokir otomatis dimatikan.', 'success');
