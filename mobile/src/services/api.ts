@@ -1,4 +1,4 @@
-import { Product, CartItem, Tenant, User, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus, Customer, StoreType } from '../types';
+import { Product, CartItem, Tenant, User, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus, Customer, StoreType, ExpenseRecord } from '../types';
 
 // Dynamic API URL for Vercel/Online Cloud Server or Local Dev
 let API_URL = (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) ? process.env.EXPO_PUBLIC_API_URL : 'http://192.168.100.184:3000/api';
@@ -435,6 +435,30 @@ export const apiService = {
         threat_level: 'LOW',
       };
     }
+  },
+
+  // Bayar Nota / Kas Keluar (Expenses)
+  async getExpenses(period: string = 'daily'): Promise<{ expenses: ExpenseRecord[]; total_expense: number; count: number }> {
+    try {
+      return await request(`/expenses?period=${period}`);
+    } catch (e) {
+      return { expenses: [], total_expense: 0, count: 0 };
+    }
+  },
+
+  async createExpense(data: { store_source: string; category?: string; amount: number; notes?: string }) {
+    try {
+      return await request('/expenses', {
+        method: 'POST',
+        body: data,
+      });
+    } catch (e) {
+      return { id: Date.now(), ...data, created_at: new Date().toISOString() };
+    }
+  },
+
+  async deleteExpense(id: number) {
+    return await request(`/expenses/${id}`, { method: 'DELETE' });
   },
 
   // AI Assistant Chat

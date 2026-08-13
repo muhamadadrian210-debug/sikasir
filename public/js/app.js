@@ -257,6 +257,8 @@ const TITLE_LOOKUP = {};
   arr.forEach((it) => {
     if (!TITLE_LOOKUP[it.id]) TITLE_LOOKUP[it.id] = it.title;
   });
+  TITLE_LOOKUP['expenses'] = 'Bayar Nota & Kas Keluar';
+  });
 });
 
 function getNavItems() {
@@ -372,8 +374,9 @@ function buildSidebar() {
       ]
     },
     {
-      title: 'Keuangan',
+      title: 'Keuangan & Kas',
       items: [
+        { id: 'expenses', label: 'Bayar Nota / Kas Keluar', icon: '💸' },
         { id: 'reports', label: 'Laporan & Untung', icon: '📈' },
         { id: 'kasbon-global', label: 'Kasbon Pelanggan', icon: '💳' },
       ]
@@ -425,6 +428,7 @@ function buildSidebar() {
       if (btn.dataset.view === 'incoming') loadIncomingPanel();
       if (btn.dataset.view === 'mutasi') loadMutasiPanel();
       if (btn.dataset.view === 'kasbon-global') loadKasbonPanel();
+      if (btn.dataset.view === 'expenses') loadExpensesPanel();
       if (btn.dataset.view === 'audit') loadAuditTable();
       if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
     });
@@ -1126,34 +1130,34 @@ async function loadReports() {
       </div>
     </div>
 
-    <!-- Executive KPI Cards -->
+    <!-- Executive KPI Cards (Realtime Omset & Kas Keluar) -->
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.15); color:#10b981;">💰</div>
         <div>
-          <div class="kpi-label">Omset Penjualan</div>
+          <div class="kpi-label">Omset Kotor</div>
           <div class="kpi-val" id="kpi-revenue" style="color:#10b981;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.15); color:#3b82f6;">📈</div>
+        <div class="kpi-icon-wrap" style="background:rgba(239,68,68,0.15); color:#ef4444;">💸</div>
         <div>
-          <div class="kpi-label">Laba Bersih</div>
-          <div class="kpi-val" id="kpi-profit" style="color:#60a5fa;">Rp 0</div>
+          <div class="kpi-label">Pengeluaran / Bayar Nota</div>
+          <div class="kpi-val" id="kpi-expense" style="color:#f87171;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(245,158,11,0.15); color:#f59e0b;">📦</div>
+        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.15); color:#3b82f6;">💵</div>
         <div>
-          <div class="kpi-label">Modal Barang</div>
-          <div class="kpi-val" id="kpi-cost" style="color:#fbbf24;">Rp 0</div>
+          <div class="kpi-label">Omset Bersih Kas</div>
+          <div class="kpi-val" id="kpi-net-revenue" style="color:#60a5fa;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(139,92,246,0.15); color:#8b5cf6;">🛒</div>
+        <div class="kpi-icon-wrap" style="background:rgba(139,92,246,0.15); color:#8b5cf6;">📈</div>
         <div>
-          <div class="kpi-label">Total Item Terjual</div>
-          <div class="kpi-val" id="kpi-items" style="color:#c084fc;">0 pcs</div>
+          <div class="kpi-label">Laba Bersih Akhir</div>
+          <div class="kpi-val" id="kpi-profit" style="color:#c084fc;">Rp 0</div>
         </div>
       </div>
     </div>
@@ -1189,8 +1193,11 @@ async function loadReports() {
 
     // Update KPIs
     document.getElementById('kpi-revenue').textContent = money(margin.total_revenue || 0);
-    document.getElementById('kpi-profit').textContent = money(margin.total_profit || 0);
-    document.getElementById('kpi-cost').textContent = money(margin.total_cost || 0);
+    const expEl = document.getElementById('kpi-expense');
+    if (expEl) expEl.textContent = money(margin.total_expenses || 0);
+    const netRevEl = document.getElementById('kpi-net-revenue');
+    if (netRevEl) netRevEl.textContent = money(margin.net_revenue ?? (margin.total_revenue - (margin.total_expenses || 0)));
+    document.getElementById('kpi-profit').textContent = money(margin.net_profit ?? (margin.total_profit - (margin.total_expenses || 0)));
     const totalQtySold = (margin.products || []).reduce((s, p) => s + Number(p.qty_sold || 0), 0);
     document.getElementById('kpi-items').textContent = `${totalQtySold} pcs`;
 
@@ -2143,3 +2150,164 @@ function loadKasbonPanel() {
 }
 
 
+
+/* -------- Bayar Nota & Kas Keluar (EXPENSES) -------- */
+async function loadExpensesPanel() {
+  const el = document.getElementById('view-expenses');
+  el.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+      <div>
+        <h3 style="margin:0; font-size:1.3rem;">💸 Bayar Nota &amp; Kas Keluar Hari Ini</h3>
+        <p style="margin:0.25rem 0 0; color:var(--text-muted); font-size:0.88rem;">
+          Catat pembayaran nota supplier (misal: Toko A) atau pengeluaran operasional. Otomatis memotong omset &amp; kas hari ini.
+        </p>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <label style="font-weight:700; font-size:0.85rem;">Filter:</label>
+        <select id="exp-period" class="pos-search-input" style="padding:0.4rem 0.8rem; width:auto; border-radius:8px;">
+          <option value="daily">📅 Hari Ini</option>
+          <option value="weekly">📅 Minggu Ini</option>
+          <option value="monthly">📅 Bulan Ini</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ringkasan Pengeluaran -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:1.5rem;">
+      <div class="kpi-card" style="border-color:rgba(239,68,68,0.3);">
+        <div class="kpi-icon-wrap" style="background:rgba(239,68,68,0.15); color:#ef4444;">💸</div>
+        <div>
+          <div class="kpi-label">Total Kas Keluar</div>
+          <div class="kpi-val" id="exp-total-val" style="color:#f87171;">Rp 0</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.15); color:#3b82f6;">📝</div>
+        <div>
+          <div class="kpi-label">Jumlah Nota Dicatat</div>
+          <div class="kpi-val" id="exp-count-val" style="color:#60a5fa;">0 nota</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr; gap:1.5rem;">
+      <!-- Form Catat Nota Baru -->
+      <div class="panel">
+        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">📝 Form Catat Pembayaran Nota / Kas Keluar</h4>
+        <form id="form-add-expense">
+          <div class="grid-2">
+            <div class="field">
+              <label>Nama Toko Asal / Supplier / Keperluan *</label>
+              <input id="exp-store-source" required placeholder="Contoh: Nota Toko A, Beli Es Batu, Bayar Galon..." />
+            </div>
+            <div class="field">
+              <label>Kategori Pengeluaran</label>
+              <select id="exp-category">
+                <option value="Supplier">📦 Bayar Nota Supplier (Toko A, B, dll)</option>
+                <option value="Operasional">🛠️ Operasional (Plastik, ATK, Listrik, Air)</option>
+                <option value="Gaji & Makan">🍲 Uang Makan / Gaji Kasir</option>
+                <option value="Lainnya">📌 Lain-lain</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Nominal Pembayaran (Rp) *</label>
+              <input id="exp-amount" type="number" min="1" required placeholder="Contoh: 50000" />
+            </div>
+            <div class="field">
+              <label>Catatan / Nomor Nota (Opsional)</label>
+              <input id="exp-notes" placeholder="Nomor faktur nota atau rincian item..." />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-danger" style="padding:0.75rem 1.5rem;">
+            💾 Simpan &amp; Potong Omset Kas Hari Ini
+          </button>
+        </form>
+      </div>
+
+      <!-- Tabel Riwayat Nota Hari Ini -->
+      <div class="panel">
+        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">📋 Riwayat Nota &amp; Kas Keluar</h4>
+        <div id="exp-table-wrap"></div>
+      </div>
+    </div>
+  `;
+
+  const periodSelect = document.getElementById('exp-period');
+
+  const renderExpenseList = async () => {
+    try {
+      const period = periodSelect.value;
+      const res = await api(`/expenses?period=${period}`);
+      document.getElementById('exp-total-val').textContent = money(res.total_expense || 0);
+      document.getElementById('exp-count-val').textContent = `${res.count || 0} nota`;
+
+      const list = res.expenses || [];
+      if (list.length === 0) {
+        document.getElementById('exp-table-wrap').innerHTML = '<p style="text-align:center; padding:1.5rem; color:var(--text-muted);">Belum ada catatan nota/kas keluar pada periode ini.</p>';
+        return;
+      }
+
+      document.getElementById('exp-table-wrap').innerHTML = `
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>Waktu</th><th>Toko / Keperluan</th><th>Kategori</th><th>Nominal</th><th>Dicatat Oleh</th><th>Catatan</th><th>Aksi</th></tr></thead>
+          <tbody>
+          ${list.map(it => `
+            <tr>
+              <td style="font-size:0.82rem; color:var(--text-muted);">${new Date(it.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
+              <td style="font-weight:700; color:var(--text-bright);">${escapeHtml(it.store_source)}</td>
+              <td><span class="badge" style="background:rgba(255,255,255,0.06); color:var(--text-bright);">${escapeHtml(it.category)}</span></td>
+              <td class="mono" style="font-weight:800; color:#f87171;">-${money(it.amount)}</td>
+              <td><span class="badge badge-kasir">${escapeHtml(it.user_name || 'Kasir')}</span></td>
+              <td style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(it.notes || '-')}</td>
+              <td>
+                <button type="button" class="btn btn-secondary btn-del-exp" data-id="${it.id}" style="padding:0.3rem 0.6rem; font-size:0.75rem; color:var(--danger); border-color:rgba(239,68,68,0.3);">Hapus</button>
+              </td>
+            </tr>
+          `).join('')}
+          </tbody>
+        </table></div>
+      `;
+
+      document.querySelectorAll('.btn-del-exp').forEach(btn => {
+        btn.onclick = async () => {
+          if (!confirm('Hapus catatan nota pengeluaran ini?')) return;
+          try {
+            await api(`/expenses/${btn.dataset.id}`, { method: 'DELETE' });
+            showAlert('Catatan pengeluaran berhasil dihapus', 'success');
+            renderExpenseList();
+          } catch (e) {
+            showAlert(e.message, 'error');
+          }
+        };
+      });
+    } catch (e) {
+      document.getElementById('exp-table-wrap').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+    }
+  };
+
+  periodSelect.onchange = renderExpenseList;
+  await renderExpenseList();
+
+  const form = document.getElementById('form-add-expense');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const store_source = document.getElementById('exp-store-source').value.trim();
+    const category = document.getElementById('exp-category').value;
+    const amount = Number(document.getElementById('exp-amount').value);
+    const notes = document.getElementById('exp-notes').value.trim();
+
+    try {
+      await api('/expenses', {
+        method: 'POST',
+        body: { store_source, category, amount, notes }
+      });
+      showAlert('Nota pengeluaran berhasil disimpan & memotong kas hari ini!', 'success');
+      form.reset();
+      renderExpenseList();
+    } catch (err) {
+      showAlert(err.message, 'error');
+    }
+  };
+}

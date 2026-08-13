@@ -121,3 +121,16 @@ export interface CyberSecurityStatus {
   last_scan_time: string;
   threat_level: 'LOW' | 'MEDIUM' | 'HIGH';
 }
+
+export interface ExpenseRecord {
+  id: number;
+  tenant_id: number;
+  user_id?: number;
+  user_name?: string;
+  store_source: string;
+  category: string;
+  amount: number;
+  notes?: string;
+  created_at: string;
+}
+

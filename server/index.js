@@ -24,6 +24,7 @@ const incomingRoutes = require('./routes/incoming');
 const auditLogsRoutes = require('./routes/auditLogs');
 const aiRoutes = require('./routes/ai');
 const backupRoutes = require('./routes/backup');
+const expensesRoutes = require('./routes/expenses');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -66,6 +67,7 @@ app.use('/api/audit-logs', auditLogsRoutes);
 app.use('/api/cybersecurity', cybersecurityRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/expenses', expensesRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 

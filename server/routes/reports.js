@@ -70,11 +70,34 @@ router.get('/margin', async (req, res) => {
        WHERE t.tenant_id = ? AND t.created_at >= ?`,
       [tid, start]
     );
+
+    let totalExpense = 0;
+    try {
+      const [expTot] = await pool.execute(
+        `SELECT COALESCE(SUM(amount), 0) AS total_expense
+         FROM expenses
+         WHERE tenant_id = ? AND created_at >= ?`,
+        [tid, start]
+      );
+      totalExpense = Number(expTot[0]?.total_expense || 0);
+    } catch (expErr) {
+      totalExpense = 0;
+    }
+
+    const totalRevenue = Number(tot[0]?.revenue || 0);
+    const totalCost = Number(tot[0]?.cost || 0);
+    const grossProfit = totalRevenue - totalCost;
+    const netRevenue = Math.max(0, totalRevenue - totalExpense);
+    const netProfit = grossProfit - totalExpense;
+
     res.json({
       products: rows,
-      total_revenue: Number(tot[0]?.revenue || 0),
-      total_cost: Number(tot[0]?.cost || 0),
-      total_profit: Number(tot[0]?.revenue || 0) - Number(tot[0]?.cost || 0),
+      total_revenue: totalRevenue,
+      total_cost: totalCost,
+      total_profit: grossProfit,
+      total_expenses: totalExpense,
+      net_revenue: netRevenue,
+      net_profit: netProfit,
     });
   } catch (e) {
     console.error(e);

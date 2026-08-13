@@ -376,7 +376,69 @@ const ScanSuccessOverlay = () => {
 };
 // ==========================================
 
-export default function App() {
+
+// ==========================================
+// ROBUST GLOBAL ERROR BOUNDARY (PREVENT FORCE CLOSES)
+// ==========================================
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('[SiKasir Mobile Error Boundary Caught]:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#090d16', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <StatusBar barStyle="light-content" backgroundColor="#090d16" />
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(239, 68, 68, 0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Ionicons name="warning" size={36} color="#ef4444" />
+          </View>
+          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>
+            Aplikasi Dipulihkan Otomatis
+          </Text>
+          <Text style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 20 }}>
+            Terjadi kendala data sementara. Aplikasi SiKasir telah mencegah force close agar sesi Anda tetap aman.
+          </Text>
+          <TouchableOpacity
+            onPress={this.handleReset}
+            style={{
+              backgroundColor: '#10b981',
+              paddingVertical: 14,
+              paddingHorizontal: 28,
+              borderRadius: 14,
+              shadowColor: '#10b981',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 10,
+              elevation: 6
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 15 }}>
+              🔄 Muat Ulang Tampilan
+            </Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+
+function MainApp() {
   const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const isTablet = SCREEN_W >= 768;
 
@@ -709,6 +771,43 @@ export default function App() {
 
   const subtotalAmount = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const totalAmount = applyPB1 ? subtotalAmount * 1.1 : subtotalAmount;
+
+  
+  const handleSaveExpense = async () => {
+    const src = expStoreSource.trim();
+    const amt = Number(expAmount);
+    if (!src) {
+      customAlert('Peringatan', 'Nama Toko Asal / Supplier / Keperluan wajib diisi', [{ text: 'OK' }], { type: 'warning' });
+      return;
+    }
+    if (isNaN(amt) || amt <= 0) {
+      customAlert('Peringatan', 'Nominal pengeluaran harus lebih dari 0', [{ text: 'OK' }], { type: 'warning' });
+      return;
+    }
+
+    setSavingExpense(true);
+    try {
+      await apiService.createExpense({
+        store_source: src,
+        category: expCategory,
+        amount: amt,
+        notes: expNotes.trim() || undefined,
+      });
+
+      showScanToast('Nota Pengeluaran Disimpan!');
+      setExpenseModalVisible(false);
+      setExpStoreSource('');
+      setExpAmount('');
+      setExpNotes('');
+      await loadExpensesData();
+      await loadDashboardData();
+    } catch (err: any) {
+      customAlert('Gagal', err.message || 'Gagal menyimpan pengeluaran', [{ text: 'OK' }], { type: 'error' });
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
 
   const handleCheckout = async () => {
     const paid = Number(paidAmount);
@@ -2213,6 +2312,96 @@ export default function App() {
         </View>
       </Modal>
 
+      
+      {/* MODAL BAYAR NOTA & KAS KELUAR */}
+      <Modal visible={expenseModalVisible} animationType="slide" transparent onRequestClose={() => setExpenseModalVisible(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { maxWidth: 440 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View>
+                <Text style={styles.modalTitle}>💸 Catat Bayar Nota / Kas Keluar</Text>
+                <Text style={{ fontSize: 11, color: '#94a3b8' }}>Otomatis memotong omset &amp; kas drawer hari ini</Text>
+              </View>
+              <TouchableOpacity onPress={() => setExpenseModalVisible(false)}>
+                <Ionicons name="close-circle" size={26} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.label}>Toko Asal / Supplier / Keperluan *</Text>
+              <TextInput
+                style={[styles.modalInput, { marginBottom: 10 }]}
+                placeholder="Contoh: Nota Toko A, Beli Es Batu, Air Galon..."
+                placeholderTextColor="#64748b"
+                value={expStoreSource}
+                onChangeText={setExpStoreSource}
+              />
+
+              <Text style={styles.label}>Kategori Pengeluaran</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                {[
+                  { id: 'Supplier', label: '📦 Nota Supplier (Toko A, dll)' },
+                  { id: 'Operasional', label: '🛠️ Operasional Toko' },
+                  { id: 'Gaji & Makan', label: '🍲 Uang Makan Kasir' },
+                  { id: 'Lainnya', label: '📌 Lainnya' },
+                ].map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={[styles.chip, expCategory === c.id && styles.chipActive]}
+                    onPress={() => setExpCategory(c.id)}
+                  >
+                    <Text style={[styles.chipText, expCategory === c.id && styles.chipTextActive]}>
+                      {c.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.label}>Nominal Pembayaran (Rp) *</Text>
+              <TextInput
+                style={[styles.modalInput, { marginBottom: 10, fontSize: 16, fontWeight: '800', color: '#f87171' }]}
+                placeholder="0"
+                placeholderTextColor="#64748b"
+                keyboardType="numeric"
+                value={expAmount}
+                onChangeText={setExpAmount}
+              />
+
+              <Text style={styles.label}>Catatan / Nomor Nota (Opsional)</Text>
+              <TextInput
+                style={[styles.modalInput, { marginBottom: 16 }]}
+                placeholder="Nomor faktur nota atau keterangan barang..."
+                placeholderTextColor="#64748b"
+                value={expNotes}
+                onChangeText={setExpNotes}
+              />
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setExpenseModalVisible(false)}
+                >
+                  <Text style={{ color: '#94a3b8', fontWeight: '700' }}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.primaryBtn, { flex: 2, marginTop: 0, backgroundColor: '#ef4444' }]}
+                  onPress={handleSaveExpense}
+                  disabled={savingExpense}
+                >
+                  {savingExpense ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+                      💾 SIMPAN &amp; POTONG OMSET
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* AI ASSISTANT MODAL */}
       {isAdmin && (
         <AiAssistantModal
@@ -2673,3 +2862,12 @@ const styles = StyleSheet.create({
   },
 });
 
+
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
+  );
+}
