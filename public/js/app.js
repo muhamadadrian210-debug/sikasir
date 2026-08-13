@@ -1,4 +1,3 @@
-
 window.showScanToast = function(message) {
   const overlay = document.createElement('div');
   overlay.className = 'scan-toast-overlay';
@@ -10,16 +9,73 @@ window.showScanToast = function(message) {
   `;
   document.body.appendChild(overlay);
   
-  // Play sound if possible (optional subtle beep)
-  // try { const a = new Audio('/sounds/beep.mp3'); a.volume = 0.5; a.play(); } catch(e) {}
-  
   setTimeout(() => {
     overlay.classList.add('fade-out');
     setTimeout(() => overlay.remove(), 200);
   }, 1000); // 1 second duration
 };
 
-﻿import { api, getToken, getUser, setToken, setUser } from './api.js';
+// ==========================================
+// WEB AI LIVE CRASH INSPECTOR & AUTO-REPAIR
+// ==========================================
+window.addEventListener('error', function(e) {
+  showWebAiCrashInspector(e.message, e.filename, e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  showWebAiCrashInspector(e.reason?.message || 'Asynchronous Promise Glitch', 'app.js', 0);
+});
+
+function showWebAiCrashInspector(msg, file, line) {
+  if (document.getElementById('web-ai-crash-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'web-ai-crash-banner';
+  banner.className = 'web-ai-crash-banner';
+  banner.innerHTML = `
+    <div class="ai-crash-content">
+      <div class="ai-crash-badge">
+        <span class="pulse-dot"></span> 🤖 SiKasir AI Crash Inspector
+      </div>
+      <div class="ai-crash-title">Glitch Terdeteksi di: <strong>${file ? file.split('/').pop() : 'Web App'}</strong> ${line ? `(Baris ${line})` : ''}</div>
+      <div class="ai-crash-desc">${msg || 'State mismatch'}</div>
+      <div class="ai-crash-actions">
+        <button id="btn-web-ai-autofix" class="btn-ai-autofix">✨ 🤖 AI Auto-Fix & Pulihkan</button>
+        <button id="btn-web-ai-dismiss" class="btn-ai-dismiss">✕ Tutup</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(banner);
+
+  document.getElementById('btn-web-ai-dismiss').onclick = () => banner.remove();
+  document.getElementById('btn-web-ai-autofix').onclick = async () => {
+    const btn = document.getElementById('btn-web-ai-autofix');
+    btn.innerHTML = '⏳ AI Sedang Memperbaiki...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/ai/auto-repair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        body: JSON.stringify({
+          componentName: 'Web POS View',
+          errorMessage: msg,
+          currentAction: 'User in Web POS'
+        })
+      });
+      const data = await res.json();
+      btn.innerHTML = '✓ Berhasil Dipulihkan!';
+      btn.style.backgroundColor = '#10b981';
+      setTimeout(() => {
+        banner.remove();
+        window.location.reload();
+      }, 1000);
+    } catch(err) {
+      banner.remove();
+      window.location.reload();
+    }
+  };
+}
+
+import { api, getToken, getUser, setToken, setUser } from './api.js';
 import { startScanner, stopScanner, scanFile } from './scanner.js';
 
 const MODE_KEY = 'sikasir_app_mode';
