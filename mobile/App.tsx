@@ -700,6 +700,14 @@ function MainApp() {
   const [shiftAction, setShiftAction] = useState<'open' | 'close'>('open');
   const [shiftModalVisible, setShiftModalVisible] = useState(false);
 
+  // Expense Modal State
+  const [expenseModalVisible, setExpenseModalVisible] = useState(false);
+  const [expStoreSource, setExpStoreSource] = useState('');
+  const [expAmount, setExpAmount] = useState('');
+  const [expCategory, setExpCategory] = useState('Supplier');
+  const [expNotes, setExpNotes] = useState('');
+  const [savingExpense, setSavingExpense] = useState(false);
+
   // Variant Modal State
   const [variantModalVisible, setVariantModalVisible] = useState(false);
   const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null);
@@ -709,6 +717,9 @@ function MainApp() {
   const [addIncomingModalVisible, setAddIncomingModalVisible] = useState(false);
   const [incSupplier, setIncSupplier] = useState('');
   const [incItem, setIncItem] = useState('');
+  const [incQty, setIncQty] = useState('');
+  const [incPrice, setIncPrice] = useState('');
+  const [incNotes, setIncNotes] = useState('');
 
   // AI Assistant Modal State
   const [aiModalVisible, setAiModalVisible] = useState(false);
@@ -764,6 +775,22 @@ function MainApp() {
   const loadCyberStatus = async () => {
     const status = await apiService.getCyberSecurityStatus();
     setCyberStatus(status);
+  };
+
+  const loadExpensesData = async () => {
+    try {
+      if (apiService.getExpenses) {
+        await apiService.getExpenses();
+      }
+    } catch (e) {}
+  };
+
+  const loadDashboardData = async () => {
+    try {
+      if (apiService.getDashboard) {
+        await apiService.getDashboard();
+      }
+    } catch (e) {}
   };
 
   const fetchTenants = async () => {
@@ -961,11 +988,11 @@ function MainApp() {
     const src = expStoreSource.trim();
     const amt = Number(expAmount);
     if (!src) {
-      customAlert('Peringatan', 'Nama Toko Asal / Supplier / Keperluan wajib diisi', [{ text: 'OK' }], { type: 'warning' });
+      showCustomAlert('Peringatan', 'Nama Toko Asal / Supplier / Keperluan wajib diisi', [{ text: 'OK' }], { type: 'warning' });
       return;
     }
     if (isNaN(amt) || amt <= 0) {
-      customAlert('Peringatan', 'Nominal pengeluaran harus lebih dari 0', [{ text: 'OK' }], { type: 'warning' });
+      showCustomAlert('Peringatan', 'Nominal pengeluaran harus lebih dari 0', [{ text: 'OK' }], { type: 'warning' });
       return;
     }
 
@@ -986,7 +1013,7 @@ function MainApp() {
       await loadExpensesData();
       await loadDashboardData();
     } catch (err: any) {
-      customAlert('Gagal', err.message || 'Gagal menyimpan pengeluaran', [{ text: 'OK' }], { type: 'error' });
+      showCustomAlert('Gagal', err.message || 'Gagal menyimpan pengeluaran', [{ text: 'OK' }], { type: 'error' });
     } finally {
       setSavingExpense(false);
     }
