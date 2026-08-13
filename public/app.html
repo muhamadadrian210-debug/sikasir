@@ -107,26 +107,49 @@
       </div>
     </div>
 
-    <!-- AI Chat Widget Floating -->
+    <!-- AI Chat Widget Floating (SiKasir Copilot) -->
     <div id="ai-chat-widget">
-      <button id="ai-chat-btn" aria-label="Buka AI Assistant">✨ AI Assistant</button>
-      <div id="ai-chat-window" class="hidden">
+      <button id="ai-chat-btn" class="ai-fab-btn" aria-label="Buka AI Assistant" title="Tanya SiKasir AI Assistant">
+        <span class="ai-fab-sparkle">✨</span>
+        <span class="ai-fab-text">SiKasir AI</span>
+      </button>
+
+      <div id="ai-chat-window" class="ai-chat-drawer hidden">
         <div class="ai-chat-header">
-          <span>SiKasir AI Assistant</span>
-          <button id="ai-chat-close">✕</button>
+          <div class="ai-chat-header-title">
+            <span style="font-size:1.2rem;">✨</span>
+            <div>
+              <div style="font-weight:800; font-size:0.95rem;">SiKasir Copilot AI</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Asisten Kasir & Analisis Pintar</div>
+            </div>
+          </div>
+          <button type="button" class="ai-chat-close-btn" id="ai-chat-close" title="Tutup Chat AI">✕</button>
         </div>
+
         <div class="ai-chat-messages" id="ai-chat-messages">
-          <div class="ai-msg bot-msg">Halo! Ada yang bisa saya bantu terkait stok, kasir, atau laporan hari ini?</div>
+          <div class="ai-msg bot-msg">
+            👋 Halo! Saya <strong>SiKasir AI</strong>. Saya bisa bantu update stok via ucapan/teks, cek laba bersih setelah bayar nota, atau cari barang yang hampir habis. Ada yang bisa dibantu?
+          </div>
         </div>
-        <form class="ai-chat-input" id="ai-chat-form">
-          <input type="text" id="ai-chat-input" placeholder="Ketik perintah (misal: cek stok indomie)..." autocomplete="off" required />
-          <button type="submit">Kirim</button>
-        </form>
+
+        <!-- Quick AI Suggestions -->
+        <div class="ai-quick-chips">
+          <button type="button" class="ai-chip" data-prompt="Rekap omset dan laba bersih hari ini">📊 Rekap Hari Ini</button>
+          <button type="button" class="ai-chip" data-prompt="Berapa total bayar nota supplier hari ini?">💸 Total Bayar Nota</button>
+          <button type="button" class="ai-chip" data-prompt="Barang apa yang stoknya hampir habis?">⚠️ Stok Menipis</button>
+        </div>
+
+        <div class="ai-chat-footer">
+          <form class="ai-chat-form" id="ai-chat-form">
+            <input type="text" id="ai-chat-input" class="ai-chat-input" placeholder="Tanya AI (misal: stok indomie masuk 2 dus)..." autocomplete="off" required />
+            <button type="submit" class="ai-chat-send-btn">Kirim</button>
+          </form>
+        </div>
       </div>
     </div>
 
     <script src="/js/samsung-redirect.js"></script>
-    <script type="module" src="/js/app.js?v=1.0.6"></script>
+    <script type="module" src="/js/app.js?v=1.0.7"></script>
     <script type="module" src="/js/ai-chat.js"></script>
   </body>
 </html>

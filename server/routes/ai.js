@@ -242,8 +242,20 @@ router.post('/chat', async (req, res) => {
           WHERE t.tenant_id = ? AND ${dateCondition}
         `, [tid]);
 
+        // Also query expenses/bayar nota for this period
+        let expenseDateCond = dateCondition.replace(/t\.created_at/g, 'e.expense_date');
+        const [expenseRows] = await pool.execute(`
+          SELECT COALESCE(SUM(e.amount), 0) as total_expenses
+          FROM expenses e
+          WHERE e.tenant_id = ? AND ${expenseDateCond}
+        `, [tid]).catch(() => [[{ total_expenses: 0 }]]);
+
+        const totalExpenses = Number(expenseRows[0]?.total_expenses || 0);
+
         const summary = txRows[0] || { total_tx: 0, total_omset: 0, total_cogs: 0 };
-        const totalProfit = Number(summary.total_omset) - Number(summary.total_cogs);
+        const grossProfit = Number(summary.total_omset) - Number(summary.total_cogs);
+        const netProfit = grossProfit - totalExpenses;
+        const netCashOmset = Number(summary.total_omset) - totalExpenses;
 
         const [topProducts] = await pool.execute(`
           SELECT 
@@ -262,9 +274,10 @@ router.post('/chat', async (req, res) => {
         const reportData = {
           periode: periodLabel,
           jumlah_transaksi: summary.total_tx,
-          total_omset: Number(summary.total_omset),
-          total_modal: Number(summary.total_cogs),
-          keuntungan_bersih: totalProfit,
+          total_omset_kotor: Number(summary.total_omset),
+          total_bayar_nota_pengeluaran: totalExpenses,
+          omset_bersih_kas: netCashOmset,
+          keuntungan_bersih_akhir: netProfit,
           produk_terlaris: topProducts.map(tp => `${tp.name} (${tp.total_qty} pcs - Rp${Number(tp.total_revenue).toLocaleString('id-ID')})`)
         };
 

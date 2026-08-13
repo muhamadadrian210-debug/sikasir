@@ -1276,12 +1276,10 @@ function MainApp() {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {isAdmin && (
-            <TouchableOpacity style={styles.aiPill} onPress={() => setAiModalVisible(true)}>
-              <MaterialCommunityIcons name="robot-outline" size={16} color="#000" />
-              <Text style={styles.aiPillText}>AI Gemini</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.aiPill} onPress={() => setAiModalVisible(true)}>
+            <MaterialCommunityIcons name="robot-outline" size={16} color="#064e3b" />
+            <Text style={styles.aiPillText}>✨ SiKasir AI</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={18} color="#ef4444" />
           </TouchableOpacity>
@@ -2403,14 +2401,12 @@ function MainApp() {
       </Modal>
 
       {/* AI ASSISTANT MODAL */}
-      {isAdmin && (
-        <AiAssistantModal
-          visible={aiModalVisible}
-          onClose={() => setAiModalVisible(false)}
-          onDataUpdated={loadProducts}
-          onSwitchTab={setActiveTab}
-        />
-      )}
+      <AiAssistantModal
+        visible={aiModalVisible}
+        onClose={() => setAiModalVisible(false)}
+        onDataUpdated={loadProducts}
+        onSwitchTab={setActiveTab}
+      />
 
       {/* HEAVY DUTY CAMERA BARCODE SCANNER MODAL */}
       <HeavyDutyBarcodeScannerModal

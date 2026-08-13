@@ -1737,46 +1737,57 @@ async function loadCybersecurityPanel() {
   el.innerHTML = `
     <div class="cyber-page-head">
       <div>
-        <h3>Keamanan Toko</h3>
-        <p>Pantau akses mencurigakan khusus toko ini. Admin bisa langsung memblokir alamat yang mencoba membobol sistem.</p>
+        <h3>🛡️ Keamanan Toko & Anti-Fraud Center</h3>
+        <p>Pantau ancaman siber, serangan SQLi/XSS, dan upaya pembobolan sistem secara realtime.</p>
       </div>
-      <button type="button" class="btn btn-secondary" id="cyber-refresh">Muat ulang</button>
+      <button type="button" class="btn btn-secondary" id="cyber-refresh">🔄 Refresh Data</button>
     </div>
 
-    <div class="grid-2">
-      <div class="cyber-section">
-        <h4>Ringkasan</h4>
-        <div id="cyber-summary">Memuat...</div>
+    <!-- Security Stat Cards -->
+    <div class="cyber-metrics-grid" id="cyber-metrics-cards">
+      <div class="cyber-stat-card">
+        <span class="cyber-stat-label">Total Ancaman Dicegah</span>
+        <span class="cyber-stat-val" id="cyber-stat-total">0</span>
       </div>
-      <div class="cyber-section">
-        <h4>Pengaturan</h4>
+      <div class="cyber-stat-card">
+        <span class="cyber-stat-label">IP Mencurigakan</span>
+        <span class="cyber-stat-val" id="cyber-stat-ip-count">0</span>
+      </div>
+      <div class="cyber-stat-card">
+        <span class="cyber-stat-label">Status Proteksi</span>
+        <span class="cyber-stat-val" id="cyber-stat-status" style="font-size:1.1rem; color:#10b981;">🛡️ Aktif & Aman</span>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.25rem;">
+      <div class="cyber-section" style="margin-bottom:0;">
+        <h4>⚙️ Pengaturan Proteksi Otomatis</h4>
         <label class="cyber-check-row">
           <input type="checkbox" id="cyber-auto-block" />
-          <span>Blokir otomatis akses berbahaya</span>
+          <span>Blokir Otomatis IP & Akses Berbahaya</span>
         </label>
-        <p class="cyber-muted">Jika aktif, sistem akan menahan akses yang berulang kali mencurigakan.</p>
+        <p class="cyber-muted">Jika aktif, sistem AI security akan otomatis memutus koneksi IP yang melakukan brute force / inject.</p>
+      </div>
+      <div class="cyber-section" style="margin-bottom:0;">
+        <h4>🧪 Uji Coba Simulasi Keamanan</h4>
+        <p class="cyber-muted">Verifikasi deteksi firewall dengan simulasi serangan terkontrol (hanya masuk ke log toko ini):</p>
+        <div class="cyber-test-actions">
+          <button type="button" class="btn" data-cyber-test="sqli">💉 Tes SQL Injection</button>
+          <button type="button" class="btn" data-cyber-test="xss">⚡ Tes XSS Script</button>
+          <button type="button" class="btn" data-cyber-test="bot">🤖 Tes Bot Kasir</button>
+          <button type="button" class="btn" data-cyber-test="api_abuse">📂 Tes File Scanner</button>
+        </div>
       </div>
     </div>
 
     <div class="cyber-section">
-      <h4>Akses mencurigakan</h4>
-      <div id="cyber-ip-list">Memuat...</div>
+      <h4>🚨 Daftar Alamat IP Mencurigakan</h4>
+      <div id="cyber-ip-list">Memuat data IP...</div>
     </div>
 
     <div class="cyber-section">
-      <h4>Catatan kejadian</h4>
-      <div id="cyber-log-list">Memuat...</div>
-    </div>
-
-    <div class="cyber-section">
-      <h4>Tes admin</h4>
-      <p class="cyber-muted">Gunakan tombol ini untuk memastikan dashboard keamanan toko berjalan. Data tes hanya masuk ke toko yang sedang login.</p>
-      <div class="cyber-test-actions">
-        <button type="button" class="btn btn-secondary" data-cyber-test="sqli">Tes coba bobol data</button>
-        <button type="button" class="btn btn-secondary" data-cyber-test="xss">Tes kirim kode jahat</button>
-        <button type="button" class="btn btn-secondary" data-cyber-test="bot">Tes robot otomatis</button>
-        <button type="button" class="btn btn-secondary" data-cyber-test="api_abuse">Tes cari file rahasia</button>
-      </div>
+      <h4>📜 Catatan Kejadian & Log Audit Serangan</h4>
+      <div id="cyber-log-list">Memuat log kejadian...</div>
     </div>`;
 
   async function refresh() {
@@ -1788,42 +1799,55 @@ async function loadCybersecurityPanel() {
 
       const stats = status.stats || {};
       const ipStats = (stats.ipStats || []).sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
-      document.getElementById('cyber-auto-block').checked = Boolean(stats.loopEnabled);
-      document.getElementById('cyber-summary').innerHTML = `
-        <p>Total kejadian: <strong>${Number(stats.totalViolations || 0)}</strong></p>
-        <p>Alamat mencurigakan: <strong>${ipStats.length}</strong></p>
-        <p>Status: <strong style="color:${ipStats.length ? 'var(--danger)' : 'var(--success)'}">${ipStats.length ? 'Perlu dicek' : 'Aman'}</strong></p>`;
+      
+      const autoBlockEl = document.getElementById('cyber-auto-block');
+      if (autoBlockEl) autoBlockEl.checked = Boolean(stats.loopEnabled);
+
+      const totalEl = document.getElementById('cyber-stat-total');
+      if (totalEl) totalEl.textContent = Number(stats.totalViolations || 0);
+
+      const ipCountEl = document.getElementById('cyber-stat-ip-count');
+      if (ipCountEl) ipCountEl.textContent = ipStats.length;
+
+      const statusEl = document.getElementById('cyber-stat-status');
+      if (statusEl) {
+        if (ipStats.length > 0) {
+          statusEl.innerHTML = '<span class="cyber-badge cyber-badge-warn">⚠️ Perlu Tindakan</span>';
+        } else {
+          statusEl.innerHTML = '<span class="cyber-badge cyber-badge-safe">✓ 100% Terlindungi</span>';
+        }
+      }
 
       document.getElementById('cyber-ip-list').innerHTML = ipStats.length
         ? `<div class="table-wrap"><table class="data">
-            <thead><tr><th>Alamat</th><th>Jumlah percobaan</th><th>Terakhir terlihat</th><th>Tindakan</th></tr></thead>
+            <thead><tr><th>Alamat IP</th><th>Jumlah Percobaan</th><th>Terakhir Terdeteksi</th><th>Tindakan Admin</th></tr></thead>
             <tbody>
               ${ipStats.map((item) => `
                 <tr>
-                  <td class="mono">${escapeHtml(item.ip)}</td>
-                  <td>${Number(item.count || 0)}</td>
+                  <td class="mono"><code>${escapeHtml(item.ip)}</code></td>
+                  <td><span class="cyber-badge cyber-badge-warn">${Number(item.count || 0)}x</span></td>
                   <td>${cyberTime(item.lastSeen)}</td>
-                  <td><button type="button" class="btn btn-danger" data-kick-ip="${escapeHtml(item.ip)}">Blokir akses</button></td>
+                  <td><button type="button" class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.78rem;" data-kick-ip="${escapeHtml(item.ip)}">🚫 Blokir IP</button></td>
                 </tr>`).join('')}
             </tbody>
           </table></div>`
-        : '<p>Belum ada akses mencurigakan untuk toko ini.</p>';
+        : '<p style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">✓ Belum ada akses mencurigakan yang terdeteksi untuk toko Anda.</p>';
 
       document.getElementById('cyber-log-list').innerHTML = logs.length
         ? `<div class="table-wrap"><table class="data">
-            <thead><tr><th>Waktu</th><th>Alamat</th><th>Kejadian</th><th>Tindakan sistem</th><th>Yang dicoba</th></tr></thead>
+            <thead><tr><th>Waktu</th><th>Alamat IP</th><th>Jenis Serangan</th><th>Respon Sistem</th><th>Payload / Endpoint</th></tr></thead>
             <tbody>
               ${logs.slice(0, 50).map((row) => `
                 <tr>
-                  <td>${cyberTime(row.created_at)}</td>
-                  <td class="mono">${escapeHtml(row.ip || '-')}</td>
-                  <td>${escapeHtml(row.branch_name || row.layer_name || 'Akses mencurigakan')}</td>
-                  <td>${cyberActionLabel(row.action_taken)}</td>
-                  <td style="max-width:260px;font-size:.85rem">${escapeHtml(row.payload || row.request_url || '-')}</td>
+                  <td style="white-space:nowrap;">${cyberTime(row.created_at)}</td>
+                  <td class="mono"><code>${escapeHtml(row.ip || '-')}</code></td>
+                  <td><span class="cyber-badge cyber-badge-danger">${escapeHtml(row.branch_name || row.layer_name || 'Akses Mencurigakan')}</span></td>
+                  <td><span class="cyber-badge cyber-badge-safe">${cyberActionLabel(row.action_taken)}</span></td>
+                  <td style="max-width:280px; font-size:.82rem; word-break:break-all;"><code>${escapeHtml(row.payload || row.request_url || '-')}</code></td>
                 </tr>`).join('')}
             </tbody>
           </table></div>`
-        : '<p>Belum ada catatan kejadian untuk toko ini.</p>';
+        : '<p style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">✓ Log bersih, sistem berjalan normal tanpa gangguan.</p>';
 
       el.querySelectorAll('[data-kick-ip]').forEach((btn) => {
         btn.onclick = async () => {
@@ -1834,7 +1858,7 @@ async function loadCybersecurityPanel() {
         };
       });
     } catch (e) {
-      document.getElementById('cyber-summary').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+      console.error(e);
     }
   }
 
@@ -1849,7 +1873,7 @@ async function loadCybersecurityPanel() {
       btn.disabled = true;
       try {
         await api('/cybersecurity/simulate', { method: 'POST', body: { type: btn.dataset.cyberTest } });
-        showAlert('Tes keamanan berhasil dibuat untuk toko ini.', 'success');
+        showAlert('Tes keamanan berhasil dieksekusi.', 'success');
         await refresh();
       } catch (e) {
         showAlert(e.message, 'error');
