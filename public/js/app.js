@@ -444,6 +444,10 @@ function buildSidebar() {
 
 /* -------- POS (MAJOO-STYLE INTERACTIVE CATALOG & CHECKOUT) -------- */
 let cart = [];
+let heldBills = [];
+let splitBillWays = 1;
+let applyPB1 = false;
+let currentPaymentMethod = 'CASH';
 
 function renderPosCatalog(filterText = '') {
   const grid = document.getElementById('pos-catalog-grid');
@@ -489,8 +493,42 @@ function renderCart(newItemName) {
   if (newItemName) window.showScanToast(`Ditambahkan: ${newItemName}`);
   const list = document.getElementById('pos-cart-list');
   if (!list) return;
-  const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
-  document.getElementById('pos-total').textContent = money(total);
+  
+  const subtotal = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
+  const taxAmount = applyPB1 ? Math.round(subtotal * 0.1) : 0;
+  const total = subtotal + taxAmount;
+
+  const totalEl = document.getElementById('pos-total');
+  if (totalEl) totalEl.textContent = money(total);
+
+  const subtotalEl = document.getElementById('pos-subtotal-val');
+  if (subtotalEl) subtotalEl.textContent = money(subtotal);
+
+  const taxEl = document.getElementById('pos-tax-val');
+  if (taxEl) taxEl.textContent = money(taxAmount);
+
+  // Update Split Bill display
+  const splitInfoEl = document.getElementById('pos-split-info');
+  if (splitInfoEl) {
+    if (splitBillWays > 1) {
+      const perPerson = Math.round(total / splitBillWays);
+      splitInfoEl.innerHTML = `<span style="color:var(--primary); font-weight:800;">Split ${splitBillWays} Orang:</span> ${money(perPerson)} / orang`;
+      splitInfoEl.classList.remove('hidden');
+    } else {
+      splitInfoEl.classList.add('hidden');
+    }
+  }
+
+  // Update Hold / Load button states
+  const holdBtn = document.getElementById('pos-hold-bill');
+  if (holdBtn) holdBtn.disabled = cart.length === 0;
+
+  const loadBtn = document.getElementById('pos-load-bill');
+  if (loadBtn) {
+    loadBtn.textContent = heldBills.length > 0 ? `📂 Muat Antrian (${heldBills.length})` : '📂 Muat Antrian';
+    loadBtn.disabled = heldBills.length === 0;
+  }
+
   document.getElementById('pos-paid')?.dispatchEvent(new Event('input'));
 
   if (!cart.length) {
@@ -544,48 +582,93 @@ function renderPOS() {
         </div>
       </div>
 
-      <!-- Right: Cart & Checkout Panel -->
+      <!-- Right: Cart & Checkout Panel with Split Pay, Hold Bill, PB1, Kasbon -->
       <div class="pos-cart-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.65rem;">
           <h3 style="margin:0; font-size:1.1rem; color:var(--heading);">🛒 Keranjang Kasir</h3>
-          <button type="button" class="btn btn-secondary" id="pos-clear" style="padding:0.3rem 0.6rem; font-size:0.8rem;">Kosongkan</button>
+          <div style="display:flex; gap:0.4rem;">
+            <button type="button" class="btn btn-secondary" id="pos-hold-bill" style="padding:0.25rem 0.55rem; font-size:0.75rem;" title="Tahan pesanan sementara">⏸️ Tahan (Hold)</button>
+            <button type="button" class="btn btn-secondary" id="pos-load-bill" style="padding:0.25rem 0.55rem; font-size:0.75rem;" title="Muat antrian yang ditahan">📂 Muat (${heldBills.length})</button>
+            <button type="button" class="btn btn-secondary" id="pos-clear" style="padding:0.25rem 0.55rem; font-size:0.75rem; color:var(--danger); border-color:rgba(239,68,68,0.3)">✕</button>
+          </div>
         </div>
 
         <div id="pos-cart-list" class="pos-cart-items"></div>
 
-        <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1rem; margin-bottom:1rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.9rem; color:var(--text);">Total Tagihan</span>
-            <span class="mono" id="pos-total" style="font-size:1.4rem; font-weight:800; color:var(--primary);">${money(0)}</span>
+        <!-- Tagihan & Rincian Pajak/Split -->
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:0.82rem; color:var(--text-muted);">
+            <span>Subtotal Barang:</span>
+            <span class="mono" id="pos-subtotal-val">${money(0)}</span>
+          </div>
+          <div id="pos-tax-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:0.82rem; color:var(--text-muted);">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <input type="checkbox" id="pos-apply-pb1" ${applyPB1 ? 'checked' : ''} /> Pajak PB1 / PPN Resto (10%)
+            </label>
+            <span class="mono" id="pos-tax-val">${money(0)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:6px;">
+            <span style="font-size:0.92rem; font-weight:700; color:var(--text-bright);">Total Tagihan</span>
+            <span class="mono" id="pos-total" style="font-size:1.35rem; font-weight:900; color:var(--primary);">${money(0)}</span>
+          </div>
+          <div id="pos-split-info" class="hidden" style="margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(16,185,129,0.1); font-size:0.82rem; text-align:center;"></div>
+        </div>
+
+        <!-- Split Bill & Metode Bayar Options -->
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+          <!-- Split Bill Stepper -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <span style="font-size:0.84rem; font-weight:700; color:var(--text-main);">👥 Split Bill (Bagi Bon):</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button type="button" class="pos-qty-btn" id="pos-split-minus" style="width:26px; height:26px;">−</button>
+              <span id="pos-split-val" style="font-weight:800; font-size:0.9rem; min-width:55px; text-align:center;">1 Orang</span>
+              <button type="button" class="pos-qty-btn" id="pos-split-plus" style="width:26px; height:26px;">+</button>
+            </div>
+          </div>
+
+          <!-- Metode Pembayaran Radio Tabs -->
+          <div style="display:flex; gap:4px; background:var(--bg-input); padding:3px; border-radius:10px; border:1px solid var(--border);">
+            <button type="button" class="auth-tab ${currentPaymentMethod === 'CASH' ? 'active' : ''}" id="pos-pm-cash" style="padding:0.4rem; font-size:0.8rem;">💵 Tunai</button>
+            <button type="button" class="auth-tab ${currentPaymentMethod === 'QRIS' ? 'active' : ''}" id="pos-pm-qris" style="padding:0.4rem; font-size:0.8rem;">📱 QRIS</button>
+            <button type="button" class="auth-tab ${currentPaymentMethod === 'KASBON' ? 'active' : ''}" id="pos-pm-kasbon" style="padding:0.4rem; font-size:0.8rem;">💳 Kasbon</button>
+          </div>
+
+          <!-- Kasbon Inputs (Conditional) -->
+          <div id="pos-kasbon-inputs" class="${currentPaymentMethod === 'KASBON' ? '' : 'hidden'}" style="margin-top:0.75rem;">
+            <input type="text" id="pos-kasbon-name" class="pos-search-input" placeholder="Nama Pelanggan Kasbon *" style="margin-bottom:0.4rem; font-size:0.85rem;" />
+            <input type="text" id="pos-kasbon-phone" class="pos-search-input" placeholder="No HP / WhatsApp Pelanggan" style="font-size:0.85rem;" />
           </div>
         </div>
 
-        <div class="field" style="margin-bottom:0.5rem;">
-          <label style="font-size:0.85rem; color:var(--text);">Uang Diterima (Rp)</label>
-          <input type="number" id="pos-paid" min="0" step="500" placeholder="0" class="pos-search-input" style="font-weight:700; font-size:1.1rem;" />
+        <!-- Cash Payment Inputs (when Cash selected) -->
+        <div id="pos-cash-container" class="${currentPaymentMethod === 'CASH' ? '' : 'hidden'}">
+          <div class="field" style="margin-bottom:0.4rem;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">Uang Diterima (Rp)</label>
+            <input type="number" id="pos-paid" min="0" step="500" placeholder="0" class="pos-search-input" style="font-weight:800; font-size:1.1rem;" />
+          </div>
+
+          <!-- Quick Cash Buttons -->
+          <div class="pos-quick-cash">
+            <button type="button" class="pos-quick-cash-btn" data-preset="exact">Uang Pas</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="10000">10rb</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="20000">20rb</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="50000">50rb</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="100000">100rb</button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; margin-bottom:0.65rem;">
+            <span style="font-size:0.88rem; color:var(--text-muted);">Kembalian:</span>
+            <strong class="mono" id="pos-change" style="font-size:1.15rem; color:var(--text-bright);">${money(0)}</strong>
+          </div>
         </div>
 
-        <!-- Quick Cash Buttons -->
-        <div class="pos-quick-cash">
-          <button type="button" class="pos-quick-cash-btn" data-preset="exact">Uang Pas</button>
-          <button type="button" class="pos-quick-cash-btn" data-preset="10000">10rb</button>
-          <button type="button" class="pos-quick-cash-btn" data-preset="20000">20rb</button>
-          <button type="button" class="pos-quick-cash-btn" data-preset="50000">50rb</button>
-          <button type="button" class="pos-quick-cash-btn" data-preset="100000">100rb</button>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; margin-bottom:0.75rem;">
-          <span style="font-size:0.9rem; color:var(--text);">Kembalian:</span>
-          <strong class="mono" id="pos-change" style="font-size:1.1rem; color:var(--heading);">${money(0)}</strong>
-        </div>
-
-        <button type="button" class="btn btn-primary btn-block" id="pos-checkout" style="padding:0.9rem; font-size:1.05rem; font-weight:800; letter-spacing:0.5px;">
+        <button type="button" class="btn btn-primary btn-block" id="pos-checkout" style="padding:0.85rem; font-size:1.02rem; font-weight:800;">
           PROSES BAYAR
         </button>
-        <button type="button" class="btn btn-secondary btn-block mt-1" id="pos-print-last" disabled style="font-size:0.85rem;">
+        <button type="button" class="btn btn-secondary btn-block mt-1" id="pos-print-last" disabled style="font-size:0.82rem; padding:0.6rem;">
           🖨️ Cetak Struk Terakhir (PDF)
         </button>
-        <p id="pos-offline-note" class="mt-1" style="font-size:.78rem; color:var(--text); text-align:center; margin-bottom:0;"></p>
+        <p id="pos-offline-note" class="mt-1" style="font-size:.75rem; color:var(--text-subtle); text-align:center; margin-bottom:0;"></p>
       </div>
     </div>`;
 
