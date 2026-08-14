@@ -228,11 +228,18 @@ export const apiService = {
       return await request(query ? `/products?q=${encodeURIComponent(query)}` : '/products');
     } catch (e) {
       const user = getCurrentUser();
-      let mockList = MOCK_PRODUCTS;
-      if (user && user.tenant_id > 6) {
-        // Hanya tampilkan produk yang baru ditambahkan (id berupa timestamp) untuk toko mock baru
-        mockList = MOCK_PRODUCTS.filter(p => p.id > 1000000000000);
+      let mockList: Product[] = [];
+
+      // Jika toko bawaan sistem (Tenant ID 1 s/d 9)
+      if (user && user.tenant_id <= 9) {
+        mockList = MOCK_PRODUCTS.filter(p => p.tenant_id === user.tenant_id || (!p.tenant_id && user.tenant_id === 1));
+      } else if (user && user.tenant_id > 9) {
+        // Toko BARU yang didaftarkan mandiri: HANYA tampilkan barang milik tenant_id ini
+        mockList = MOCK_PRODUCTS.filter(p => p.tenant_id === user.tenant_id);
+      } else {
+        mockList = [];
       }
+
       if (!query) return mockList;
       return mockList.filter(p =>
         p.name.toLowerCase().includes(query.toLowerCase()) || p.barcode.includes(query)
@@ -244,8 +251,10 @@ export const apiService = {
     try {
       return await request('/products', { method: 'POST', body: productData });
     } catch (e) {
+      const user = getCurrentUser();
       const newProd: Product = {
         id: Date.now(),
+        tenant_id: user?.tenant_id || 1,
         barcode: productData.barcode || '899' + Math.floor(100000000 + Math.random() * 900000000),
         name: productData.name || 'Produk Baru',
         purchase_price: productData.purchase_price || 0,
