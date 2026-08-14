@@ -1,7 +1,7 @@
 import { Product, CartItem, Tenant, User, TransactionRecord, IncomingLog, AuditLog, CyberSecurityStatus, Customer, StoreType, ExpenseRecord } from '../types';
 
 // Dynamic API URL for Vercel/Online Cloud Server or Local Dev
-let API_URL = (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) ? process.env.EXPO_PUBLIC_API_URL : 'http://192.168.100.184:3000/api';
+let API_URL = (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) ? process.env.EXPO_PUBLIC_API_URL : 'http://192.168.100.194:3000/api';
 let authToken = '';
 let currentUser: User | null = null;
 
@@ -17,9 +17,9 @@ const MOCK_INCOMING: IncomingLog[] = [
 ];
 
 const MOCK_AUDIT: AuditLog[] = [
-  { id: 1, created_at: '2026-07-31 20:10', username: 'kasir_admin', action: 'LOGIN_SUCCESS', details: 'Login dari Android App', ip_address: '192.168.100.184' },
-  { id: 2, created_at: '2026-07-31 19:45', username: 'kasir_admin', action: 'TRANSACTION_CREATED', details: 'Transaksi TX-8921 berhasil', ip_address: '192.168.100.184' },
-  { id: 3, created_at: '2026-07-31 17:30', username: 'kasir_admin', action: 'TENANT_REGISTER', details: 'Restorasi Toko Berhasil', ip_address: '192.168.100.184' },
+  { id: 1, created_at: '2026-07-31 20:10', username: 'kasir_admin', action: 'LOGIN_SUCCESS', details: 'Login dari Android App', ip_address: '192.168.100.194' },
+  { id: 2, created_at: '2026-07-31 19:45', username: 'kasir_admin', action: 'TRANSACTION_CREATED', details: 'Transaksi TX-8921 berhasil', ip_address: '192.168.100.194' },
+  { id: 3, created_at: '2026-07-31 17:30', username: 'kasir_admin', action: 'TENANT_REGISTER', details: 'Restorasi Toko Berhasil', ip_address: '192.168.100.194' },
 ];
 
 export const MOCK_TENANTS: Tenant[] = [

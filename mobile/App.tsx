@@ -959,13 +959,15 @@ function MainApp() {
       const newTenantObj: Tenant = res.tenant || { id: registeredUser.tenant_id, name: regStoreName.trim(), slug: regStoreName.trim().toLowerCase().replace(/\s+/g, '-'), store_type: regStoreType, icon: 'cart-outline' };
 
       setTenants(prev => [newTenantObj, ...prev.filter(t => t.id !== newTenantObj.id)]);
+      setSelectedTenantId(newTenantObj.id);
       setCurrentUserLocal(registeredUser);
+      setAuthToken('token_authenticated_registered');
 
       showCustomAlert(
         'Pendaftaran Sukses! 🎉',
         `Toko "${regStoreName}" (${regStoreType.toUpperCase()}) berhasil didaftarkan sebagai Admin Toko.`,
         [{
-          text: 'Mulai Sekarang 🚀',
+          text: 'Masuk Kasir & Dashboard 🚀',
           onPress: async () => {
             setRegisterModalVisible(false);
             setRegStoreName('');
@@ -973,13 +975,14 @@ function MainApp() {
             setRegUsername('');
             setRegPassword('');
             setIsLoggedIn(true);
-            loadProducts();
-            loadTransactions();
+            setActiveTab('kasir');
+            await loadProducts();
+            await loadTransactions();
           }
         }]
       );
     } catch (e: any) {
-      showCustomAlert('Pendaftaran Gagal', e.message || 'Gagal merestorasi data toko.');
+      showCustomAlert('Pendaftaran Gagal', e.message || 'Gagal mendaftarkan toko.');
     } finally {
       setRegLoading(false);
     }
