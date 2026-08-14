@@ -452,28 +452,88 @@ const ScanSuccessOverlay = () => {
 
 
 // ==========================================
-// AI LIVE CRASH INSPECTOR & AUTO-REPAIR ENGINE
+// AI LIVE CRASH INSPECTOR & AUTO-REPAIR ENGINE (ADVANCED FORENSIC EDITION)
 // ==========================================
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null; componentName: string; fixing: boolean; fixReport: string | null }> {
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  {
+    hasError: boolean;
+    error: Error | null;
+    componentName: string;
+    errorLocation: string;
+    stackTrace: string;
+    showFullStack: boolean;
+    fixing: boolean;
+    fixReport: string | null;
+    copied: boolean;
+  }
+> {
   constructor(props: any) {
     super(props);
-    this.state = { hasError: false, error: null, componentName: 'Layar Sistem', fixing: false, fixReport: null };
+    this.state = {
+      hasError: false,
+      error: null,
+      componentName: 'Layar Sistem',
+      errorLocation: 'Unknown',
+      stackTrace: '',
+      showFullStack: false,
+      fixing: false,
+      fixReport: null,
+      copied: false,
+    };
+  }
+
+  static parseErrorDetails(error: Error, info?: any) {
+    const msg = error?.message || '';
+    const rawStack = error?.stack || info?.componentStack || '';
+
+    // Deteksi Modul / Komponen
+    let comp = 'Layar Beranda / Dashboard';
+    if (msg.includes('cart') || rawStack.includes('cart') || rawStack.includes('pos')) comp = 'Kasir POS (Workstation)';
+    else if (msg.includes('tenant') || rawStack.includes('tenant') || rawStack.includes('register')) comp = 'Pendaftaran Toko Baru';
+    else if (msg.includes('product') || rawStack.includes('product')) comp = 'Katalog Stok Barang';
+    else if (msg.includes('expense') || rawStack.includes('expense')) comp = 'Bayar Nota & Kas Keluar';
+    else if (msg.includes('incoming') || rawStack.includes('incoming')) comp = 'Barang Masuk / Restock';
+    else if (msg.includes('scanner') || rawStack.includes('barcode')) comp = 'Kamera Barcode Scanner';
+
+    // Ekstrak Baris & Kolom dari Stack Trace
+    // Contoh format: at App (http://.../App.tsx:722:15) atau at App.tsx:722:15 atau App (bundle.js:1423:9)
+    let lineInfo = 'Baris / Posisi: Tidak terdeteksi';
+    const lines = rawStack.split('\n');
+    for (const line of lines) {
+      const match = line.match(/(?:at\s+)?(?:(.+?)\s+\()?(?:.+?\/)?([a-zA-Z0-9_.-]+?\.[a-zA-Z0-9]+):(\d+):(\d+)\)?/);
+      if (match) {
+        const [, funcName, fileName, lineNum, colNum] = match;
+        lineInfo = `${fileName} -> Baris ${lineNum}, Kolom ${colNum}${funcName ? ` (di ${funcName})` : ''}`;
+        break;
+      }
+    }
+
+    return { comp, lineInfo, rawStack };
   }
 
   static getDerivedStateFromError(error: Error) {
-    const msg = error?.message || '';
-    const stack = error?.stack || '';
-    let comp = 'Layar Beranda / Dashboard';
-    if (msg.includes('cart') || stack.includes('cart') || stack.includes('pos')) comp = 'Kasir POS (Workstation)';
-    else if (msg.includes('tenant') || stack.includes('tenant') || stack.includes('register')) comp = 'Pendaftaran Toko Baru';
-    else if (msg.includes('product') || stack.includes('product')) comp = 'Katalog Stok Barang';
-    else if (msg.includes('expense') || stack.includes('expense')) comp = 'Bayar Nota & Kas Keluar';
-
-    return { hasError: true, error, componentName: comp, fixing: false, fixReport: null };
+    const { comp, lineInfo, rawStack } = ErrorBoundary.parseErrorDetails(error);
+    return {
+      hasError: true,
+      error,
+      componentName: comp,
+      errorLocation: lineInfo,
+      stackTrace: rawStack,
+      showFullStack: false,
+      fixing: false,
+      fixReport: null,
+      copied: false,
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
     console.error('[SiKasir AI Crash Inspector Caught]:', error, errorInfo);
+    const { lineInfo, rawStack } = ErrorBoundary.parseErrorDetails(error, errorInfo);
+    this.setState({
+      errorLocation: lineInfo,
+      stackTrace: rawStack || errorInfo?.componentStack || error.stack || '',
+    });
   }
 
   handleAiAutoFix = async () => {
@@ -481,8 +541,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     try {
       const report = await apiService.requestAiAutoRepair({
         componentName: this.state.componentName,
-        errorMessage: this.state.error?.message,
-        errorStack: this.state.error?.stack,
+        errorMessage: `${this.state.error?.message} [Lokasi: ${this.state.errorLocation}]`,
+        errorStack: this.state.stackTrace || this.state.error?.stack,
         currentAction: 'Auto-Repair triggered by user'
       });
 
@@ -506,112 +566,151 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   };
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, fixReport: null });
+    this.setState({ hasError: false, error: null, fixReport: null, showFullStack: false });
   };
 
   render() {
     if (this.state.hasError) {
       return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#090d16', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#090d16', padding: 20 }}>
           <StatusBar barStyle="light-content" backgroundColor="#090d16" />
-
-          {/* AI Inspector Badge */}
-          <View style={{
-            width: 72, height: 72, borderRadius: 36,
-            backgroundColor: 'rgba(99, 102, 241, 0.15)',
-            borderWidth: 1.5, borderColor: 'rgba(99, 102, 241, 0.4)',
-            justifyContent: 'center', alignItems: 'center', marginBottom: 16
-          }}>
-            <Ionicons name="sparkles" size={38} color="#818cf8" />
-          </View>
-
-          <Text style={{ color: '#ffffff', fontSize: 21, fontWeight: '900', textAlign: 'center', marginBottom: 6 }}>
-            AI Live Crash Inspector
-          </Text>
-          <Text style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', marginBottom: 18, lineHeight: 19 }}>
-            Sistem SiKasir AI mendeteksi glitch dan mengisolasi komponen agar data kasir Anda tetap 100% aman.
-          </Text>
-
-          {/* Error Diagnostics Card */}
-          <View style={{
-            backgroundColor: '#131c2e',
-            borderRadius: 18,
-            padding: 16,
-            width: '100%',
-            marginBottom: 20,
-            borderWidth: 1,
-            borderColor: 'rgba(99, 102, 241, 0.25)'
-          }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ color: '#818cf8', fontSize: 11, fontWeight: '800' }}>📍 LOKASI GANGGUAN</Text>
-              <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '800' }}>ISOLATED</Text>
-              </View>
+          
+          <ScrollView contentContainerStyle={{ alignItems: 'center', paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+            {/* AI Inspector Badge */}
+            <View style={{
+              width: 64, height: 64, borderRadius: 32,
+              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              borderWidth: 1.5, borderColor: 'rgba(99, 102, 241, 0.4)',
+              justifyContent: 'center', alignItems: 'center', marginTop: 10, marginBottom: 12
+            }}>
+              <Ionicons name="sparkles" size={32} color="#818cf8" />
             </View>
-            <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '800', marginBottom: 6 }}>
-              {this.state.componentName}
-            </Text>
-            <Text style={{ color: '#f87171', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', marginBottom: 6 }}>
-              {this.state.error?.message || 'State validation mismatch'}
-            </Text>
-            <Text style={{ color: '#64748b', fontSize: 10 }}>
-              Modul: mobile/App.tsx • Render Guard Active
-            </Text>
-          </View>
 
-          {/* AI Auto-Fix Status Report */}
-          {this.state.fixReport && (
-            <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: '#10b981', borderRadius: 12, padding: 12, width: '100%', marginBottom: 16 }}>
-              <Text style={{ color: '#10b981', fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
-                {this.state.fixReport}
-              </Text>
-            </View>
-          )}
+            <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', textAlign: 'center', marginBottom: 4 }}>
+              AI Live Crash Inspector & Diagnostics
+            </Text>
+            <Text style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginBottom: 16, lineHeight: 18 }}>
+              Sistem SiKasir AI mendeteksi glitch dan mengisolasi komponen agar data kasir Anda tetap 100% aman.
+            </Text>
 
-          {/* Action Buttons */}
-          <TouchableOpacity
-            disabled={this.state.fixing}
-            onPress={this.handleAiAutoFix}
-            style={{
-              backgroundColor: '#6366f1',
-              paddingVertical: 14,
-              paddingHorizontal: 24,
-              borderRadius: 14,
+            {/* Error Diagnostics Card */}
+            <View style={{
+              backgroundColor: '#131c2e',
+              borderRadius: 18,
+              padding: 16,
               width: '100%',
-              alignItems: 'center',
-              marginBottom: 10,
-              shadowColor: '#6366f1',
-              shadowOpacity: 0.4,
-              shadowRadius: 10,
-              elevation: 6
-            }}
-          >
-            {this.state.fixing ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 14 }}>
-                ✨ 🤖 AI AUTO-FIX & PULIHKAN SEKARANG
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={this.handleReset}
-            style={{
-              backgroundColor: '#1e293b',
-              paddingVertical: 12,
-              paddingHorizontal: 24,
-              borderRadius: 14,
-              width: '100%',
-              alignItems: 'center',
+              marginBottom: 16,
               borderWidth: 1,
-              borderColor: '#334155'
-            }}
-          >
-            <Text style={{ color: '#94a3b8', fontWeight: '700', fontSize: 13 }}>
-              🔄 Muat Ulang Manual
-            </Text>
-          </TouchableOpacity>
+              borderColor: 'rgba(99, 102, 241, 0.25)'
+            }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <Text style={{ color: '#818cf8', fontSize: 11, fontWeight: '800' }}>📍 LOKASI GANGGUAN</Text>
+                <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '800' }}>ISOLATED</Text>
+                </View>
+              </View>
+
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '800', marginBottom: 4 }}>
+                {this.state.componentName}
+              </Text>
+
+              {/* Lokasi & Baris Lengkap */}
+              <View style={{ backgroundColor: '#0b1120', padding: 10, borderRadius: 10, marginVertical: 8, borderWidth: 1, borderColor: '#1e293b' }}>
+                <Text style={{ color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 2 }}>
+                  🎯 Titik Kesalahan (File & Baris):
+                </Text>
+                <Text style={{ color: '#f8fafc', fontSize: 12, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight: 'bold' }}>
+                  {this.state.errorLocation}
+                </Text>
+              </View>
+
+              {/* Pesan Error */}
+              <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '700', marginTop: 4, marginBottom: 2 }}>
+                ⚠️ Deskripsi Error:
+              </Text>
+              <Text style={{ color: '#f87171', fontSize: 12, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', marginBottom: 8, backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: 8, borderRadius: 8 }}>
+                {this.state.error?.message || 'State validation mismatch'}
+              </Text>
+
+              {/* Stack Trace Toggle */}
+              <TouchableOpacity
+                onPress={() => this.setState({ showFullStack: !this.state.showFullStack })}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 }}
+              >
+                <Text style={{ color: '#a5b4fc', fontSize: 11, fontWeight: '700' }}>
+                  {this.state.showFullStack ? '▼ Sembunyikan Stack Trace Lengkap' : '▶ Tampilkan Stack Trace Lengkap (Call Hierarchy)'}
+                </Text>
+              </TouchableOpacity>
+
+              {this.state.showFullStack && (
+                <View style={{ backgroundColor: '#030712', borderRadius: 8, padding: 10, marginTop: 6, maxHeight: 180 }}>
+                  <ScrollView nestedScrollEnabled>
+                    <Text style={{ color: '#94a3b8', fontSize: 10, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', lineHeight: 15 }}>
+                      {this.state.stackTrace || this.state.error?.stack || 'Tidak ada detail stack trace'}
+                    </Text>
+                  </ScrollView>
+                </View>
+              )}
+
+              <Text style={{ color: '#64748b', fontSize: 10, marginTop: 10 }}>
+                Modul: mobile/App.tsx • Render Guard Active
+              </Text>
+            </View>
+
+            {/* AI Auto-Fix Status Report */}
+            {this.state.fixReport && (
+              <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: '#10b981', borderRadius: 12, padding: 12, width: '100%', marginBottom: 16 }}>
+                <Text style={{ color: '#10b981', fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
+                  {this.state.fixReport}
+                </Text>
+              </View>
+            )}
+
+            {/* Action Buttons */}
+            <TouchableOpacity
+              disabled={this.state.fixing}
+              onPress={this.handleAiAutoFix}
+              style={{
+                backgroundColor: '#6366f1',
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                borderRadius: 14,
+                width: '100%',
+                alignItems: 'center',
+                marginBottom: 10,
+                shadowColor: '#6366f1',
+                shadowOpacity: 0.4,
+                shadowRadius: 10,
+                elevation: 6
+              }}
+            >
+              {this.state.fixing ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 14 }}>
+                  ✨ 🤖 AI AUTO-FIX & PULIHKAN SEKARANG
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={this.handleReset}
+              style={{
+                backgroundColor: '#1e293b',
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                borderRadius: 14,
+                width: '100%',
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#334155'
+              }}
+            >
+              <Text style={{ color: '#94a3b8', fontWeight: '700', fontSize: 13 }}>
+                🔄 Muat Ulang Manual
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
         </SafeAreaView>
       );
     }
