@@ -547,21 +547,21 @@ class ErrorBoundary extends React.Component<
       });
 
       this.setState({
-        fixReport: report.aiDiagnosis || '✓ State berhasil dinormalisasi dan data aman.',
+        fixReport: report.aiDiagnosis || '✓ State berhasil dinormalisasi dan data toko dipulihkan.',
         fixing: false
       });
 
       setTimeout(() => {
-        this.setState({ hasError: false, error: null, fixReport: null });
-      }, 900);
+        this.setState({ hasError: false, error: null, fixReport: null, showFullStack: false });
+      }, 1000);
     } catch (e: any) {
       this.setState({
         fixReport: '✓ State memori telah dinormalisasi ke baseline aman.',
         fixing: false
       });
       setTimeout(() => {
-        this.setState({ hasError: false, error: null, fixReport: null });
-      }, 900);
+        this.setState({ hasError: false, error: null, fixReport: null, showFullStack: false });
+      }, 1000);
     }
   };
 
@@ -727,8 +727,8 @@ function MainApp() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
   const [currentUser, setCurrentUserLocal] = useState<User | null>(getCurrentUser());
   const [tenants, setTenants] = useState<Tenant[]>(MOCK_TENANTS);
-  const currentTenant = currentUser ? (tenants.find(t => t.id === currentUser.tenant_id) || MOCK_TENANTS.find(t => t.id === currentUser.tenant_id) || { id: currentUser.tenant_id || 1, name: 'Toko SiKasir', store_type: 'minimarket', slug: 'toko-sikasir' }) : null;
-  const storeType = currentTenant?.store_type || 'umum';
+  const currentTenant = currentUser ? (tenants.find(t => t?.id === currentUser?.tenant_id) || MOCK_TENANTS.find(t => t?.id === currentUser?.tenant_id) || { id: currentUser?.tenant_id || 1, name: 'Toko SiKasir', store_type: 'minimarket', slug: 'toko-sikasir' }) : null;
+  const storeType = (currentTenant?.store_type || 'minimarket') as StoreType;
   const [activeTab, setActiveTab] = useState<'kasir' | 'history' | 'products' | 'incoming' | 'dashboard' | 'users' | 'audit' | 'cybersecurity' | 'kds' | 'adminTools'>('kasir');
 
   // Heavy Duty Camera Barcode Scanner State
@@ -969,15 +969,20 @@ function MainApp() {
         [{
           text: 'Masuk Kasir & Dashboard 🚀',
           onPress: async () => {
-            setRegisterModalVisible(false);
-            setRegStoreName('');
-            setRegOwnerName('');
-            setRegUsername('');
-            setRegPassword('');
-            setIsLoggedIn(true);
-            setActiveTab('kasir');
-            await loadProducts();
-            await loadTransactions();
+            try {
+              setRegisterModalVisible(false);
+              setRegStoreName('');
+              setRegOwnerName('');
+              setRegUsername('');
+              setRegPassword('');
+              setIsLoggedIn(true);
+              setActiveTab('kasir');
+              await loadProducts().catch(() => {});
+              await loadTransactions().catch(() => {});
+            } catch (err) {
+              console.warn('[Register Transition Notice]:', err);
+              setIsLoggedIn(true);
+            }
           }
         }]
       );
