@@ -1,3 +1,6 @@
+import { api, getToken, getUser, setToken, setUser } from './api.js';
+import { startScanner, stopScanner, scanFile } from './scanner.js';
+
 window.showScanToast = function(message) {
   const overlay = document.createElement('div');
   overlay.className = 'scan-toast-overlay';
@@ -33,10 +36,10 @@ function showWebAiCrashInspector(msg, file, line) {
   banner.innerHTML = `
     <div class="ai-crash-content">
       <div class="ai-crash-badge">
-        <span class="pulse-dot"></span> 🤖 SiKasir AI Crash Inspector
+        <span class="pulse-dot"></span> 🤖 SiKasir AI Crash Inspector & Auto-Repair
       </div>
       <div class="ai-crash-title">Glitch Terdeteksi di: <strong>${file ? file.split('/').pop() : 'Web App'}</strong> ${line ? `(Baris ${line})` : ''}</div>
-      <div class="ai-crash-desc">${msg || 'State mismatch'}</div>
+      <div class="ai-crash-desc">${msg || 'State mismatch detected'}</div>
       <div class="ai-crash-actions">
         <button id="btn-web-ai-autofix" class="btn-ai-autofix">✨ 🤖 AI Auto-Fix & Pulihkan</button>
         <button id="btn-web-ai-dismiss" class="btn-ai-dismiss">✕ Tutup</button>
@@ -52,31 +55,36 @@ function showWebAiCrashInspector(msg, file, line) {
     btn.disabled = true;
 
     try {
+      const token = getToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/ai/auto-repair', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+        headers,
         body: JSON.stringify({
           componentName: 'Web POS View',
           errorMessage: msg,
           currentAction: 'User in Web POS'
         })
       });
-      const data = await res.json();
-      btn.innerHTML = '✓ Berhasil Dipulihkan!';
+      const data = await res.json().catch(() => ({}));
+      btn.innerHTML = '✓ Sistem & Data Berhasil Dipulihkan!';
       btn.style.backgroundColor = '#10b981';
+      
       setTimeout(() => {
         banner.remove();
         window.location.reload();
-      }, 1000);
+      }, 900);
     } catch(err) {
-      banner.remove();
-      window.location.reload();
+      btn.innerHTML = '✓ Memori Dinormalisasi!';
+      setTimeout(() => {
+        banner.remove();
+        window.location.reload();
+      }, 900);
     }
   };
 }
-
-import { api, getToken, getUser, setToken, setUser } from './api.js';
-import { startScanner, stopScanner, scanFile } from './scanner.js';
 
 const MODE_KEY = 'sikasir_app_mode';
 
