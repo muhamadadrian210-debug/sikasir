@@ -1,0 +1,14 @@
+# Vercel Deployment Ignore
+node_modules
+.env
+*.log
+.git
+.vercel
+
+# Mobile App & Build Artifacts (Do not upload to Vercel web server)
+mobile/
+*.apk
+public/downloads/
+android/
+.gradle/
+build/
