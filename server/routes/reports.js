@@ -123,4 +123,40 @@ router.get('/low-stock', async (req, res) => {
   }
 });
 
+router.get('/export-csv', async (req, res) => {
+  try {
+    const tid = tenantId(req);
+    const period = req.query.period || 'monthly';
+    const start = periodWhere(period);
+
+    const [rows] = await pool.execute(
+      `SELECT p.barcode, p.name,
+              SUM(ti.qty) AS qty_sold,
+              SUM(ti.subtotal) AS revenue,
+              SUM(ti.qty * p.purchase_price) AS cost,
+              SUM(ti.subtotal - ti.qty * p.purchase_price) AS profit
+       FROM transaction_items ti
+       JOIN transactions t ON t.id = ti.transaction_id
+       JOIN products p ON p.id = ti.product_id
+       WHERE t.tenant_id = ? AND t.created_at >= ?
+       GROUP BY p.id, p.barcode, p.name
+       ORDER BY profit DESC`,
+      [tid, start]
+    );
+
+    let csvContent = 'Barcode,Nama Produk,Qty Terjual,Omset (Revenue),HPP (Cost),Laba Bersih (Profit)\n';
+    rows.forEach(r => {
+      const cleanName = (r.name || '').replace(/"/g, '""');
+      csvContent += `"${r.barcode}","${cleanName}",${r.qty_sold},${r.revenue},${r.cost},${r.profit}\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=laporan-keuangan-${period}-${Date.now()}.csv`);
+    res.status(200).send(csvContent);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Gagal mengekspor laporan CSV: ' + e.message });
+  }
+});
+
 module.exports = router;
