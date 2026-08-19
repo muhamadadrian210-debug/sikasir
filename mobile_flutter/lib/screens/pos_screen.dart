@@ -5,6 +5,7 @@ import '../providers/pos_provider.dart';
 import '../core/services/api_service.dart';
 import '../core/services/local_cache_service.dart';
 import '../core/services/receipt_printer_service.dart';
+import '../core/widgets/heavy_duty_barcode_scanner_modal.dart';
 
 class PosScreen extends StatefulWidget {
   const PosScreen({super.key});
@@ -244,6 +245,28 @@ class _PosScreenState extends State<PosScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF10B981)),
+            onPressed: () {
+              HeavyDutyBarcodeScannerModal.show(context, (code) {
+                _searchController.text = code;
+                pos.setSearchQuery(code);
+                // Jika produk persis ditemukan, auto tambahkan ke cart
+                final matches = pos.products.where((p) => p.barcode == code).toList();
+                if (matches.isNotEmpty) {
+                  pos.addToCart(matches.first);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✅ Ditambahkan: ${matches.first.name}'),
+                      backgroundColor: const Color(0xFF064E3B),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                }
+              });
+            },
+            tooltip: 'AI Barcode Scanner',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: _loadProducts,
             tooltip: 'Sinkronkan Data Produk',
@@ -280,19 +303,48 @@ class _PosScreenState extends State<PosScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: TextField(
-            controller: _searchController,
-            onChanged: pos.setSearchQuery,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: '🔍 Cari barang atau barcode...',
-              hintStyle: const TextStyle(color: Color(0xFF64748B)),
-              filled: true,
-              fillColor: const Color(0xFF111827),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: pos.setSearchQuery,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: '🔍 Cari barang atau scan barcode...',
+                    hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                    filled: true,
+                    fillColor: const Color(0xFF111827),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  HeavyDutyBarcodeScannerModal.show(context, (code) {
+                    _searchController.text = code;
+                    pos.setSearchQuery(code);
+                    final matches = pos.products.where((p) => p.barcode == code).toList();
+                    if (matches.isNotEmpty) {
+                      pos.addToCart(matches.first);
+                    }
+                  });
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF10B981)),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: Color(0xFF10B981), size: 22),
+                ),
+              ),
+            ],
           ),
         ),
         Expanded(
