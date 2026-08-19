@@ -6,9 +6,14 @@ import 'providers/pos_provider.dart';
 import 'screens/auth_screen.dart';
 import 'screens/pos_screen.dart';
 import 'screens/products_screen.dart';
+import 'screens/incoming_goods_screen.dart';
 import 'screens/shift_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/reports_screen.dart';
+import 'screens/expenses_screen.dart';
+import 'screens/users_screen.dart';
+import 'screens/audit_logs_screen.dart';
+import 'screens/cybersecurity_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -97,21 +102,39 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    PosScreen(),
-    ProductsScreen(),
-    ShiftScreen(),
-    HistoryScreen(),
-    ReportsScreen(),
+  final List<Map<String, dynamic>> _menuItems = const [
+    {'title': 'Kasir POS', 'icon': Icons.point_of_sale, 'screen': PosScreen()},
+    {'title': 'Manajemen Produk & Stok', 'icon': Icons.inventory_2, 'screen': ProductsScreen()},
+    {'title': 'Log Barang Masuk (Restock)', 'icon': Icons.move_to_inbox, 'screen': IncomingGoodsScreen()},
+    {'title': 'Shift Kasir & Cash Drawer', 'icon': Icons.badge, 'screen': ShiftScreen()},
+    {'title': 'Riwayat Transaksi', 'icon': Icons.receipt_long, 'screen': HistoryScreen()},
+    {'title': 'Laporan & Untung', 'icon': Icons.bar_chart, 'screen': ReportsScreen()},
+    {'title': 'Bayar Nota & Kas Keluar', 'icon': Icons.payments_outlined, 'screen': ExpensesScreen()},
+    {'title': 'Manajemen Kasir & Staf', 'icon': Icons.people_alt_outlined, 'screen': UsersScreen()},
+    {'title': 'Log Audit Admin', 'icon': Icons.security_update_good, 'screen': AuditLogsScreen()},
+    {'title': 'Keamanan Toko & Cyber Defense', 'icon': Icons.shield_outlined, 'screen': CybersecurityScreen()},
   ];
 
   @override
   Widget build(BuildContext context) {
+    final currentItem = _menuItems[_currentIndex];
+
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF111827),
+        elevation: 1,
+        title: Row(
+          children: [
+            Text(
+              currentItem['title'] as String,
+              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
       drawer: Drawer(
         backgroundColor: const Color(0xFF111827),
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
             DrawerHeader(
               decoration: const BoxDecoration(
@@ -138,15 +161,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'SiKasir POS',
+                            'SiKasir',
                             style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                           const Text(
-                            'Enterprise v3.0.0',
+                            'Enterprise POS v3.1.1',
                             style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -156,99 +179,55 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.point_of_sale, color: Color(0xFF10B981)),
-              title: const Text('Kasir POS', style: TextStyle(color: Colors.white)),
-              selected: _currentIndex == 0,
-              onTap: () {
-                setState(() => _currentIndex = 0);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.inventory_2, color: Color(0xFF3B82F6)),
-              title: const Text('Produk & Stok', style: TextStyle(color: Colors.white)),
-              selected: _currentIndex == 1,
-              onTap: () {
-                setState(() => _currentIndex = 1);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.badge, color: Color(0xFFF59E0B)),
-              title: const Text('Shift Kasir', style: TextStyle(color: Colors.white)),
-              selected: _currentIndex == 2,
-              onTap: () {
-                setState(() => _currentIndex = 2);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt_long, color: Color(0xFF8B5CF6)),
-              title: const Text('Riwayat Transaksi', style: TextStyle(color: Colors.white)),
-              selected: _currentIndex == 3,
-              onTap: () {
-                setState(() => _currentIndex = 3);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.bar_chart, color: Color(0xFFEC4899)),
-              title: const Text('Laporan & Margin', style: TextStyle(color: Colors.white)),
-              selected: _currentIndex == 4,
-              onTap: () {
-                setState(() => _currentIndex = 4);
-                Navigator.pop(context);
-              },
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: _menuItems.length,
+                itemBuilder: (ctx, idx) {
+                  final it = _menuItems[idx];
+                  final isSelected = _currentIndex == idx;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF10B981).withValues(alpha: 0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: isSelected ? Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)) : null,
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(it['icon'] as IconData, color: isSelected ? const Color(0xFF10B981) : const Color(0xFF94A3B8), size: 20),
+                      title: Text(
+                        it['title'] as String,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() => _currentIndex = idx);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
             const Divider(color: Color(0xFF1E293B)),
             ListTile(
-              leading: const Icon(Icons.logout, color: Color(0xFFEF4444)),
-              title: const Text('Keluar Akun', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+              dense: true,
+              leading: const Icon(Icons.logout, color: Color(0xFFEF4444), size: 20),
+              title: const Text('Keluar Akun', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold, fontSize: 13)),
               onTap: () {
                 Navigator.pop(context);
                 widget.onLogout();
               },
             ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: const Color(0xFF111827),
-        indicatorColor: const Color(0xFF10B981).withValues(alpha: 0.2),
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.point_of_sale, color: Color(0xFF94A3B8)),
-            selectedIcon: Icon(Icons.point_of_sale, color: Color(0xFF10B981)),
-            label: 'POS',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2, color: Color(0xFF94A3B8)),
-            selectedIcon: Icon(Icons.inventory_2, color: Color(0xFF10B981)),
-            label: 'Produk',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.badge, color: Color(0xFF94A3B8)),
-            selectedIcon: Icon(Icons.badge, color: Color(0xFF10B981)),
-            label: 'Shift',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long, color: Color(0xFF94A3B8)),
-            selectedIcon: Icon(Icons.receipt_long, color: Color(0xFF10B981)),
-            label: 'Riwayat',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bar_chart, color: Color(0xFF94A3B8)),
-            selectedIcon: Icon(Icons.bar_chart, color: Color(0xFF10B981)),
-            label: 'Laporan',
-          ),
-        ],
-      ),
+      body: currentItem['screen'] as Widget,
     );
   }
 }
