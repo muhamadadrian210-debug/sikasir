@@ -403,9 +403,58 @@ class _PosScreenState extends State<PosScreen> {
         ),
         Expanded(
           child: pos.isLoading
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF10B981)),
+                      SizedBox(height: 12),
+                      Text('Memuat katalog produk toko...', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                    ],
+                  ),
+                )
               : pos.products.isEmpty
-                  ? const Center(child: Text('Tidak ada produk.', style: TextStyle(color: Color(0xFF64748B))))
+                  ? Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF10B981), size: 48),
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              'Katalog Toko Masih Kosong',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Anda belum memiliki data barang di toko ini.\nSilakan daftarkan produk baru atau gunakan AI Assistant.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              icon: const Icon(Icons.refresh_rounded, size: 18),
+                              label: const Text('Sinkronkan Ulang', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: _loadProducts,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                   : GridView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
