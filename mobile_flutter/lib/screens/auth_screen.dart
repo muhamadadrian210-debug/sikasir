@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/api_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -111,6 +112,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
       if (res.statusCode == 200 && res.data != null && res.data['token'] != null) {
         await ApiService().setToken(res.data['token']);
+        final prefs = await SharedPreferences.getInstance();
+        if (res.data['user'] != null) {
+          final tenantName = res.data['user']['tenant_name'] ?? '';
+          await prefs.setString('tenant_name', tenantName);
+        }
         widget.onLoginSuccess();
       } else {
         setState(() => _errorMessage = res.data?['error'] ?? 'Gagal masuk akun');
@@ -165,6 +171,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
       if (res.statusCode == 201 && res.data != null && res.data['token'] != null) {
         await ApiService().setToken(res.data['token']);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('store_type', _selectedStoreType ?? '🛒 Minimarket');
+        if (res.data['user'] != null) {
+          final tenantName = res.data['user']['tenant_name'] ?? sn;
+          await prefs.setString('tenant_name', tenantName);
+        }
         widget.onLoginSuccess();
       } else {
         setState(() => _errorMessage = res.data?['error'] ?? 'Gagal mendaftar toko');

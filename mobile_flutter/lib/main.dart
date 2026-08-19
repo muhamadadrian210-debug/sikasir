@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/api_service.dart';
 import 'providers/pos_provider.dart';
 import 'screens/auth_screen.dart';
@@ -105,23 +106,66 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  String _storeType = '🛒 Minimarket';
+  String _tenantName = 'SiKasir Store';
 
-  final List<Map<String, dynamic>> _menuItems = const [
-    {'title': 'Kasir POS', 'icon': Icons.point_of_sale, 'screen': PosScreen()},
-    {'title': 'SiKasir AI Copilot', 'icon': Icons.auto_awesome, 'screen': AiCopilotScreen()},
-    {'title': 'Kitchen Display (KDS)', 'icon': Icons.restaurant, 'screen': KdsScreen()},
-    {'title': 'Manajemen Produk & Stok', 'icon': Icons.inventory_2, 'screen': ProductsScreen()},
-    {'title': 'Kasbon & Tagih WhatsApp', 'icon': Icons.credit_card_rounded, 'screen': KasbonScreen()},
-    {'title': 'Multi-Outlet & Mutasi Stok', 'icon': Icons.storefront_rounded, 'screen': MultiOutletScreen()},
-    {'title': 'Log Barang Masuk (Restock)', 'icon': Icons.move_to_inbox, 'screen': IncomingGoodsScreen()},
-    {'title': 'Shift Kasir & Cash Drawer', 'icon': Icons.badge, 'screen': ShiftScreen()},
-    {'title': 'Riwayat Transaksi', 'icon': Icons.receipt_long, 'screen': HistoryScreen()},
-    {'title': 'Laporan & Untung', 'icon': Icons.bar_chart, 'screen': ReportsScreen()},
-    {'title': 'Bayar Nota & Kas Keluar', 'icon': Icons.payments_outlined, 'screen': ExpensesScreen()},
-    {'title': 'Manajemen Kasir & Staf', 'icon': Icons.people_alt_outlined, 'screen': UsersScreen()},
-    {'title': 'Log Audit Admin', 'icon': Icons.security_update_good, 'screen': AuditLogsScreen()},
-    {'title': 'Keamanan Toko & Cyber Defense', 'icon': Icons.shield_outlined, 'screen': CybersecurityScreen()},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreContext();
+  }
+
+  Future<void> _loadStoreContext() async {
+    final prefs = await SharedPreferences.getInstance();
+    final st = prefs.getString('store_type') ?? '';
+    final tn = prefs.getString('tenant_name') ?? '';
+    setState(() {
+      if (st.isNotEmpty) _storeType = st;
+      if (tn.isNotEmpty) _tenantName = tn;
+    });
+  }
+
+  bool get _isFnBBusiness {
+    final lower = '$_storeType $_tenantName'.toLowerCase();
+    return lower.contains('cafe') ||
+        lower.contains('kopi') ||
+        lower.contains('restoran') ||
+        lower.contains('warung makan') ||
+        lower.contains('tegal') ||
+        lower.contains('bakery') ||
+        lower.contains('kue') ||
+        lower.contains('kuliner') ||
+        lower.contains('resto') ||
+        lower.contains('f&b');
+  }
+
+  List<Map<String, dynamic>> get _menuItems {
+    final list = <Map<String, dynamic>>[
+      {'title': 'Kasir POS', 'icon': Icons.point_of_sale, 'screen': const PosScreen()},
+      {'title': 'SiKasir AI Copilot', 'icon': Icons.auto_awesome, 'screen': const AiCopilotScreen()},
+    ];
+
+    // Khusus F&B / Kuliner (Resto, Cafe, Kedai Kopi, Warung Makan)
+    if (_isFnBBusiness) {
+      list.add({'title': 'Kitchen Display (KDS)', 'icon': Icons.restaurant, 'screen': const KdsScreen()});
+    }
+
+    list.addAll([
+      {'title': 'Manajemen Produk & Stok', 'icon': Icons.inventory_2, 'screen': const ProductsScreen()},
+      {'title': 'Kasbon & Tagih WhatsApp', 'icon': Icons.credit_card_rounded, 'screen': const KasbonScreen()},
+      {'title': 'Multi-Outlet & Mutasi Stok', 'icon': Icons.storefront_rounded, 'screen': const MultiOutletScreen()},
+      {'title': 'Log Barang Masuk (Restock)', 'icon': Icons.move_to_inbox, 'screen': const IncomingGoodsScreen()},
+      {'title': 'Shift Kasir & Cash Drawer', 'icon': Icons.badge, 'screen': const ShiftScreen()},
+      {'title': 'Riwayat Transaksi', 'icon': Icons.receipt_long, 'screen': const HistoryScreen()},
+      {'title': 'Laporan & Untung', 'icon': Icons.bar_chart, 'screen': const ReportsScreen()},
+      {'title': 'Bayar Nota & Kas Keluar', 'icon': Icons.payments_outlined, 'screen': const ExpensesScreen()},
+      {'title': 'Manajemen Kasir & Staf', 'icon': Icons.people_alt_outlined, 'screen': const UsersScreen()},
+      {'title': 'Log Audit Admin', 'icon': Icons.security_update_good, 'screen': const AuditLogsScreen()},
+      {'title': 'Keamanan Toko & Cyber Defense', 'icon': Icons.shield_outlined, 'screen': const CybersecurityScreen()},
+    ]);
+
+    return list;
+  }
 
   @override
   Widget build(BuildContext context) {
