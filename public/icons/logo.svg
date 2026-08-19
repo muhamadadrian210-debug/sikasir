@@ -1,67 +1,92 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Background Shield Gradient: Obsidian Navy Depth -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0F172A" />
-      <stop offset="50%" stop-color="#090D16" />
-      <stop offset="100%" stop-color="#05080E" />
+      <stop offset="60%" stop-color="#090D16" />
+      <stop offset="100%" stop-color="#030712" />
     </linearGradient>
 
-    <!-- Emerald Teal Vibrant Gradient -->
-    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34D399" />
+    <!-- Shield Border Gradient: Emerald to Cyan (Trust & Security) -->
+    <linearGradient id="shieldBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Growth Arrow & Emerald Flow (Finansial & Keuntungan) -->
+    <linearGradient id="growthGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" />
       <stop offset="50%" stop-color="#10B981" />
-      <stop offset="100%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#34D399" />
     </linearGradient>
 
-    <!-- Cyan Azure Accent Gradient -->
-    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Cyan Laser Scan Beam Gradient (Kecepatan & Akurasi Barcode) -->
+    <linearGradient id="scanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38BDF8" />
       <stop offset="100%" stop-color="#0284C7" />
     </linearGradient>
 
-    <!-- Glowing Rim Gradient -->
-    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Center Verified Spark Gradient -->
+    <radialGradient id="sparkGlow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#34D399" stop-opacity="0.8" />
-      <stop offset="40%" stop-color="#10B981" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.6" />
-    </linearGradient>
-
-    <!-- Inner Glow Shadow -->
-    <radialGradient id="centerGlow" cx="50%" cy="45%" r="50%">
-      <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
-      <stop offset="60%" stop-color="#0284C7" stop-opacity="0.08" />
-      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
     </radialGradient>
-
-    <!-- Glassmorphic Card Reflection -->
-    <linearGradient id="glassLight" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.15" />
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0" />
-    </linearGradient>
   </defs>
 
-  <!-- App Rounded Squircle Container -->
-  <rect width="512" height="512" rx="120" fill="url(#bgGrad)" />
-  <rect x="4" y="4" width="504" height="504" rx="116" stroke="url(#borderGrad)" stroke-width="6" />
+  <!-- 1. FILOSOFI PERISAI (SHIELD): Keamanan & Perlindungan Transaksi Bisnis -->
+  <path d="M 256 28 
+           C 370 28, 448 68, 448 152 
+           C 448 296, 360 416, 256 484 
+           C 152 416, 64 296, 64 152 
+           C 64 68, 142 28, 256 28 Z" 
+        fill="url(#bgGradient)" 
+        stroke="url(#shieldBorderGrad)" 
+        stroke-width="10" 
+        stroke-linejoin="round" />
 
-  <!-- Ambient Backdrop Glow -->
-  <circle cx="256" cy="240" r="180" fill="url(#centerGlow)" />
+  <!-- Inner Ambient Protection Glow -->
+  <path d="M 256 46 
+           C 352 46, 428 82, 428 156 
+           C 428 282, 348 392, 256 456 
+           C 164 392, 84 282, 84 156 
+           C 84 82, 160 46, 256 46 Z" 
+        fill="#10B981" 
+        fill-opacity="0.04" />
 
-  <!-- MODERN GEOMETRIC EMBLEM: Sleek Interlocking 'S' + POS Terminal & Fast Scan Matrix -->
-  <!-- Top Arc Wing of S (Swift Cash / Cloud) -->
-  <path d="M 330 145 C 375 145, 395 180, 395 210 C 395 240, 365 260, 310 275 L 235 295 C 190 307, 175 325, 175 350 C 175 385, 205 405, 255 405 C 305 405, 340 380, 355 355" 
-        stroke="url(#emeraldGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <!-- 2. FILOSOFI LASER SCAN & TRANSAKSI CEPAT (Top Left Arch to Center) -->
+  <path d="M 170 178 C 170 140, 205 118, 256 118 C 308 118, 342 142, 342 178 C 342 208, 318 226, 276 238 L 236 250" 
+        stroke="url(#scanGrad)" 
+        stroke-width="26" 
+        stroke-linecap="round" 
+        fill="none" />
 
-  <!-- Bottom Forward Dynamic Strike (Speed & Transactions) -->
-  <path d="M 182 367 C 137 367, 117 332, 117 302 C 117 272, 147 252, 202 237 L 277 217 C 322 205, 337 187, 337 162 C 337 127, 307 107, 257 107 C 207 107, 172 132, 157 157" 
-        stroke="url(#cyanGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <!-- 3. FILOSOFI PERTUMBUHAN OMSET & FINANSIAL NAIK (Bottom S Curve with Arrow Tip ↗) -->
+  <path d="M 236 250 L 276 262 C 322 276, 346 298, 346 334 C 346 376, 308 402, 256 402 C 200 402, 166 374, 164 332" 
+        stroke="url(#growthGrad)" 
+        stroke-width="26" 
+        stroke-linecap="round" 
+        fill="none" />
 
-  <!-- Central Diamond Sparkle / Transaction Verified Badge -->
-  <circle cx="256" cy="256" r="32" fill="#090D16" stroke="url(#emeraldGrad)" stroke-width="8" />
-  <circle cx="256" cy="256" r="14" fill="#34D399" />
+  <!-- Dynamic Financial Growth Arrow Head ↗ (Puncak Kesuksesan Bisnis) -->
+  <path d="M 326 126 L 372 126 L 372 172" 
+        fill="none" 
+        stroke="#38BDF8" 
+        stroke-width="20" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+  <line x1="288" y1="210" x2="368" y2="130" 
+        stroke="#38BDF8" 
+        stroke-width="20" 
+        stroke-linecap="round" />
 
-  <!-- Futuristic Corner Highlights (Precision Optics) -->
-  <circle cx="395" cy="145" r="8" fill="#38BDF8" />
-  <circle cx="117" cy="367" r="8" fill="#34D399" />
+  <!-- 4. FILOSOFI TRANSAKSI TERVERIFIKASI & CASHLESS CORE (Simbol Integritas & Koin Sukses) -->
+  <circle cx="256" cy="256" r="38" fill="#090D16" stroke="url(#growthGrad)" stroke-width="8" />
+  <circle cx="256" cy="256" r="24" fill="url(#sparkGlow)" />
+  <circle cx="256" cy="256" r="12" fill="#34D399" />
+
+  <!-- Barcode Speed Accent Marks -->
+  <rect x="180" y="278" width="6" height="24" rx="3" fill="#10B981" opacity="0.8" />
+  <rect x="194" y="284" width="4" height="18" rx="2" fill="#34D399" opacity="0.9" />
+  <rect x="204" y="280" width="8" height="22" rx="4" fill="#38BDF8" opacity="0.8" />
 </svg>
