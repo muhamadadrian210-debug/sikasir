@@ -12,6 +12,7 @@ import 'screens/history_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/expenses_screen.dart';
 import 'screens/users_screen.dart';
+import 'screens/ai_copilot_screen.dart';
 import 'screens/audit_logs_screen.dart';
 import 'screens/cybersecurity_screen.dart';
 
@@ -104,6 +105,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Map<String, dynamic>> _menuItems = const [
     {'title': 'Kasir POS', 'icon': Icons.point_of_sale, 'screen': PosScreen()},
+    {'title': 'SiKasir AI Copilot', 'icon': Icons.auto_awesome, 'screen': AiCopilotScreen()},
     {'title': 'Manajemen Produk & Stok', 'icon': Icons.inventory_2, 'screen': ProductsScreen()},
     {'title': 'Log Barang Masuk (Restock)', 'icon': Icons.move_to_inbox, 'screen': IncomingGoodsScreen()},
     {'title': 'Shift Kasir & Cash Drawer', 'icon': Icons.badge, 'screen': ShiftScreen()},
@@ -180,7 +182,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             ),
                           ),
                           const Text(
-                            'Enterprise POS v3.6.0 Pro',
+                            'Enterprise POS v3.7.0 Pro (AI Edition)',
                             style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],
