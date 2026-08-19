@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dio/dio.dart';
 import '../core/services/api_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -108,14 +109,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         if (cid.isNotEmpty) 'company_id': cid,
       });
 
-      if (res.statusCode == 200 && res.data['token'] != null) {
+      if (res.statusCode == 200 && res.data != null && res.data['token'] != null) {
         await ApiService().setToken(res.data['token']);
         widget.onLoginSuccess();
       } else {
-        setState(() => _errorMessage = res.data['error'] ?? 'Gagal masuk akun');
+        setState(() => _errorMessage = res.data?['error'] ?? 'Gagal masuk akun');
       }
+    } on DioException catch (dioErr) {
+      final serverMsg = dioErr.response?.data is Map ? dioErr.response?.data['error'] : null;
+      setState(() => _errorMessage = serverMsg ?? 'Gagal menghubungi server (${dioErr.response?.statusCode ?? 'Koneksi Terputus'}). Silakan coba lagi.');
     } catch (e) {
-      setState(() => _errorMessage = 'Koneksi error: $e');
+      setState(() => _errorMessage = 'Gagal masuk: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -159,14 +163,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         if (cid.isNotEmpty) 'company_id': cid,
       });
 
-      if (res.statusCode == 201 && res.data['token'] != null) {
+      if (res.statusCode == 201 && res.data != null && res.data['token'] != null) {
         await ApiService().setToken(res.data['token']);
         widget.onLoginSuccess();
       } else {
-        setState(() => _errorMessage = res.data['error'] ?? 'Gagal mendaftar toko');
+        setState(() => _errorMessage = res.data?['error'] ?? 'Gagal mendaftar toko');
       }
+    } on DioException catch (dioErr) {
+      final serverMsg = dioErr.response?.data is Map ? dioErr.response?.data['error'] : null;
+      setState(() => _errorMessage = serverMsg ?? 'Gagal mendaftar toko (${dioErr.response?.statusCode ?? 'Koneksi Terputus'}). Silakan coba lagi.');
     } catch (e) {
-      setState(() => _errorMessage = 'Koneksi error: $e');
+      setState(() => _errorMessage = 'Gagal mendaftar: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -366,7 +373,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
                                 ),
                                 child: const Text(
-                                  'v3.5.0 Pro',
+                                  'v3.6.0 Pro',
                                   style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ),

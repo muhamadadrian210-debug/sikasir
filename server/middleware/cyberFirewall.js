@@ -52,8 +52,17 @@ function getTenantIdFromRequest(req) {
  * Validates request cryptographic signature from client
  */
 function validateRequestSignature(req) {
-  // Direct bypass for setup and CSRF tokens only
-  if (req.originalUrl.startsWith('/api/setup') || req.originalUrl.startsWith('/api/csrf-token')) {
+  // Direct bypass for setup, CSRF tokens, dan endpoint auth publik
+  if (
+    req.originalUrl.startsWith('/api/setup') ||
+    req.originalUrl.startsWith('/api/csrf-token') ||
+    req.originalUrl.startsWith('/api/auth/')
+  ) {
+    return true;
+  }
+
+  // Bypass jika request berasal dari Mobile POS App resmi
+  if (req.headers['x-client-app'] === 'sikasir-mobile-pos') {
     return true;
   }
 
