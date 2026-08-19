@@ -180,7 +180,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             ),
                           ),
                           const Text(
-                            'Enterprise POS v3.4.0 Pro',
+                            'Enterprise POS v3.5.0 Pro',
                             style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],

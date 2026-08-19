@@ -366,7 +366,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
                                 ),
                                 child: const Text(
-                                  'v3.4.0 Pro',
+                                  'v3.5.0 Pro',
                                   style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ),
