@@ -257,22 +257,25 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  gap: 10px;
+  background: var(--primary);
   color: #ffffff !important;
   font-weight: 800;
-  font-size: 0.9rem;
-  border-radius: var(--radius);
-  padding: 0.85rem 1.25rem;
+  font-size: 0.92rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.9rem 1.25rem;
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 1.25rem;
+  letter-spacing: 0.2px;
 }
 
 .btn-apk-download:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+  background: var(--primary-dark);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
 }
 
 .auth-tabs {

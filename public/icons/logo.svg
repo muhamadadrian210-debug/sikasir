@@ -1,5 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <rect width="128" height="128" rx="28" fill="#0369A1"/>
-  <path fill="#38BDF8" d="M32 40h8v48h-8V40zm16 0h8v48h-8V40zm16 8h8v32h-8V48zm16-8h8v48h-8V40zm16 0h8v48h-8V40z"/>
-  <rect x="28" y="88" width="72" height="8" rx="2" fill="#F8FAFC" opacity=".9"/>
+  <!-- Background Rounded Shield / Icon Container -->
+  <rect width="128" height="128" rx="32" fill="#0F172A"/>
+  <rect x="2" y="2" width="124" height="124" rx="30" stroke="#1E293B" stroke-width="3"/>
+  
+  <!-- Subtle Glow Layer -->
+  <circle cx="64" cy="64" r="44" fill="#10B981" fill-opacity="0.12"/>
+  
+  <!-- Modern Geometric POS Terminal Base -->
+  <rect x="30" y="32" width="68" height="54" rx="12" fill="#1E293B" stroke="#10B981" stroke-width="3"/>
+  
+  <!-- Screen Area -->
+  <rect x="38" y="40" width="52" height="34" rx="6" fill="#090D16"/>
+  
+  <!-- Futuristic Barcode / Cash Lines inside Screen -->
+  <rect x="44" y="47" width="4" height="18" rx="2" fill="#10B981"/>
+  <rect x="52" y="47" width="3" height="18" rx="1.5" fill="#34D399"/>
+  <rect x="58" y="47" width="6" height="18" rx="2" fill="#10B981"/>
+  <rect x="67" y="47" width="3" height="18" rx="1.5" fill="#34D399"/>
+  <rect x="73" y="47" width="5" height="18" rx="2" fill="#10B981"/>
+  <rect x="81" y="47" width="3" height="18" rx="1.5" fill="#34D399"/>
+
+  <!-- Cash Drawer / POS Stand Base -->
+  <path d="M26 94C26 90.6863 28.6863 88 32 88H96C99.3137 88 102 90.6863 102 94V97C102 100.314 99.3137 103 96 103H32C28.6863 103 26 100.314 26 97V94Z" fill="#10B981"/>
+  
+  <!-- Thermal Receipt Paper Coming Out -->
+  <path d="M46 22H82V32H46V22Z" fill="#F8FAFC" rx="3"/>
+  <line x1="52" y1="26" x2="68" y2="26" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="52" y1="29" x2="76" y2="29" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round"/>
 </svg>
