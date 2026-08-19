@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import '../core/services/api_service.dart';
 import '../core/widgets/heavy_duty_barcode_scanner_modal.dart';
+import '../core/widgets/premium_notification.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -523,11 +524,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   if (ctx.mounted) {
                     Navigator.of(ctx).pop();
                     _fetchData();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Produk berhasil disimpan!'), backgroundColor: Color(0xFF10B981)));
+                    PremiumNotification.showSuccess(
+                      context,
+                      title: 'PRODUK TERSIMPAN',
+                      message: 'Data barang "${payload['name']}" berhasil diperbarui ke database!',
+                    );
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Gagal simpan: $e'), backgroundColor: Colors.red));
+                    PremiumNotification.showAlertModal(
+                      ctx,
+                      title: 'Gagal Menyimpan Produk',
+                      message: 'Terjadi kesalahan sistem: $e',
+                      type: AlertType.error,
+                    );
                   }
                 }
               },

@@ -47,8 +47,10 @@ class _PosScreenState extends State<PosScreen> {
       pos.clearCart();
       _paidController.clear();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('⏸️ Tagihan disimpan ke antrean Hold (${_heldBills.length} antrean).')),
+    PremiumNotification.showInfo(
+      context,
+      title: 'HOLD BILL BERHASIL',
+      message: 'Keranjang disimpan ke antrean Hold (${_heldBills.length} antrean).',
     );
   }
 
@@ -62,8 +64,10 @@ class _PosScreenState extends State<PosScreen> {
         pos.addToCart(item.product);
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('📂 Antrean tagihan berhasil dimuat kembali!')),
+    PremiumNotification.showSuccess(
+      context,
+      title: 'ANTREAN DIMUAT',
+      message: 'Keranjang transaksi sebelumnya berhasil dipulihkan!',
     );
   }
 
@@ -97,13 +101,18 @@ class _PosScreenState extends State<PosScreen> {
     final total = subtotal + tax;
 
     if (pos.cart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Keranjang belanja kosong!')));
+      PremiumNotification.showWarning(context, title: 'KERANJANG KOSONG', message: 'Silakan pilih produk sebelum checkout.');
       return;
     }
 
     if (_paymentMethod == 'KASBON') {
       if (_kasbonNameController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nama pelanggan kasbon wajib diisi!')));
+        PremiumNotification.showAlertModal(
+          context,
+          title: 'Data Kasbon Diperlukan',
+          message: 'Harap masukkan nama pelanggan kasbon untuk mencatat piutang dengan benar.',
+          type: AlertType.warning,
+        );
         return;
       }
       _paidAmount = total; // Kasbon di-cover penuh ke akun hutang
@@ -111,7 +120,12 @@ class _PosScreenState extends State<PosScreen> {
       _paidAmount = total; // QRIS pas sesuai nominal
     } else {
       if (_paidAmount < total) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Uang pembayaran tunai masih kurang!')));
+        PremiumNotification.showAlertModal(
+          context,
+          title: 'Uang Pembayaran Kurang',
+          message: 'Nominal tunai diterima (${_currency.format(_paidAmount)}) masih kurang dari total belanja (${_currency.format(total)}).',
+          type: AlertType.error,
+        );
         return;
       }
     }
@@ -141,8 +155,10 @@ class _PosScreenState extends State<PosScreen> {
         'customer_phone': _kasbonPhoneController.text.trim(),
         'tax_amount': tax,
       });
-      if (res.statusCode == 200 && res.data != null && res.data['transaction_id'] != null) {
-        invoiceId = res.data['transaction_id'].toString();
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        if (res.data != null && res.data['transaction_id'] != null) {
+          invoiceId = res.data['transaction_id'].toString();
+        }
       }
     } catch (_) {
       await LocalCacheService.queueOfflineTransaction({
@@ -229,11 +245,10 @@ class _PosScreenState extends State<PosScreen> {
                   pos.addToCart(item);
                   PremiumNotification.showScanSuccess(context, productName: item.name, price: item.salePrice);
                 } else {
-                  PremiumNotification.showSuccessToast(
+                  PremiumNotification.showInfo(
                     context,
                     title: 'BARCODE TERDETEKSI',
                     message: 'Kode SKU: $code (Belum ada di katalog)',
-                    icon: Icons.qr_code_2_rounded,
                   );
                 }
               });
@@ -307,11 +322,10 @@ class _PosScreenState extends State<PosScreen> {
                       pos.addToCart(item);
                       PremiumNotification.showScanSuccess(context, productName: item.name, price: item.salePrice);
                     } else {
-                      PremiumNotification.showSuccessToast(
+                      PremiumNotification.showInfo(
                         context,
                         title: 'BARCODE TERDETEKSI',
                         message: 'Kode SKU: $code',
-                        icon: Icons.qr_code_2_rounded,
                       );
                     }
                   });

@@ -438,6 +438,28 @@ async function fetchProductsCached() {
   } catch {
     try {
       const cache = await caches.open('sikasir-data');
+let salesChart = null;
+
+/** Cached products for offline POS */
+let productsCache = [];
+
+async function fetchProductsCached() {
+  try {
+    const data = await api('/products');
+    productsCache = data;
+    try {
+      const cache = await caches.open('sikasir-data');
+      await cache.put(
+        '/offline-products.json',
+        new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } })
+      );
+    } catch {
+      /* SW optional */
+    }
+    return data;
+  } catch {
+    try {
+      const cache = await caches.open('sikasir-data');
       const r = await cache.match('/offline-products.json');
       if (r) {
         productsCache = await r.json();
@@ -464,10 +486,67 @@ function money(n) {
 function showAlert(msg, kind = 'error') {
   const el = document.getElementById('global-alert');
   if (!msg) {
-    el.innerHTML = '';
+    if (el) el.innerHTML = '';
     return;
   }
-  el.innerHTML = `<div class="alert alert-${kind === 'success' ? 'success' : kind === 'warn' ? 'warn' : 'error'}">${msg}</div>`;
+  if (el) {
+    el.innerHTML = `<div class="alert alert-${kind === 'success' ? 'success' : kind === 'warn' ? 'warn' : 'error'}">${msg}</div>`;
+  }
+
+  // Trigger Animated Floating Premium Toast
+  const colorMap = {
+    success: { bg: 'linear-gradient(135deg, #064e3b, #065f46)', border: '#10b981', glow: '#34d399', icon: '✓', title: 'BERHASIL' },
+    warn: { bg: 'linear-gradient(135deg, #78350f, #92400e)', border: '#f59e0b', glow: '#fbbf24', icon: '⚠️', title: 'PERINGATAN' },
+    error: { bg: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '#ef4444', glow: '#f87171', icon: '✕', title: 'PERHATIAN' },
+    info: { bg: 'linear-gradient(135deg, #0c4a6e, #0369a1)', border: '#38bdf8', glow: '#7dd3fc', icon: 'ℹ️', title: 'INFORMASI' }
+  };
+  const theme = colorMap[kind] || colorMap.error;
+
+  const existing = document.querySelector('.floating-premium-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'floating-premium-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 280px;
+    max-width: 420px;
+    background: ${theme.bg};
+    border: 1.5px solid ${theme.border};
+    border-radius: 14px;
+    padding: 0.85rem 1.25rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px ${theme.border}44;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    animation: popInBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  `;
+  toast.innerHTML = `
+    <div style="
+      width: 32px; height: 32px;
+      background: ${theme.border};
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #090d16; font-weight: 900; font-size: 1.1rem;
+      box-shadow: 0 0 10px ${theme.glow};
+    ">${theme.icon}</div>
+    <div style="flex: 1;">
+      <div style="font-size: 0.72rem; font-weight: 900; color: ${theme.glow}; letter-spacing: 0.5px;">${theme.title}</div>
+      <div style="font-size: 0.88rem; font-weight: 600; line-height: 1.35;">${msg}</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-15px)';
+    toast.style.transition = 'all 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2800);
 }
 
 function setActiveNav(id) {
