@@ -1,7 +1,8 @@
 <div align="center">
-  <img src="public/icons/logo.png" alt="SiKasir Logo" width="120" height="120">
-  <h1>SiKasir</h1>
-  <p><b>Sistem Point of Sales Cerdas Masa Depan (Super POS App)</b></p>
+  <img src="public/icons/logo.svg" alt="SiKasir Logo" width="120" height="120">
+  <h1>SiKasir v3.0.0 Pro Enterprise</h1>
+  <p><b>Sistem Point of Sales & Multi-Branch Retail Engine Masa Depan</b></p>
+  <p><i>Powered by Clean Native Flutter POS Engine + Express Multi-Tenant Architecture</i></p>
 </div>
 
 ---
