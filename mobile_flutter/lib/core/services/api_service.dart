@@ -57,6 +57,20 @@ class ApiService {
     await prefs.remove('auth_token');
   }
 
+  String get currentBaseUrl => _dio.options.baseUrl;
+
+  Future<String> getBaseUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('base_url') ?? _baseUrl;
+  }
+
+  Future<void> setBaseUrl(String newUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('base_url', newUrl);
+    _baseUrl = newUrl;
+    _dio.options.baseUrl = newUrl;
+  }
+
   void updateBaseUrl(String newUrl) {
     _baseUrl = newUrl;
     _dio.options.baseUrl = newUrl;

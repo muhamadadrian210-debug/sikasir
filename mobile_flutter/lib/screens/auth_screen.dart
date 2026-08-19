@@ -172,6 +172,108 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     }
   }
 
+  Future<void> _showServerSettingsDialog() async {
+    final currentUrl = await ApiService().getBaseUrl();
+    final urlCtrl = TextEditingController(text: currentUrl);
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF111827),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF1E293B)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.dns_rounded, color: Color(0xFF10B981), size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Pengaturan Server Backend',
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ubah alamat API Server backend SiKasir jika berjalan di host / port lain (misal: localhost PC / WiFi IP):',
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: urlCtrl,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: _inputDecoration('http://10.0.2.2:3000/api'),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Preset Cepat:',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                ActionChip(
+                  label: const Text('Emulator (10.0.2.2:3000)', style: TextStyle(fontSize: 11, color: Colors.white)),
+                  backgroundColor: const Color(0xFF1E293B),
+                  onPressed: () => urlCtrl.text = 'http://10.0.2.2:3000/api',
+                ),
+                ActionChip(
+                  label: const Text('Localhost (127.0.0.1:3000)', style: TextStyle(fontSize: 11, color: Colors.white)),
+                  backgroundColor: const Color(0xFF1E293B),
+                  onPressed: () => urlCtrl.text = 'http://127.0.0.1:3000/api',
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              final newUrl = urlCtrl.text.trim();
+              if (newUrl.isNotEmpty) {
+                await ApiService().setBaseUrl(newUrl);
+                if (mounted) {
+                  setState(() => _errorMessage = null);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Server URL berhasil diubah ke: $newUrl'),
+                      backgroundColor: const Color(0xFF10B981),
+                    ),
+                  );
+                }
+              }
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Simpan & Terapkan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -234,7 +336,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   border: Border.all(color: const Color(0xFF10B981)),
                                 ),
                                 child: const Text(
-                                  'v3.1.1',
+                                  'v3.2.0',
                                   style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ),
@@ -248,7 +350,25 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+                  // Server connection settings action button
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: _showServerSettingsDialog,
+                      icon: const Icon(Icons.settings_outlined, size: 14, color: Color(0xFF64748B)),
+                      label: const Text(
+                        'Ubah Server URL',
+                        style: TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                   // Top Tab Switcher
                   Container(
