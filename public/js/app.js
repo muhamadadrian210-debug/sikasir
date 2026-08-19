@@ -438,28 +438,6 @@ async function fetchProductsCached() {
   } catch {
     try {
       const cache = await caches.open('sikasir-data');
-let salesChart = null;
-
-/** Cached products for offline POS */
-let productsCache = [];
-
-async function fetchProductsCached() {
-  try {
-    const data = await api('/products');
-    productsCache = data;
-    try {
-      const cache = await caches.open('sikasir-data');
-      await cache.put(
-        '/offline-products.json',
-        new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } })
-      );
-    } catch {
-      /* SW optional */
-    }
-    return data;
-  } catch {
-    try {
-      const cache = await caches.open('sikasir-data');
       const r = await cache.match('/offline-products.json');
       if (r) {
         productsCache = await r.json();
