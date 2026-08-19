@@ -1,15 +1,17 @@
 <div align="center">
-  <img src="public/icons/logo.svg" alt="SiKasir Logo" width="120" height="120">
-  <h1>SiKasir v3.0.0 Pro Enterprise</h1>
+  <img src="public/icons/logo.png" alt="SiKasir Logo" width="120" height="120" style="border-radius: 24px;">
+  <h1>SiKasir v3.7.0 Pro AI Enterprise</h1>
   <p><b>Sistem Point of Sales & Multi-Branch Retail Engine Masa Depan</b></p>
-  <p><i>Powered by Clean Native Flutter POS Engine + Express Multi-Tenant Architecture</i></p>
+  <p><i>Powered by Clean Native Flutter POS Engine + Express Multi-Tenant Architecture + Gemini AI Copilot</i></p>
 </div>
 
 ---
 
 ## 🚀 Apa itu SiKasir?
 
-**SiKasir** adalah sistem *Point of Sales* (POS) dan manajemen inventaris digital tingkat lanjut yang dirancang khusus untuk mempercepat, mempermudah, dan mengotomatisasi proses bisnis ritel modern. SiKasir adalah sebuah **Universal POS** yang secara otomatis beradaptasi dengan lebih dari 30 tipe bisnis, mulai dari F&B, Ritel, Jasa, Otomotif, hingga Klinik Kesehatan. Dibekali dengan fitur **AI Assistant**, SiKasir tidak hanya mencatat transaksi, tetapi juga mampu diajak berkomunikasi untuk mengatur dan mengaudit stok secara instan, cerdas, dan efisien.
+**SiKasir** adalah sistem *Point of Sales* (POS) dan manajemen inventaris digital tingkat lanjut yang dirancang khusus untuk mempercepat, mempermudah, dan mengotomatisasi proses bisnis ritel modern. SiKasir adalah sebuah **Universal POS** yang secara otomatis beradaptasi dengan lebih dari 30 tipe bisnis, mulai dari F&B, Ritel, Jasa, Otomotif, hingga Klinik Kesehatan. 
+
+Dibekali dengan fitur **SiKasir AI Copilot** dan **4 Metode Tambah Produk Pintar (AI Prompt, Barcode Scanner Kamera, AI Vision OCR Foto Produk Kemasan, & Form Manual)**, SiKasir tidak hanya mencatat transaksi, tetapi juga mampu diajak berkomunikasi untuk menganalisis laba, mengatur restock, dan mengaudit stok secara instan, cerdas, dan efisien.
 
 ---
 
