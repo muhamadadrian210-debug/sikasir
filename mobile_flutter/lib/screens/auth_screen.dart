@@ -215,7 +215,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             TextField(
               controller: urlCtrl,
               style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: _inputDecoration('http://10.0.2.2:3000/api'),
+              decoration: _inputDecoration('https://sikasir-alpha.vercel.app/api'),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -228,12 +228,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               runSpacing: 6,
               children: [
                 ActionChip(
-                  label: const Text('Emulator (10.0.2.2:3000)', style: TextStyle(fontSize: 11, color: Colors.white)),
-                  backgroundColor: const Color(0xFF1E293B),
-                  onPressed: () => urlCtrl.text = 'http://10.0.2.2:3000/api',
+                  label: const Text('☁️ Cloud Resmi (Vercel)', style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  onPressed: () => urlCtrl.text = 'https://sikasir-alpha.vercel.app/api',
                 ),
                 ActionChip(
-                  label: const Text('Localhost (127.0.0.1:3000)', style: TextStyle(fontSize: 11, color: Colors.white)),
+                  label: const Text('💻 Localhost PC', style: TextStyle(fontSize: 11, color: Colors.white)),
                   backgroundColor: const Color(0xFF1E293B),
                   onPressed: () => urlCtrl.text = 'http://127.0.0.1:3000/api',
                 ),

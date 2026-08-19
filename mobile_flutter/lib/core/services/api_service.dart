@@ -6,7 +6,7 @@ class ApiService {
   factory ApiService() => _instance;
 
   late Dio _dio;
-  String _baseUrl = 'http://10.0.2.2:3000/api'; // Default Android Emulator host / change to IP in Settings
+  String _baseUrl = 'https://sikasir-alpha.vercel.app/api'; // Official Cloud Production Server
 
   ApiService._internal() {
     _dio = Dio(BaseOptions(
