@@ -373,7 +373,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
                                 ),
                                 child: const Text(
-                                  'v3.7.0 Pro AI Edition',
+                                  'v3.8.0 Pro Enterprise',
                                   style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ),

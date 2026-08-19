@@ -13,6 +13,9 @@ import 'screens/reports_screen.dart';
 import 'screens/expenses_screen.dart';
 import 'screens/users_screen.dart';
 import 'screens/ai_copilot_screen.dart';
+import 'screens/kasbon_screen.dart';
+import 'screens/multi_outlet_screen.dart';
+import 'screens/kds_screen.dart';
 import 'screens/audit_logs_screen.dart';
 import 'screens/cybersecurity_screen.dart';
 
@@ -106,7 +109,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Map<String, dynamic>> _menuItems = const [
     {'title': 'Kasir POS', 'icon': Icons.point_of_sale, 'screen': PosScreen()},
     {'title': 'SiKasir AI Copilot', 'icon': Icons.auto_awesome, 'screen': AiCopilotScreen()},
+    {'title': 'Kitchen Display (KDS)', 'icon': Icons.restaurant, 'screen': KdsScreen()},
     {'title': 'Manajemen Produk & Stok', 'icon': Icons.inventory_2, 'screen': ProductsScreen()},
+    {'title': 'Kasbon & Tagih WhatsApp', 'icon': Icons.credit_card_rounded, 'screen': KasbonScreen()},
+    {'title': 'Multi-Outlet & Mutasi Stok', 'icon': Icons.storefront_rounded, 'screen': MultiOutletScreen()},
     {'title': 'Log Barang Masuk (Restock)', 'icon': Icons.move_to_inbox, 'screen': IncomingGoodsScreen()},
     {'title': 'Shift Kasir & Cash Drawer', 'icon': Icons.badge, 'screen': ShiftScreen()},
     {'title': 'Riwayat Transaksi', 'icon': Icons.receipt_long, 'screen': HistoryScreen()},
@@ -182,7 +188,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             ),
                           ),
                           const Text(
-                            'Enterprise POS v3.7.0 Pro (AI Edition)',
+                            'Enterprise POS v3.8.0 Pro',
                             style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],

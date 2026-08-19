@@ -18,7 +18,14 @@ class _PosScreenState extends State<PosScreen> {
   final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   final TextEditingController _paidController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _kasbonNameController = TextEditingController();
+  final TextEditingController _kasbonPhoneController = TextEditingController();
+  
   double _paidAmount = 0;
+  String _paymentMethod = 'CASH'; // CASH, QRIS, KASBON
+  bool _applyPB1 = false;
+  int _splitWays = 1;
+  final List<List<CartItem>> _heldBills = [];
 
   @override
   void initState() {
@@ -29,6 +36,34 @@ class _PosScreenState extends State<PosScreen> {
         _paidAmount = double.tryParse(_paidController.text.replaceAll(RegExp(r'\D'), '')) ?? 0;
       });
     });
+  }
+
+  void _holdCurrentBill() {
+    final pos = context.read<PosProvider>();
+    if (pos.cart.isEmpty) return;
+    setState(() {
+      _heldBills.add(List.from(pos.cart));
+      pos.clearCart();
+      _paidController.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('⏸️ Tagihan disimpan ke antrean Hold (${_heldBills.length} antrean).')),
+    );
+  }
+
+  void _loadHeldBill() {
+    if (_heldBills.isEmpty) return;
+    final pos = context.read<PosProvider>();
+    setState(() {
+      final restored = _heldBills.removeLast();
+      pos.clearCart();
+      for (final item in restored) {
+        pos.addToCart(item.product);
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('📂 Antrean tagihan berhasil dimuat kembali!')),
+    );
   }
 
   Future<void> _loadProducts() async {
@@ -56,15 +91,28 @@ class _PosScreenState extends State<PosScreen> {
 
   void _onCheckout() async {
     final pos = context.read<PosProvider>();
-    final total = pos.totalAmount;
+    final subtotal = pos.totalAmount;
+    final tax = _applyPB1 ? (subtotal * 0.10) : 0.0;
+    final total = subtotal + tax;
 
     if (pos.cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Keranjang belanja kosong!')));
       return;
     }
-    if (_paidAmount < total) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Uang pembayaran masih kurang!')));
-      return;
+
+    if (_paymentMethod == 'KASBON') {
+      if (_kasbonNameController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nama pelanggan kasbon wajib diisi!')));
+        return;
+      }
+      _paidAmount = total; // Kasbon di-cover penuh ke akun hutang
+    } else if (_paymentMethod == 'QRIS') {
+      _paidAmount = total; // QRIS pas sesuai nominal
+    } else {
+      if (_paidAmount < total) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Uang pembayaran tunai masih kurang!')));
+        return;
+      }
     }
 
     final change = _paidAmount - total;
@@ -87,29 +135,35 @@ class _PosScreenState extends State<PosScreen> {
       final res = await ApiService().post('/transactions/checkout', data: {
         'items': itemsPayload,
         'paid': _paidAmount,
+        'payment_method': _paymentMethod.toLowerCase(),
+        'customer_name': _kasbonNameController.text.trim(),
+        'customer_phone': _kasbonPhoneController.text.trim(),
+        'tax_amount': tax,
       });
-      if (res.statusCode == 200 && res.data['transaction_id'] != null) {
+      if (res.statusCode == 200 && res.data != null && res.data['transaction_id'] != null) {
         invoiceId = res.data['transaction_id'].toString();
       }
     } catch (_) {
-      // Offline fallback: simpan transaksi ke antrean offline
       await LocalCacheService.queueOfflineTransaction({
         'invoice_id': invoiceId,
         'items': itemsPayload,
         'paid': _paidAmount,
         'total': total,
         'change': change,
+        'payment_method': _paymentMethod,
       });
     }
 
     if (!mounted) return;
     Navigator.of(context).pop(); // Tutup loading
 
-    // Tampilkan Modal Sukses Transaksi Kembalian Jumbo
+    // Tampilkan Modal Sukses Transaksi Kembalian
     _showSuccessDialog(invoiceId, total, _paidAmount, change, itemsPayload);
 
     pos.clearCart();
     _paidController.clear();
+    _kasbonNameController.clear();
+    _kasbonPhoneController.clear();
   }
 
   void _showSuccessDialog(String invoiceId, double total, double paid, double change, List<Map<String, dynamic>> items) {
@@ -419,8 +473,11 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   Widget _buildCartSection(PosProvider pos) {
-    final total = pos.totalAmount;
+    final subtotal = pos.totalAmount;
+    final tax = _applyPB1 ? (subtotal * 0.10) : 0.0;
+    final total = subtotal + tax;
     final change = _paidAmount >= total ? _paidAmount - total : 0.0;
+    final perPerson = _splitWays > 1 ? (total / _splitWays) : total;
 
     return Container(
       color: const Color(0xFF111827),
@@ -428,21 +485,50 @@ class _PosScreenState extends State<PosScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Cart + Hold/Load Bill Action Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('🛒 Keranjang Belanja', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              if (pos.cart.isNotEmpty)
-                TextButton(
-                  onPressed: pos.clearCart,
-                  child: const Text('Kosongkan', style: TextStyle(color: Color(0xFFEF4444), fontSize: 12)),
-                ),
+              const Text('🛒 Keranjang Kasir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      side: const BorderSide(color: Color(0xFF38BDF8)),
+                    ),
+                    icon: const Icon(Icons.pause, size: 14, color: Color(0xFF38BDF8)),
+                    label: const Text('Hold', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 11)),
+                    onPressed: pos.cart.isEmpty ? null : _holdCurrentBill,
+                  ),
+                  const SizedBox(width: 6),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F766E),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
+                    icon: const Icon(Icons.folder_open, size: 14, color: Colors.white),
+                    label: Text('Muat (${_heldBills.length})', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                    onPressed: _heldBills.isEmpty ? null : _loadHeldBill,
+                  ),
+                  if (pos.cart.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    IconButton(
+                      icon: const Icon(Icons.delete_sweep, color: Color(0xFFEF4444), size: 20),
+                      onPressed: pos.clearCart,
+                      tooltip: 'Kosongkan Keranjang',
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 8),
+
+          // Items List
           Expanded(
             child: pos.cart.isEmpty
-                ? const Center(child: Text('Keranjang masih kosong', style: TextStyle(color: Color(0xFF64748B))))
+                ? const Center(child: Text('Keranjang masih kosong\nSentuh produk di katalog untuk menambahkan', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B), fontSize: 12)))
                 : ListView.separated(
                     itemCount: pos.cart.length,
                     separatorBuilder: (context, index) => const Divider(color: Color(0xFF1E293B), height: 8),
@@ -478,6 +564,72 @@ class _PosScreenState extends State<PosScreen> {
                   ),
           ),
           const Divider(color: Color(0xFF1E293B)),
+
+          // PB1 Pajak & Split Bill Controls
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(8)),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    InkWell(
+                      onTap: () => setState(() => _applyPB1 = !_applyPB1),
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: _applyPB1,
+                            activeColor: const Color(0xFF10B981),
+                            onChanged: (v) => setState(() => _applyPB1 = v ?? false),
+                          ),
+                          const Text('Pajak PB1 Resto (10%)', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    Text(_currency.format(tax), style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('👥 Split Bill (Bagi Bon):', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                    Row(
+                      children: [
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.remove, color: Colors.white70, size: 16),
+                          onPressed: _splitWays > 1 ? () => setState(() => _splitWays--) : null,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text('$_splitWays Orang', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                        ),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.add, color: Colors.white70, size: 16),
+                          onPressed: () => setState(() => _splitWays++),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (_splitWays > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Bayar per orang: ${_currency.format(perPerson)}',
+                      style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Total Display
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -485,52 +637,139 @@ class _PosScreenState extends State<PosScreen> {
               Text(_currency.format(total), style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 18)),
             ],
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _paidController,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-            decoration: InputDecoration(
-              labelText: 'Nominal Diterima (Rp)',
-              labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-              filled: true,
-              fillColor: const Color(0xFF090D16),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF1E293B))),
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Quick cash buttons
-          Wrap(
-            spacing: 6,
+          const SizedBox(height: 8),
+
+          // Metode Pembayaran Selector
+          Row(
             children: [
-              _buildQuickCashBtn('Uang Pas', total),
-              _buildQuickCashBtn('50rb', 50000),
-              _buildQuickCashBtn('100rb', 100000),
+              Expanded(
+                child: _buildPaymentMethodTab('💵 Tunai', 'CASH'),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: _buildPaymentMethodTab('📱 QRIS', 'QRIS'),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: _buildPaymentMethodTab('💳 Kasbon', 'KASBON'),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Kembalian:', style: TextStyle(color: Colors.white70, fontSize: 13)),
-              Text(_currency.format(change), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-            ],
-          ),
-          const SizedBox(height: 12),
+
+          if (_paymentMethod == 'KASBON') ...[
+            TextField(
+              controller: _kasbonNameController,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: const InputDecoration(
+                labelText: 'Nama Pelanggan Kasbon *',
+                labelStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                filled: true,
+                fillColor: Color(0xFF090D16),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _kasbonPhoneController,
+              keyboardType: TextInputType.phone,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: const InputDecoration(
+                labelText: 'No WhatsApp / HP Pelanggan',
+                labelStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                filled: true,
+                fillColor: Color(0xFF090D16),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ] else if (_paymentMethod == 'CASH') ...[
+            TextField(
+              controller: _paidController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+              decoration: InputDecoration(
+                labelText: 'Nominal Tunai Diterima (Rp)',
+                labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                filled: true,
+                fillColor: const Color(0xFF090D16),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF1E293B))),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 6,
+              children: [
+                _buildQuickCashBtn('Uang Pas', total),
+                _buildQuickCashBtn('50rb', 50000),
+                _buildQuickCashBtn('100rb', 100000),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Kembalian:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(_currency.format(change), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+              ],
+            ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(8)),
+              child: const Row(
+                children: [
+                  Icon(Icons.qr_code_2_rounded, color: Color(0xFF38BDF8), size: 28),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text('Tunjukkan QRIS Dinamis Toko kepada pembeli. Sistem otomatis mencocokkan nominal.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: pos.cart.isEmpty ? null : _onCheckout,
-              child: const Text('PROSES BAYAR', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              child: Text(
+                _paymentMethod == 'KASBON' ? 'CATAT SEBAGAI KASBON' : 'PROSES BAYAR',
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodTab(String label, String method) {
+    final isSelected = _paymentMethod == method;
+    return InkWell(
+      onTap: () => setState(() => _paymentMethod = method),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF0F172A),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isSelected ? const Color(0xFF10B981) : const Color(0xFF1E293B)),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
       ),
     );
   }
