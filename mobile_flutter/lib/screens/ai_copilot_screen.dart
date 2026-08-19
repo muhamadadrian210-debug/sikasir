@@ -15,7 +15,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   final List<Map<String, dynamic>> _messages = [
     {
       'isAi': true,
-      'text': '👋 Halo! Saya **SiKasir AI Business Copilot**.\n\nSaya bisa membantu Anda:\n1. 📊 **Cek Rekap Keuangan & Laba** ("Berapa omset dan untung bulan ini?")\n2. 📦 **Cek Stok Menipis & Restock** ("Barang apa yang stoknya mau habis?")\n3. ✨ **Daftarkan Produk Baru** ("Tambah produk Sabun Nuvo harga jual 4000 stok 20")\n4. 💡 **Strategi Bisnis Retail**\n\nApa yang ingin Anda analisis hari ini?',
+      'text': '👋 Halo! Saya SiKasir AI Business Copilot.\n\nSaya siap membantu mengelola bisnis Anda:\n• 📊 Rekap Keuangan & Laba ("Berapa omset dan laba bulan ini?")\n• 📦 Audit Stok Menipis ("Barang apa yang stoknya menipis?")\n• ✨ Pendaftaran Produk Cepat ("Tambah produk Sabun Nuvo jual 4000 modal 2500 stok 20")\n• 💡 Saran Strategi Penjualan Toko\n\nApa yang ingin Anda konsultasikan hari ini?',
       'time': DateTime.now(),
     }
   ];
