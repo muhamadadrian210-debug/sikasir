@@ -148,13 +148,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F172A), Color(0xFF090D16)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF10B981)),
+                          border: Border.all(color: const Color(0xFF10B981), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.point_of_sale, color: Color(0xFF10B981), size: 24),
+                        child: const Icon(Icons.point_of_sale_rounded, color: Color(0xFF10B981), size: 20),
                       ),
                       const SizedBox(width: 10),
                       Column(
@@ -169,7 +180,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             ),
                           ),
                           const Text(
-                            'Enterprise POS v3.2.0',
+                            'Enterprise POS v3.3.0 Pro',
                             style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],

@@ -1,30 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <!-- Background Rounded Shield / Icon Container -->
-  <rect width="128" height="128" rx="32" fill="#0F172A"/>
-  <rect x="2" y="2" width="124" height="124" rx="30" stroke="#1E293B" stroke-width="3"/>
-  
-  <!-- Subtle Glow Layer -->
-  <circle cx="64" cy="64" r="44" fill="#10B981" fill-opacity="0.12"/>
-  
-  <!-- Modern Geometric POS Terminal Base -->
-  <rect x="30" y="32" width="68" height="54" rx="12" fill="#1E293B" stroke="#10B981" stroke-width="3"/>
-  
-  <!-- Screen Area -->
-  <rect x="38" y="40" width="52" height="34" rx="6" fill="#090D16"/>
-  
-  <!-- Futuristic Barcode / Cash Lines inside Screen -->
-  <rect x="44" y="47" width="4" height="18" rx="2" fill="#10B981"/>
-  <rect x="52" y="47" width="3" height="18" rx="1.5" fill="#34D399"/>
-  <rect x="58" y="47" width="6" height="18" rx="2" fill="#10B981"/>
-  <rect x="67" y="47" width="3" height="18" rx="1.5" fill="#34D399"/>
-  <rect x="73" y="47" width="5" height="18" rx="2" fill="#10B981"/>
-  <rect x="81" y="47" width="3" height="18" rx="1.5" fill="#34D399"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="50%" stop-color="#090D16" />
+      <stop offset="100%" stop-color="#05080E" />
+    </linearGradient>
 
-  <!-- Cash Drawer / POS Stand Base -->
-  <path d="M26 94C26 90.6863 28.6863 88 32 88H96C99.3137 88 102 90.6863 102 94V97C102 100.314 99.3137 103 96 103H32C28.6863 103 26 100.314 26 97V94Z" fill="#10B981"/>
-  
-  <!-- Thermal Receipt Paper Coming Out -->
-  <path d="M46 22H82V32H46V22Z" fill="#F8FAFC" rx="3"/>
-  <line x1="52" y1="26" x2="68" y2="26" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <line x1="52" y1="29" x2="76" y2="29" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Emerald Teal Vibrant Gradient -->
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="50%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Cyan Azure Accent Gradient -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Glowing Rim Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" stop-opacity="0.8" />
+      <stop offset="40%" stop-color="#10B981" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.6" />
+    </linearGradient>
+
+    <!-- Inner Glow Shadow -->
+    <radialGradient id="centerGlow" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
+      <stop offset="60%" stop-color="#0284C7" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Glassmorphic Card Reflection -->
+    <linearGradient id="glassLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <!-- App Rounded Squircle Container -->
+  <rect width="512" height="512" rx="120" fill="url(#bgGrad)" />
+  <rect x="4" y="4" width="504" height="504" rx="116" stroke="url(#borderGrad)" stroke-width="6" />
+
+  <!-- Ambient Backdrop Glow -->
+  <circle cx="256" cy="240" r="180" fill="url(#centerGlow)" />
+
+  <!-- MODERN GEOMETRIC EMBLEM: Sleek Interlocking 'S' + POS Terminal & Fast Scan Matrix -->
+  <!-- Top Arc Wing of S (Swift Cash / Cloud) -->
+  <path d="M 330 145 C 375 145, 395 180, 395 210 C 395 240, 365 260, 310 275 L 235 295 C 190 307, 175 325, 175 350 C 175 385, 205 405, 255 405 C 305 405, 340 380, 355 355" 
+        stroke="url(#emeraldGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+  <!-- Bottom Forward Dynamic Strike (Speed & Transactions) -->
+  <path d="M 182 367 C 137 367, 117 332, 117 302 C 117 272, 147 252, 202 237 L 277 217 C 322 205, 337 187, 337 162 C 337 127, 307 107, 257 107 C 207 107, 172 132, 157 157" 
+        stroke="url(#cyanGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+  <!-- Central Diamond Sparkle / Transaction Verified Badge -->
+  <circle cx="256" cy="256" r="32" fill="#090D16" stroke="url(#emeraldGrad)" stroke-width="8" />
+  <circle cx="256" cy="256" r="14" fill="#34D399" />
+
+  <!-- Futuristic Corner Highlights (Precision Optics) -->
+  <circle cx="395" cy="145" r="8" fill="#38BDF8" />
+  <circle cx="117" cy="367" r="8" fill="#34D399" />
 </svg>
