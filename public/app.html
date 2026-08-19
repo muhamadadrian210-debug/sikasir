@@ -85,6 +85,39 @@
       </div>
     </div>
 
+    <!-- Transaction Success Modal (Majoo/Moka Style Jumbo Change) -->
+    <div class="modal-backdrop" id="modal-tx-success">
+      <div class="modal" style="max-width: 440px; text-align: center;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 0.75rem auto;">
+          ✅
+        </div>
+        <h3 style="margin-bottom: 0.25rem; font-size: 1.25rem;">Transaksi Sukses!</h3>
+        <p id="tx-success-inv" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">Invoice #TRX-000000</p>
+        
+        <div style="background: var(--bg-base); border: 1.5px solid var(--border); border-radius: 12px; padding: 1.15rem; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 4px;">UANG KEMBALIAN</div>
+          <div id="tx-success-change" class="mono" style="font-size: 2.2rem; font-weight: 900; color: var(--primary); line-height: 1.2;">Rp 0</div>
+          <div id="tx-success-paid-info" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px; border-top: 1px dashed var(--border); padding-top: 6px;">
+            Total: Rp 0 · Bayar: Rp 0
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          <button type="button" class="btn btn-primary btn-block" id="btn-success-print" style="padding: 0.75rem; font-weight: 800; font-size: 0.95rem;">
+            🖨️ Cetak Struk Belanja (PDF)
+          </button>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+            <button type="button" class="btn btn-secondary" id="btn-success-wa" style="padding: 0.65rem; font-size: 0.84rem;">
+              💬 Kirim via WA
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-success-new" style="padding: 0.65rem; font-size: 0.84rem; font-weight: 700;">
+              🛒 Transaksi Baru
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Scan Barcode Modal -->
     <div class="modal-backdrop" id="modal-scan">
       <div class="modal">
@@ -134,9 +167,10 @@
 
         <!-- Quick AI Suggestions -->
         <div class="ai-quick-chips">
+          <button type="button" class="ai-chip" data-prompt="Rekap omset dan laba bersih bulan ini">📅 Rekap Bulan Ini</button>
           <button type="button" class="ai-chip" data-prompt="Rekap omset dan laba bersih hari ini">📊 Rekap Hari Ini</button>
-          <button type="button" class="ai-chip" data-prompt="Berapa total bayar nota supplier hari ini?">💸 Total Bayar Nota</button>
-          <button type="button" class="ai-chip" data-prompt="Barang apa yang stoknya hampir habis?">⚠️ Stok Menipis</button>
+          <button type="button" class="ai-chip" data-prompt="Barang apa yang paling laris dan stoknya menipis?">📦 Cek Stok & Best Seller</button>
+          <button type="button" class="ai-chip" data-prompt="Berapa total bayar nota supplier bulan ini?">💸 Pengeluaran Nota</button>
         </div>
 
         <div class="ai-chat-footer">

@@ -19,15 +19,15 @@ router.use((req, res, next) => {
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const systemInstruction = `
-Kamu: SiKasir AI Assistant — Asisten Kasir Cerdas & Hemat.
-Tugas:
-1. Ubah stok barang (Restock delta > 0, Laku/Terjual delta < 0).
-2. Tambah produk baru.
-3. Rekap keuangan (Omset, Untung, Transaksi).
+Kamu: SiKasir AI Business Copilot — Asisten Finansial & Kasir Cerdas Toko.
+Tugas Utama:
+1. Rekap & Analisis Keuangan (Omset, Transaksi, Bayar Nota/Pengeluaran, Laba/Profit Bersih, Produk Terlaris).
+2. Pengecekan & Update Stok (Cek stok menipis, barang terlaris, dead stock, restock grosir).
+3. Pendaftaran produk baru secara akurat.
 
-ATURAN RESPON (SANGAT SINGKAT & HEBAT TOKEN):
-- JANGAN GUNAKAN KALIMAT FORMAL MAUPUN BASA-BASI.
-- Tampilkan jawaban maksimal 2-3 baris ringkas.
+ATURAN RESPON:
+- Format jawaban dengan angka Rupiah rapi (contoh: Rp 150.000) dan poin-poin/tabel ringkas.
+- JANGAN berhalusinasi angka jika data belum ada, gunakan data yang diberikan oleh tools.
 - Konversi Grosir: 1 Bal/Press=100pcs, 1 Slop=10pcs, 1 Dus Mi=40pcs, 1 Dus Minuman=24pcs, 1 Lusin=12pcs.
 `;
 
@@ -44,18 +44,16 @@ router.post('/chat', async (req, res) => {
     const lower = prompt.toLowerCase();
     let productContext = '';
 
-    // Smart Token Saver: Only load product context if user asks about products/stock
-    if (!lower.includes('omset') && !lower.includes('keuangan') && !lower.includes('tutor')) {
-      const [products] = await pool.execute(
-        'SELECT id, barcode, name, purchase_price, sale_price, stock FROM products WHERE tenant_id = ? LIMIT 30',
-        [tid]
-      );
-      if (products.length > 0) {
-        productContext = `Produk Toko:\n` + products.map(p => `#${p.id} ${p.name} (Stok:${p.stock},Jual:${p.sale_price},Beli:${p.purchase_price})`).join('\n');
-      }
+    // Load product summary context
+    const [products] = await pool.execute(
+      'SELECT id, barcode, name, purchase_price, sale_price, stock FROM products WHERE tenant_id = ? ORDER BY stock ASC LIMIT 40',
+      [tid]
+    );
+    if (products.length > 0) {
+      productContext = `Katalog Toko:\n` + products.map(p => `#${p.id} ${p.name} (Stok:${p.stock}, Jual:Rp${p.sale_price}, Beli:Rp${p.purchase_price})`).join('\n');
     }
 
-    const context = `${productContext}\nPerintah: "${prompt}"`;
+    const context = `${productContext}\nPerintah User: "${prompt}"`;
 
     // Tool Declarations
     const tools = [{
@@ -90,13 +88,13 @@ router.post('/chat', async (req, res) => {
         },
         {
           name: 'get_financial_report',
-          description: 'Rekap keuangan toko (Omset, Untung, Transaksi).',
+          description: 'Rekap keuangan dan penjualan toko secara lengkap (Omset, Untung Bersih, Pengeluaran/Bayar Nota, Transaksi, Produk Terlaris). Wajib dipanggil jika user menanyakan omset, keuntungan, rekapan, laporan hari ini, bulan ini, minggu ini, atau tahun ini.',
           parameters: {
             type: 'OBJECT',
             properties: {
               period: { 
                 type: 'STRING', 
-                description: 'Periode: "today", "this_week", "this_month", "this_year", "all_time".' 
+                description: 'Periode waktu: "today" (hari ini), "this_week" (minggu ini), "this_month" (bulan ini / rekapan bulan ini), "this_quarter" (kuartal ini), "this_year" (tahun ini), "all_time" (keseluruhan).' 
               }
             },
             required: ['period']
@@ -105,7 +103,7 @@ router.post('/chat', async (req, res) => {
       ]
     }];
 
-    // Call Gemini with Token Savers (maxOutputTokens: 256)
+    // Call Gemini with intelligent assistant settings
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: context,
@@ -113,7 +111,7 @@ router.post('/chat', async (req, res) => {
         systemInstruction: systemInstruction,
         tools: tools,
         temperature: 0.1,
-        maxOutputTokens: 256
+        maxOutputTokens: 600
       }
     });
 

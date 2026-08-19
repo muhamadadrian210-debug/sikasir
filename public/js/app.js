@@ -873,10 +873,11 @@ async function checkout() {
       time: new Date().toISOString(),
     };
     document.getElementById('pos-print-last').disabled = false;
+    window.dispatchEvent(new CustomEvent('sikasir:tx-success', { detail: lastReceipt }));
     cart = [];
     renderCart();
     document.getElementById('pos-paid').value = '';
-    showAlert('Transaksi berhasil.', 'success');
+    showAlert('Transaksi berhasil dicatat.', 'success');
     fetchProductsCached().catch(() => {});
   } catch (e) {
     showAlert(e.message || 'Gagal checkout', 'error');
@@ -937,7 +938,6 @@ function openScanModal(cb) {
   history.pushState({ modal: 'scan' }, '');
 
   startScanner(host, async (code) => {
-    // Tampilkan preview nama + harga dulu sebelum callback
     try {
       await fetchProductsCached();
       const p = productByBarcode(code);
@@ -2546,3 +2546,47 @@ async function loadExpensesPanel() {
     }
   };
 }
+
+// Global Transaction Success Modal Auto-Hook
+window.addEventListener('sikasir:tx-success', (e) => {
+  const rec = e.detail;
+  const modal = document.getElementById('modal-tx-success');
+  if (!modal || !rec) return;
+
+  const invEl = document.getElementById('tx-success-inv');
+  const changeEl = document.getElementById('tx-success-change');
+  const paidEl = document.getElementById('tx-success-paid-info');
+
+  if (invEl) invEl.textContent = `Invoice #${rec.id} · Kasir: ${rec.kasir || 'Kasir'}`;
+  if (changeEl) changeEl.textContent = money(rec.change);
+  if (paidEl) paidEl.textContent = `Total Belanja: ${money(rec.total)} · Diterima: ${money(rec.paid)}`;
+  modal.classList.add('open');
+
+  const btnPrint = document.getElementById('btn-success-print');
+  if (btnPrint) {
+    btnPrint.onclick = () => {
+      if (typeof printReceiptPdf === 'function') printReceiptPdf(rec);
+    };
+  }
+
+  const btnWa = document.getElementById('btn-success-wa');
+  if (btnWa) {
+    btnWa.onclick = () => {
+      const phone = prompt('Nomor WhatsApp Pelanggan (contoh: 08123456789):');
+      if (phone) {
+        const cleanPhone = phone.replace(/^0/, '62').replace(/\D/g, '');
+        const itemsText = (rec.items || []).map(it => `• ${it.name} (${it.qty}x) = ${money(it.qty * it.sale_price)}`).join('%0A');
+        const waMsg = `*STRUK PEMBELIAN SIKASIR*%0AInvoice: %23${rec.id}%0AWaktu: ${new Date(rec.time).toLocaleString('id-ID')}%0A--------------------------------%0A${itemsText}%0A--------------------------------%0A*Total: ${money(rec.total)}*%0ABayar: ${money(rec.paid)}%0AKembali: ${money(rec.change)}%0A%0ATerima kasih telah berbelanja! 🙏`;
+        window.open(`https://wa.me/${cleanPhone}?text=${waMsg}`, '_blank');
+      }
+    };
+  }
+
+  const btnNew = document.getElementById('btn-success-new');
+  if (btnNew) {
+    btnNew.onclick = () => {
+      modal.classList.remove('open');
+      document.getElementById('pos-search-catalog')?.focus();
+    };
+  }
+});
