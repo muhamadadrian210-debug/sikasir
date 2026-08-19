@@ -6,6 +6,7 @@ import '../core/services/api_service.dart';
 import '../core/services/local_cache_service.dart';
 import '../core/services/receipt_printer_service.dart';
 import '../core/widgets/heavy_duty_barcode_scanner_modal.dart';
+import '../core/widgets/premium_notification.dart';
 
 class PosScreen extends StatefulWidget {
   const PosScreen({super.key});
@@ -170,108 +171,25 @@ class _PosScreenState extends State<PosScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: const Color(0xFF111827),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF10B981), width: 2),
-                ),
-                child: const Icon(Icons.check, color: Color(0xFF10B981), size: 32),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Transaksi Sukses!',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              Text(
-                'Invoice #$invoiceId',
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF090D16),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF1E293B)),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'UANG KEMBALIAN',
-                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _currency.format(change),
-                      style: const TextStyle(
-                        color: Color(0xFF10B981),
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const Divider(color: Color(0xFF1E293B), height: 16),
-                    Text(
-                      'Total: ${_currency.format(total)}  ·  Bayar: ${_currency.format(paid)}',
-                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  icon: const Icon(Icons.print, size: 18),
-                  label: const Text('Cetak Struk Thermal (58mm)', style: TextStyle(fontWeight: FontWeight.bold)),
-                  onPressed: () {
-                    ReceiptPrinterService.printReceipt(
-                      storeName: 'SiKasir POS',
-                      invoiceId: invoiceId,
-                      cashierName: 'Kasir',
-                      time: DateTime.now(),
-                      items: items,
-                      total: total,
-                      paid: paid,
-                      change: change,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF334155)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Transaksi Baru'),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (ctx) => AnimatedSuccessCheckoutModal(
+        invoiceId: invoiceId,
+        total: total,
+        paid: paid,
+        change: change,
+        items: items,
+        onPrint: () {
+          ReceiptPrinterService.printReceipt(
+            storeName: 'SiKasir POS',
+            invoiceId: invoiceId,
+            cashierName: 'Kasir',
+            time: DateTime.now(),
+            items: items,
+            total: total,
+            paid: paid,
+            change: change,
+          );
+        },
+        onNewTransaction: () => Navigator.of(ctx).pop(),
       ),
     );
   }
@@ -307,13 +225,15 @@ class _PosScreenState extends State<PosScreen> {
                 // Jika produk persis ditemukan, auto tambahkan ke cart
                 final matches = pos.products.where((p) => p.barcode == code).toList();
                 if (matches.isNotEmpty) {
-                  pos.addToCart(matches.first);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('✅ Ditambahkan: ${matches.first.name}'),
-                      backgroundColor: const Color(0xFF064E3B),
-                      duration: const Duration(seconds: 1),
-                    ),
+                  final item = matches.first;
+                  pos.addToCart(item);
+                  PremiumNotification.showScanSuccess(context, productName: item.name, price: item.salePrice);
+                } else {
+                  PremiumNotification.showSuccessToast(
+                    context,
+                    title: 'BARCODE TERDETEKSI',
+                    message: 'Kode SKU: $code (Belum ada di katalog)',
+                    icon: Icons.qr_code_2_rounded,
                   );
                 }
               });
@@ -383,7 +303,16 @@ class _PosScreenState extends State<PosScreen> {
                     pos.setSearchQuery(code);
                     final matches = pos.products.where((p) => p.barcode == code).toList();
                     if (matches.isNotEmpty) {
-                      pos.addToCart(matches.first);
+                      final item = matches.first;
+                      pos.addToCart(item);
+                      PremiumNotification.showScanSuccess(context, productName: item.name, price: item.salePrice);
+                    } else {
+                      PremiumNotification.showSuccessToast(
+                        context,
+                        title: 'BARCODE TERDETEKSI',
+                        message: 'Kode SKU: $code',
+                        icon: Icons.qr_code_2_rounded,
+                      );
                     }
                   });
                 },

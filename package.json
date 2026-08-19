@@ -1,6 +1,6 @@
 {
   "name": "sikasir",
-  "version": "3.8.1",
+  "version": "3.8.2",
   "description": "SiKasir — PWA supermarket POS",
   "license": "UNLICENSED",
   "main": "server/index.js",

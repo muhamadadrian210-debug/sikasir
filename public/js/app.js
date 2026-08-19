@@ -2,20 +2,95 @@ import { api, getToken, getUser, setToken, setUser } from './api.js';
 import { startScanner, stopScanner, scanFile } from './scanner.js';
 
 window.showScanToast = function(message) {
+  const existing = document.querySelector('.scan-toast-overlay');
+  if (existing) existing.remove();
+
   const overlay = document.createElement('div');
   overlay.className = 'scan-toast-overlay';
   overlay.innerHTML = `
-    <div class="scan-toast-card">
-      <div class="scan-toast-icon">✓</div>
-      <div class="scan-toast-text">${message}</div>
+    <div class="scan-toast-card" style="
+      background: linear-gradient(135deg, #064e3b, #065f46);
+      border: 1.5px solid #10b981;
+      border-radius: 14px;
+      padding: 0.75rem 1.25rem;
+      box-shadow: 0 10px 25px rgba(16,185,129,0.35);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: popInBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    ">
+      <div style="
+        width: 28px; height: 28px;
+        background: #10b981;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: #064e3b; font-weight: 900; font-size: 1rem;
+        box-shadow: 0 0 12px #34d399;
+        animation: rotateCheck 0.4s ease-out;
+      ">✓</div>
+      <div>
+        <div style="font-size: 0.75rem; font-weight: 800; color: #34d399; letter-spacing: 0.5px;">SCAN BERHASIL!</div>
+        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">${message}</div>
+      </div>
+      <div style="color: #34d399; margin-left: auto;">✨</div>
     </div>
   `;
   document.body.appendChild(overlay);
   
   setTimeout(() => {
-    overlay.classList.add('fade-out');
-    setTimeout(() => overlay.remove(), 200);
-  }, 1000); // 1 second duration
+    overlay.style.opacity = '0';
+    overlay.style.transform = 'translateY(-20px)';
+    overlay.style.transition = 'all 0.3s ease';
+    setTimeout(() => overlay.remove(), 300);
+  }, 1800);
+};
+
+window.showPremiumSuccessModal = function({ title, subtitle, total, paid, change, onPrint }) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop open';
+  modal.style.zIndex = '9999';
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width: 420px; text-align: center; border: 1.5px solid #10b981; animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+      <div style="
+        width: 72px; height: 72px; margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: #ffffff; font-size: 2.2rem; font-weight: 900;
+        box-shadow: 0 0 24px rgba(16,185,129,0.5);
+        animation: rotateCheck 0.6s ease-out;
+      ">✓</div>
+
+      <h2 style="color: #ffffff; font-size: 1.4rem; font-weight: 900; margin: 0 0 4px;">${title}</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 1.2rem;">${subtitle}</p>
+
+      <div style="background: #090d16; border: 1px solid rgba(16,185,129,0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;">
+        <div style="color: #34d399; font-size: 0.72rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px;">UANG KEMBALIAN</div>
+        <div style="color: #10b981; font-size: 1.85rem; font-weight: 900; font-family: monospace;">${money(change)}</div>
+        <div style="border-top: 1px dashed var(--border); margin: 8px 0; padding-top: 6px; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+          <span>Total: <strong>${money(total)}</strong></span>
+          <span>Bayar: <strong>${money(paid)}</strong></span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-modal-print-receipt" class="btn btn-primary btn-block" style="padding: 0.85rem; font-weight: 800;">
+          🖨️ Cetak Struk Bon (PDF / 58mm)
+        </button>
+        <button id="btn-modal-close-checkout" class="btn btn-secondary btn-block" style="padding: 0.75rem;">
+          Transaksi Baru
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('btn-modal-print-receipt').onclick = () => {
+    onPrint?.();
+  };
+  document.getElementById('btn-modal-close-checkout').onclick = () => {
+    modal.remove();
+  };
 };
 
 // ==========================================
@@ -877,7 +952,16 @@ async function checkout() {
     cart = [];
     renderCart();
     document.getElementById('pos-paid').value = '';
-    showAlert('Transaksi berhasil dicatat.', 'success');
+    
+    // Tampilkan modal checkout sukses dengan animasi centang hijau bergerak
+    showPremiumSuccessModal({
+      title: 'TRANSAKSI BERHASIL!',
+      subtitle: `Invoice #${res.transaction_id}`,
+      total: res.total,
+      paid: res.paid,
+      change: res.change,
+      onPrint: () => lastReceipt && printReceiptPdf(lastReceipt)
+    });
     fetchProductsCached().catch(() => {});
   } catch (e) {
     showAlert(e.message || 'Gagal checkout', 'error');
