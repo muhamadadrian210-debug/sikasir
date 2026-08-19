@@ -1,1 +1,0 @@
-{"cli":{"version":">= 14.0.0","appVersionSource":"remote"},"build":{"preview":{"android":{"buildType":"apk","gradleCommand":":app:assembleRelease"}},"production":{"android":{"buildType":"app-bundle"}}},"submit":{"production":{}}}
