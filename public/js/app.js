@@ -1,6 +1,20 @@
 import { api, getToken, getUser, setToken, setUser } from './api.js';
 import { startScanner, stopScanner, scanFile } from './scanner.js';
 
+// Safe DOM manipulators to prevent "Cannot set properties of null"
+function setElText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+function setElHtml(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+function setElValue(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
 window.showScanToast = function(message) {
   const existing = document.querySelector('.scan-toast-overlay');
   if (existing) existing.remove();
@@ -603,7 +617,7 @@ function setActiveNav(id) {
   document.querySelectorAll('#sidebar-nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.view === id);
   });
-  document.getElementById('page-title').textContent = StoreConfig.getPageTitle(id, TITLE_LOOKUP[id] || '');
+  setElText('page-title', StoreConfig.getPageTitle(id, TITLE_LOOKUP[id] || ''));
 }
 
 function showView(id) {
@@ -621,7 +635,7 @@ function buildSidebar() {
     admin: 'MODE: ADMIN TOKO',
     both: 'MODE: KASIR + ADMIN',
   };
-  document.getElementById('sidebar-mode-label').textContent = modeLabels[storedMode] || '';
+  setElText('sidebar-mode-label', modeLabels[storedMode] || '');
 
   const groups = [
     {
@@ -943,10 +957,10 @@ function renderPOS() {
   const paidEl = document.getElementById('pos-paid');
   const updateChange = () => {
     const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
-    const paid = Number(paidEl.value) || 0;
-    document.getElementById('pos-change').textContent = money(Math.max(0, paid - total));
+    const paid = Number(paidEl ? paidEl.value : 0) || 0;
+    setElText('pos-change', money(Math.max(0, paid - total)));
   };
-  paidEl.addEventListener('input', updateChange);
+  if (paidEl) paidEl.addEventListener('input', updateChange);
 
   function openScanModal(onCode) {
     openWebBarcodeScanner(onCode);
@@ -1003,12 +1017,10 @@ function renderPOS() {
   fetchProductsCached()
     .then(() => {
       renderPosCatalog();
-      document.getElementById('pos-offline-note').textContent =
-        '✓ Produk tersinkronisasi';
+      setElText('pos-offline-note', '✓ Produk tersinkronisasi');
     })
     .catch(() => {
-      document.getElementById('pos-offline-note').textContent =
-        'Gunakan koneksi sekali untuk mengunduh daftar produk.';
+      setElText('pos-offline-note', 'Gunakan koneksi sekali untuk mengunduh daftar produk.');
     });
 }
 
@@ -1571,14 +1583,14 @@ async function loadReports() {
     ]);
 
     // Update KPIs
-    document.getElementById('kpi-revenue').textContent = money(margin.total_revenue || 0);
+    setElText('kpi-revenue', money(margin.total_revenue || 0));
     const expEl = document.getElementById('kpi-expense');
     if (expEl) expEl.textContent = money(margin.total_expenses || 0);
     const netRevEl = document.getElementById('kpi-net-revenue');
     if (netRevEl) netRevEl.textContent = money(margin.net_revenue ?? (margin.total_revenue - (margin.total_expenses || 0)));
-    document.getElementById('kpi-profit').textContent = money(margin.net_profit ?? (margin.total_profit - (margin.total_expenses || 0)));
+    setElText('kpi-profit', money(margin.net_profit ?? (margin.total_profit - (margin.total_expenses || 0))));
     const totalQtySold = (margin.products || []).reduce((s, p) => s + Number(p.qty_sold || 0), 0);
-    document.getElementById('kpi-items').textContent = `${totalQtySold} pcs`;
+    setElText('kpi-items', `${totalQtySold} pcs`);
 
     // Render Chart
     const ctx = document.getElementById('chart-sales');
@@ -1884,10 +1896,10 @@ async function loadIncomingPanel() {
     const d = document.getElementById('inc-date').value || today;
     try {
       const sum = await api(`/incoming-goods/summary/today?date=${encodeURIComponent(d)}`);
-      document.getElementById('inc-summary').innerHTML = `
-        Tanggal <strong>${d}</strong>: <strong>${sum.items}</strong> entri · total qty (sum): <strong>${Number(sum.total_qty).toLocaleString('id-ID')}</strong>`;
+      setElHtml('inc-summary', `
+        Tanggal <strong>${d}</strong>: <strong>${sum.items}</strong> entri · total qty (sum): <strong>${Number(sum.total_qty).toLocaleString('id-ID')}</strong>`);
     } catch {
-      document.getElementById('inc-summary').textContent = 'Ringkasan tidak tersedia.';
+      setElText('inc-summary', 'Ringkasan tidak tersedia.');
     }
     try {
       const rows = await api(`/incoming-goods?date=${encodeURIComponent(d)}`);
@@ -2705,10 +2717,10 @@ async function loadExpensesPanel() {
 
   const renderExpenseList = async () => {
     try {
-      const period = periodSelect.value;
+      const period = periodSelect ? periodSelect.value : 'all';
       const res = await api(`/expenses?period=${period}`);
-      document.getElementById('exp-total-val').textContent = money(res.total_expense || 0);
-      document.getElementById('exp-count-val').textContent = `${res.count || 0} nota`;
+      setElText('exp-total-val', money(res.total_expense || 0));
+      setElText('exp-count-val', `${res.count || 0} nota`);
 
       const list = res.expenses || [];
       if (list.length === 0) {
