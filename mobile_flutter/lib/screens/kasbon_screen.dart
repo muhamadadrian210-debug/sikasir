@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class KasbonScreen extends StatefulWidget {
   const KasbonScreen({super.key});
@@ -27,7 +28,6 @@ class _KasbonScreenState extends State<KasbonScreen> {
     try {
       final res = await ApiService().get('/transactions');
       if (res.statusCode == 200 && res.data is List) {
-        // Filter transactions with payment_method == 'kasbon' or have unpaid debt
         final all = res.data as List;
         setState(() {
           _debts = all.where((t) => (t['payment_method'] ?? '').toString().toLowerCase() == 'kasbon' || (t['debt_amount'] ?? 0) > 0).toList();
@@ -61,35 +61,36 @@ class _KasbonScreenState extends State<KasbonScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: const Color(0xFF25D366).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.chat_rounded, color: Color(0xFF25D366), size: 20),
+              decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(8)),
+              child: const Icon(Icons.chat_rounded, color: Color(0xFF16A34A), size: 20),
             ),
             const SizedBox(width: 10),
-            const Text('Draf Tagihan WhatsApp', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('Draf Tagihan WhatsApp', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kirim ke: $name (${formattedPhone.isNotEmpty ? "+$formattedPhone" : "Belum ada no WA"})', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+            Text('Kirim ke: $name (${formattedPhone.isNotEmpty ? "+$formattedPhone" : "Belum ada nomor WA"})',
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF090D16),
+                color: AppColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF1E293B)),
+                border: Border.all(color: AppColors.border),
               ),
               child: SelectableText(
                 messageText,
-                style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, height: 1.4),
               ),
             ),
           ],
@@ -97,7 +98,7 @@ class _KasbonScreenState extends State<KasbonScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tutup', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: const Text('Tutup', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
@@ -108,7 +109,7 @@ class _KasbonScreenState extends State<KasbonScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('📋 Draf tagihan disalin! Buka WhatsApp pelanggan untuk paste.'),
-                  backgroundColor: Color(0xFF10B981),
+                  backgroundColor: AppColors.primary,
                 ),
               );
             },
@@ -127,17 +128,17 @@ class _KasbonScreenState extends State<KasbonScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.credit_card, color: Color(0xFFF59E0B), size: 20),
+              decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(8)),
+              child: const Icon(Icons.credit_card, color: AppColors.warning, size: 20),
             ),
             const SizedBox(width: 10),
-            const Text('Catat Kasbon Baru', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Catat Kasbon Baru', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
         content: SingleChildScrollView(
@@ -146,28 +147,28 @@ class _KasbonScreenState extends State<KasbonScreen> {
             children: [
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nama Pelanggan *', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                style: const TextStyle(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Nama Pelanggan *'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'No WhatsApp / HP *', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                style: const TextStyle(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Nomor WhatsApp / HP *'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nominal Hutang (Rp) *', labelStyle: TextStyle(color: Color(0xFF10B981))),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                decoration: const InputDecoration(labelText: 'Nominal Hutang (Rp) *'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: noteCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Keterangan Barang / Catatan', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                style: const TextStyle(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Keterangan Barang / Catatan'),
               ),
             ],
           ),
@@ -175,10 +176,10 @@ class _KasbonScreenState extends State<KasbonScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () {
               final name = nameCtrl.text.trim();
               final phone = phoneCtrl.text.trim();
@@ -202,9 +203,9 @@ class _KasbonScreenState extends State<KasbonScreen> {
               });
 
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Kasbon pelanggan berhasil dicatat!'), backgroundColor: Color(0xFF10B981)));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Kasbon pelanggan berhasil dicatat!'), backgroundColor: AppColors.primary));
             },
-            child: const Text('Simpan Kasbon', style: TextStyle(color: Color(0xFF090D16), fontWeight: FontWeight.bold)),
+            child: const Text('Simpan Kasbon', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -223,40 +224,30 @@ class _KasbonScreenState extends State<KasbonScreen> {
     final totalDebt = filtered.fold<double>(0, (sum, it) => sum + (it['total'] ?? it['debt_amount'] ?? 0));
 
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: Row(
-          children: [
-            Text('Manajemen Kasbon & Hutang', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _fetchKasbon,
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFFF59E0B),
-        icon: const Icon(Icons.add, color: Color(0xFF090D16)),
-        label: const Text('Catat Kasbon', style: TextStyle(color: Color(0xFF090D16), fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Catat Kasbon', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         onPressed: _showAddKasbonDialog,
       ),
       body: Column(
         children: [
           // Total Kasbon Header Banner
           Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [const Color(0xFFB45309).withValues(alpha: 0.8), const Color(0xFF78350F)],
-              ),
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,15 +255,15 @@ class _KasbonScreenState extends State<KasbonScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('TOTAL PIUTANG / KASBON AKTIF', style: TextStyle(color: Color(0xFFFDE68A), fontSize: 11, fontWeight: FontWeight.bold)),
+                    const Text('TOTAL KASBON / PIUTANG BELUM LUNAS', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(_currency.format(totalDebt), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+                    Text(_currency.format(totalDebt), style: GoogleFonts.plusJakartaSans(color: AppColors.danger, fontSize: 22, fontWeight: FontWeight.w900)),
                   ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(20)),
-                  child: Text('${filtered.length} Catatan', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(20)),
+                  child: Text('${filtered.length} Catatan', style: const TextStyle(color: AppColors.warning, fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -280,41 +271,49 @@ class _KasbonScreenState extends State<KasbonScreen> {
 
           // Search Field
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextField(
-              onChanged: (val) => setState(() => _searchQuery = val),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: '🔍 Cari nama / nomor WhatsApp pelanggan...',
-                hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                filled: true,
-                fillColor: const Color(0xFF111827),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: TextField(
+                onChanged: (val) => setState(() => _searchQuery = val),
+                style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Cari nama atau nomor WhatsApp...',
+                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 11),
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           // List Kasbon
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFFF59E0B)))
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : filtered.isEmpty
                     ? const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 48),
+                            Icon(Icons.check_circle_outline, color: AppColors.primary, size: 48),
                             SizedBox(height: 10),
-                            Text('Tidak ada catatan kasbon yang belum lunas 🎉', style: TextStyle(color: Color(0xFF94A3B8))),
+                            Text('Tidak ada catatan kasbon yang belum lunas 🎉', style: TextStyle(color: AppColors.textSecondary)),
                           ],
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, i) => const SizedBox(height: 10),
                         itemBuilder: (ctx, idx) {
                           final d = filtered[idx];
                           final name = d['customer_name'] ?? d['name'] ?? 'Pelanggan Kasbon';
@@ -324,35 +323,32 @@ class _KasbonScreenState extends State<KasbonScreen> {
 
                           return Container(
                             padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF111827),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF1E293B)),
-                            ),
+                            decoration: AppTheme.cardDecoration(),
                             child: Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                    color: AppColors.warningLight,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(Icons.person_pin_circle_rounded, color: Color(0xFFF59E0B), size: 24),
+                                  child: const Icon(Icons.person_pin_circle_rounded, color: AppColors.warning, size: 22),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(name, style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text(name, style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
                                       const SizedBox(height: 2),
-                                      Text('WA: $phone  ·  ${date != null ? DateFormat('dd/MM/yy').format(date) : '-'}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                                      Text('WA: $phone  ·  ${date != null ? DateFormat('dd/MM/yy').format(date) : '-'}',
+                                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
                                       const SizedBox(height: 4),
-                                      Text(_currency.format(amount), style: const TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w900, fontSize: 14)),
+                                      Text(_currency.format(amount),
+                                          style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 14)),
                                     ],
                                   ),
                                 ),
-                                // 1-Click WhatsApp Tagih Button
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF25D366),

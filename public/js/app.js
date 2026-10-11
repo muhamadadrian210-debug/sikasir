@@ -45,6 +45,78 @@ window.showScanToast = function(message) {
   }, 1800);
 };
 
+window.showMinimalNotification = function({ type = 'success', title, message, duration = 3000 }) {
+  const existing = document.querySelector('.sikasir-pill-toast');
+  if (existing) existing.remove();
+
+  const colors = {
+    success: { primary: '#10b981', bg: '#064e3b', icon: '✓', border: 'rgba(16,185,129,0.4)' },
+    warning: { primary: '#f59e0b', bg: '#451a03', icon: '✕', border: 'rgba(245,158,11,0.4)' },
+    error: { primary: '#ef4444', bg: '#450a0a', icon: '!', border: 'rgba(239,68,68,0.4)' },
+    info: { primary: '#3b82f6', bg: '#172554', icon: 'ℹ', border: 'rgba(59,130,246,0.4)' }
+  };
+  const theme = colors[type] || colors.info;
+
+  const toast = document.createElement('div');
+  toast.className = 'sikasir-pill-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 10000;
+    background: #0f172a;
+    border: 1px solid ${theme.border};
+    border-radius: 9999px;
+    padding: 8px 18px 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35), 0 0 20px ${theme.border};
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+    cursor: pointer;
+    font-family: system-ui, -apple-system, sans-serif;
+  `;
+
+  toast.innerHTML = `
+    <div style="
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: ${theme.primary};
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    ">${theme.icon}</div>
+    <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
+      <span style="font-size: 0.72rem; font-weight: 800; color: ${theme.primary}; letter-spacing: 0.6px; text-transform: uppercase;">${title}</span>
+      <span style="font-size: 0.86rem; font-weight: 600; color: #f8fafc;">${message}</span>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  const dismiss = () => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-15px)';
+    setTimeout(() => toast.remove(), 300);
+  };
+
+  toast.onclick = dismiss;
+  setTimeout(dismiss, duration);
+};
+
 window.showPremiumSuccessModal = function({ title, subtitle, total, paid, change, onPrint }) {
   const modal = document.createElement('div');
   modal.className = 'modal-backdrop open';
@@ -882,6 +954,13 @@ function renderPOS() {
 
   document.getElementById('pos-btn-scan').onclick = () => openScanModal(onPosScan);
   document.getElementById('pos-clear').onclick = () => {
+    if (cart.length > 0) {
+      window.showMinimalNotification({
+        type: 'warning',
+        title: 'PEMBAYARAN DIBATALKAN',
+        message: 'Pesanan dibatalkan & keranjang kasir dikosongkan'
+      });
+    }
     cart = [];
     renderCart();
     lastReceipt = null;
@@ -1010,6 +1089,13 @@ async function checkout() {
     renderCart();
     document.getElementById('pos-paid').value = '';
     
+    // Tampilkan notifikasi floating pill pembayaran selesai
+    window.showMinimalNotification({
+      type: 'success',
+      title: 'PEMBAYARAN SELESAI',
+      message: `Invoice #${res.transaction_id} · Total ${money(res.total)}`
+    });
+
     // Tampilkan modal checkout sukses dengan animasi centang hijau bergerak
     showPremiumSuccessModal({
       title: 'TRANSAKSI BERHASIL!',
@@ -1022,6 +1108,11 @@ async function checkout() {
     fetchProductsCached().catch(() => {});
   } catch (e) {
     showAlert(e.message || 'Gagal checkout', 'error');
+    window.showMinimalNotification({
+      type: 'error',
+      title: 'PEMBAYARAN GAGAL',
+      message: e.message || 'Transaksi gagal diproses'
+    });
   }
 }
 

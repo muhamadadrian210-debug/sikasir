@@ -27,6 +27,8 @@ const backupRoutes = require('./routes/backup');
 const expensesRoutes = require('./routes/expenses');
 const shiftsRoutes = require('./routes/shifts');
 
+const cdsRoutes = require('./routes/cds');
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -50,6 +52,9 @@ app.get('/api/csrf-token', issueCsrf);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+/** Customer Display System (CDS) — akses terbuka lokal per tenant */
+app.use('/api/cds', cdsRoutes);
 
 /** Setup admin pertama — tidak butuh auth */
 app.use('/api/setup', setupRoutes);

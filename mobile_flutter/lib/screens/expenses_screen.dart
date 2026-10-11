@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -48,29 +50,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => AlertDialog(
-          backgroundColor: const Color(0xFF111827),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
-          title: const Text('Catat Pengeluaran / Bayar Nota', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Catat Kas Keluar / Nota', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: sourceCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Toko / Supplier / Keperluan', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                  style: const TextStyle(fontSize: 13),
+                  decoration: const InputDecoration(labelText: 'Toko / Supplier / Keperluan *'),
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: category,
-                  dropdownColor: const Color(0xFF1E293B),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Kategori', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                  dropdownColor: AppColors.surface,
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  decoration: const InputDecoration(labelText: 'Kategori Biaya'),
                   items: const [
                     DropdownMenuItem(value: 'Supplier', child: Text('Belanja Supplier / Restock')),
-                    DropdownMenuItem(value: 'Operasional', child: Text('Operasional & Listrik')),
+                    DropdownMenuItem(value: 'Operasional', child: Text('Operasional & Listrik Toko')),
                     DropdownMenuItem(value: 'Gaji', child: Text('Gaji Karyawan')),
-                    DropdownMenuItem(value: 'Lainnya', child: Text('Keperluan Lain')),
+                    DropdownMenuItem(value: 'Lainnya', child: Text('Keperluan Lain-lain')),
                   ],
                   onChanged: (val) => setModalState(() => category = val ?? 'Supplier'),
                 ),
@@ -78,14 +80,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 TextField(
                   controller: amountCtrl,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Nominal Biaya (Rp)', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  decoration: const InputDecoration(labelText: 'Nominal Biaya (Rp) *'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: notesCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Catatan / Keterangan', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                  style: const TextStyle(fontSize: 13),
+                  decoration: const InputDecoration(labelText: 'Catatan / Keterangan'),
                 ),
               ],
             ),
@@ -93,15 +95,21 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
               onPressed: () async {
+                final amount = double.tryParse(amountCtrl.text) ?? 0;
+                if (sourceCtrl.text.trim().isEmpty || amount <= 0) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Keperluan dan nominal wajib diisi!')));
+                  return;
+                }
+
                 final payload = {
                   'store_source': sourceCtrl.text.trim(),
                   'category': category,
-                  'amount': double.tryParse(amountCtrl.text) ?? 0,
+                  'amount': amount,
                   'notes': notesCtrl.text.trim(),
                 };
 
@@ -113,11 +121,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Gagal catat pengeluaran: $e')));
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Gagal catat kas keluar: $e')));
                   }
                 }
               },
-              child: const Text('Simpan Kas Keluar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text('Simpan Kas Keluar'),
             ),
           ],
         ),
@@ -127,83 +135,110 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final totalExpense = _expenses.fold<double>(0, (sum, it) => sum + ((it['amount'] is num) ? (it['amount'] as num).toDouble() : 0));
+
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: const Text('Bayar Nota & Kas Keluar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFFEF4444)),
-            onPressed: _showAddExpenseModal,
-            tooltip: 'Tambah Pengeluaran',
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.danger,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Catat Pengeluaran', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        onPressed: _showAddExpenseModal,
+      ),
+      body: Column(
+        children: [
+          // Banner Total Kas Keluar Bulan Ini
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
+            decoration: AppTheme.cardDecoration(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('TOTAL KAS KELUAR BULAN INI', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(
+                      _currency.format(totalExpense),
+                      style: GoogleFonts.plusJakartaSans(color: AppColors.danger, fontSize: 22, fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
+                  onPressed: _fetchExpenses,
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _fetchExpenses,
+
+          // List Pengeluaran
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _expenses.isEmpty
+                    ? const Center(
+                        child: Text('Belum ada catatan kas keluar bulan ini', style: TextStyle(color: AppColors.textSecondary)),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                        itemCount: _expenses.length,
+                        separatorBuilder: (_, i) => const SizedBox(height: 10),
+                        itemBuilder: (ctx, idx) {
+                          final ex = _expenses[idx];
+                          final date = ex['created_at'] != null ? DateTime.tryParse(ex['created_at'].toString()) : null;
+
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: AppTheme.cardDecoration(),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.dangerLight,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.receipt_outlined, color: AppColors.danger, size: 22),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        ex['store_source'] ?? '',
+                                        style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Kategori: ${ex['category'] ?? '-'} · ${date != null ? DateFormat('dd MMM yyyy, HH:mm').format(date) : '-'}',
+                                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                                      ),
+                                      if (ex['notes'] != null && ex['notes'].toString().isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          ex['notes'],
+                                          style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontStyle: FontStyle.italic),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  _currency.format(ex['amount'] ?? 0),
+                                  style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-          : _expenses.isEmpty
-              ? const Center(child: Text('Belum ada catatan kas keluar bulan ini', style: TextStyle(color: Color(0xFF64748B))))
-              : ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _expenses.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, idx) {
-                    final ex = _expenses[idx];
-                    final date = ex['created_at'] != null ? DateTime.tryParse(ex['created_at'].toString()) : null;
-                    return Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF111827),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF1E293B)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF7F1D1D).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.receipt_outlined, color: Color(0xFFEF4444), size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  ex['store_source'] ?? '',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Kategori: ${ex['category'] ?? '-'} | ${date != null ? DateFormat('dd MMM yyyy, HH:mm').format(date) : '-'}',
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                                ),
-                                if (ex['notes'] != null && ex['notes'].toString().isNotEmpty)
-                                  Text(
-                                    ex['notes'],
-                                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontStyle: FontStyle.italic),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            _currency.format(ex['amount'] ?? 0),
-                            style: const TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w900, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class ShiftScreen extends StatefulWidget {
   const ShiftScreen({super.key});
@@ -24,6 +26,13 @@ class _ShiftScreenState extends State<ShiftScreen> {
     _checkActiveShift();
   }
 
+  @override
+  void dispose() {
+    _initialCashController.dispose();
+    _actualCashController.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkActiveShift() async {
     setState(() => _isLoading = true);
     try {
@@ -36,7 +45,7 @@ class _ShiftScreenState extends State<ShiftScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Koneksi shift offline: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Koneksi shift: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -81,29 +90,34 @@ class _ShiftScreenState extends State<ShiftScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Laporan Tutup Shift', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Rekap Tutup Shift Kasir', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kasir: ${summary['cashier']}', style: const TextStyle(color: Color(0xFF94A3B8))),
-            const Divider(color: Color(0xFF1E293B)),
-            Text('Modal Awal: ${_currency.format(summary['initial_cash'])}', style: const TextStyle(color: Colors.white)),
-            Text('Total Penjualan: ${_currency.format(summary['total_sales'])}', style: const TextStyle(color: Color(0xFF10B981))),
-            Text('Uang Seharusnya (Expected): ${_currency.format(summary['expected_cash'])}', style: const TextStyle(color: Colors.white)),
-            Text('Uang Fisik Kasir: ${_currency.format(summary['actual_cash'])}', style: const TextStyle(color: Colors.white)),
-            const Divider(color: Color(0xFF1E293B)),
+            Text('Kasir: ${summary['cashier'] ?? 'Kasir'}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+            const SizedBox(height: 8),
+            const Divider(color: AppColors.border),
+            const SizedBox(height: 8),
+            _buildReportRow('Modal Awal', _currency.format(summary['initial_cash'] ?? 0)),
+            _buildReportRow('Total Penjualan Shift', _currency.format(summary['total_sales'] ?? 0), isHighlighted: true),
+            _buildReportRow('Uang Seharusnya (Expected)', _currency.format(summary['expected_cash'] ?? 0)),
+            _buildReportRow('Uang Fisik Dihitung Kasir', _currency.format(summary['actual_cash'] ?? 0)),
+            const SizedBox(height: 8),
+            const Divider(color: AppColors.border),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Selisih (Variance):', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                const Text('Selisih (Variance):', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                 Text(
                   _currency.format(variance),
                   style: TextStyle(
-                    color: variance == 0 ? const Color(0xFF10B981) : (variance > 0 ? const Color(0xFF3B82F6) : const Color(0xFFEF4444)),
+                    color: variance == 0 ? AppColors.primaryDark : (variance > 0 ? AppColors.secondary : AppColors.danger),
                     fontWeight: FontWeight.w900,
+                    fontSize: 15,
                   ),
                 ),
               ],
@@ -112,9 +126,29 @@ class _ShiftScreenState extends State<ShiftScreen> {
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Selesai', style: TextStyle(color: Colors.white)),
+            child: const Text('Selesai'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportRow(String label, String value, {bool isHighlighted = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+          Text(
+            value,
+            style: TextStyle(
+              color: isHighlighted ? AppColors.primaryDark : AppColors.textPrimary,
+              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+              fontSize: 12.5,
+            ),
           ),
         ],
       ),
@@ -124,14 +158,10 @@ class _ShiftScreenState extends State<ShiftScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        title: const Text('Manajemen Shift Kasir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
+      backgroundColor: AppColors.background,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-          : Padding(
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: _hasActiveShift ? _buildActiveShiftView() : _buildStartShiftView(),
             ),
@@ -141,46 +171,52 @@ class _ShiftScreenState extends State<ShiftScreen> {
   Widget _buildStartShiftView() {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Card(
-          color: const Color(0xFF111827),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lock_open, color: Color(0xFF10B981), size: 48),
-                const SizedBox(height: 12),
-                const Text('Buka Shift Kasir Baru', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                const Text('Masukkan modal awal di laci kasir', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _initialCashController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    labelText: 'Modal Awal Kas (Rp)',
-                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                    filled: true,
-                    fillColor: const Color(0xFF090D16),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: AppTheme.cardDecoration(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: _startShift,
-                    child: const Text('BUKA SHIFT KASIR', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
+                child: const Icon(Icons.lock_open_rounded, color: AppColors.primary, size: 40),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Buka Shift Kasir Baru',
+                style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Masukkan jumlah uang modal awal di laci kasir (cash drawer)',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _initialCashController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                decoration: const InputDecoration(
+                  labelText: 'Modal Awal Kas (Rp)',
+                  hintText: 'Contoh: 200000',
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: _startShift,
+                  child: const Text('BUKA SHIFT KASIR SEKARANG', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -194,83 +230,94 @@ class _ShiftScreenState extends State<ShiftScreen> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
-        child: Card(
-          color: const Color(0xFF111827),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Shift Sedang Aktif', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFF064E3B), borderRadius: BorderRadius.circular(6)),
-                      child: const Text('OPEN', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-                if (startTime != null)
-                  Text('Dimulai: ${DateFormat('dd MMM yyyy HH:mm').format(startTime)}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                const Divider(color: Color(0xFF1E293B), height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Modal Awal:', style: TextStyle(color: Color(0xFF94A3B8))),
-                    Text(_currency.format(shift['initial_cash'] ?? 0), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total Penjualan Shift:', style: TextStyle(color: Color(0xFF94A3B8))),
-                    Text(_currency.format(shift['total_sales'] ?? 0), style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Uang Seharusnya (Expected):', style: TextStyle(color: Color(0xFF94A3B8))),
-                    Text(_currency.format(shift['expected_cash'] ?? 0), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                  ],
-                ),
-                const Divider(color: Color(0xFF1E293B), height: 24),
-                const Text('Tutup Shift & Hitung Kas Fisik', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _actualCashController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    labelText: 'Jumlah Uang Fisik di Laci (Rp)',
-                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                    filled: true,
-                    fillColor: const Color(0xFF090D16),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: AppTheme.cardDecoration(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Shift Sedang Aktif',
+                    style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEF4444),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.successLight,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    onPressed: _closeShift,
-                    child: const Text('TUTUP SHIFT & CETAK REKAP', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text('AKTIF (OPEN)', style: TextStyle(color: AppColors.primaryDark, fontSize: 11, fontWeight: FontWeight.w800)),
                   ),
+                ],
+              ),
+              if (startTime != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'Dimulai sejak: ${DateFormat('dd MMMM yyyy, HH:mm').format(startTime)}',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
               ],
-            ),
+              const SizedBox(height: 14),
+              const Divider(color: AppColors.border),
+              const SizedBox(height: 10),
+
+              // KPI Nilai Shift
+              _buildMetricTile('Modal Awal Kasir', _currency.format(shift['initial_cash'] ?? 0)),
+              _buildMetricTile('Total Penjualan Shift', _currency.format(shift['total_sales'] ?? 0), isPrimary: true),
+              _buildMetricTile('Uang Seharusnya (Expected)', _currency.format(shift['expected_cash'] ?? 0), isBold: true),
+
+              const SizedBox(height: 14),
+              const Divider(color: AppColors.border),
+              const SizedBox(height: 12),
+
+              Text('Tutup Shift & Hitung Kasir Fisik', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _actualCashController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                decoration: const InputDecoration(
+                  labelText: 'Jumlah Uang Fisik di Laci (Rp)',
+                  hintText: 'Hitung dan masukkan uang fisik di laci',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                  onPressed: _closeShift,
+                  child: const Text('TUTUP SHIFT & HITUNG SELISIH', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMetricTile(String label, String value, {bool isPrimary = false, bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          Text(
+            value,
+            style: TextStyle(
+              color: isPrimary ? AppColors.primaryDark : AppColors.textPrimary,
+              fontWeight: isBold || isPrimary ? FontWeight.w800 : FontWeight.w600,
+              fontSize: isPrimary ? 15 : 13.5,
+            ),
+          ),
+        ],
       ),
     );
   }

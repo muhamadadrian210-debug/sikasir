@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../core/services/api_service.dart';
 import '../core/widgets/heavy_duty_barcode_scanner_modal.dart';
 import '../core/widgets/premium_notification.dart';
+import '../core/theme/app_theme.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -21,6 +22,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   List<dynamic> _categories = [];
   bool _isLoading = false;
   String _searchQuery = '';
+  String _stockFilter = 'all'; // all, ready, low, empty
 
   @override
   void initState() {
@@ -53,10 +55,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void _showAddMethodSelector() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF111827),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: Color(0xFF1E293B)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -66,15 +67,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        color: AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.add_business_rounded, color: Color(0xFF10B981), size: 22),
+                      child: const Icon(Icons.add_business_rounded, color: AppColors.primary, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Column(
@@ -82,11 +94,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       children: [
                         Text(
                           'Tambah Produk Baru',
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         const Text(
                           'Pilih 1 dari 4 metode pendaftaran produk pintar',
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
                         ),
                       ],
                     ),
@@ -97,11 +109,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 // METODE 1: AI Prompt Magic
                 _buildMethodTile(
                   icon: Icons.auto_awesome,
-                  iconColor: const Color(0xFF38BDF8),
+                  iconColor: const Color(0xFF0284C7),
                   title: '✨ 1. Lewat AI Prompt Cerdas',
-                  subtitle: 'Ketik bebas, AI otomatis ekstrak nama, harga & stok eceran/grosir',
+                  subtitle: 'Ketik bebas, AI otomatis ekstrak nama, harga & stok',
                   badge: 'TERCEPAT',
-                  badgeColor: const Color(0xFF38BDF8),
+                  badgeColor: const Color(0xFF0284C7),
                   onTap: () {
                     Navigator.pop(ctx);
                     _showAiAddProductDialog();
@@ -112,11 +124,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 // METODE 2: Scan Barcode Kamera / USB
                 _buildMethodTile(
                   icon: Icons.qr_code_scanner_rounded,
-                  iconColor: const Color(0xFF10B981),
+                  iconColor: AppColors.primary,
                   title: '📷 2. Scan Barcode Kamera',
                   subtitle: 'Scan fisik barcode kemasan produk untuk isi otomatis',
                   badge: 'INSTAN',
-                  badgeColor: const Color(0xFF10B981),
+                  badgeColor: AppColors.primary,
                   onTap: () {
                     Navigator.pop(ctx);
                     _openBarcodeScannerForAdd();
@@ -127,11 +139,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 // METODE 3: Foto Kamera / Galeri (AI Vision OCR)
                 _buildMethodTile(
                   icon: Icons.camera_alt_rounded,
-                  iconColor: const Color(0xFFF59E0B),
+                  iconColor: const Color(0xFFD97706),
                   title: '🖼️ 3. Foto Produk (AI Vision OCR)',
-                  subtitle: 'Ambil foto bungkus produk, AI mengenali nama & merek',
+                  subtitle: 'Ambil foto bungkus produk, AI mengenali merek & nama',
                   badge: 'AI VISION',
-                  badgeColor: const Color(0xFFF59E0B),
+                  badgeColor: const Color(0xFFD97706),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickAndAnalyzeProductImage();
@@ -142,11 +154,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 // METODE 4: Input Manual
                 _buildMethodTile(
                   icon: Icons.edit_note_rounded,
-                  iconColor: const Color(0xFF94A3B8),
+                  iconColor: AppColors.textSecondary,
                   title: '✍️ 4. Form Manual',
                   subtitle: 'Input nama, harga modal, harga jual, dan stok secara manual',
                   badge: 'STANDAR',
-                  badgeColor: const Color(0xFF64748B),
+                  badgeColor: AppColors.textSecondary,
                   onTap: () {
                     Navigator.pop(ctx);
                     _showAddEditProductModal();
@@ -171,9 +183,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1E293B)),
+        border: Border.all(color: AppColors.border),
       ),
       child: ListTile(
         onTap: onTap,
@@ -181,28 +193,32 @@ class _ProductsScreenState extends State<ProductsScreen> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.15),
+            color: iconColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
         title: Row(
           children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5)),
-            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
+              ),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
               decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.15),
+                color: badgeColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
+                border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
               ),
-              child: Text(badge, style: TextStyle(color: badgeColor, fontSize: 9, fontWeight: FontWeight.bold)),
+              child: Text(badge, style: TextStyle(color: badgeColor, fontSize: 9.5, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5)),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 20),
+        subtitle: Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
+        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 20),
       ),
     );
   }
@@ -216,23 +232,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF111827),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFF1E293B)),
-          ),
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF38BDF8), Color(0xFF10B981)]),
+                  color: const Color(0xFFE0F2FE),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.auto_awesome, color: Color(0xFF0284C7), size: 18),
               ),
               const SizedBox(width: 10),
-              const Text('Tambah Produk Lewat AI', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('Tambah Lewat AI Prompt', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
@@ -240,29 +253,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Ketik kalimat bebas, AI otomatis menerjemahkan harga grosir, modal & stok:',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                'Ketik kalimat bebas, AI otomatis membaca harga grosir, modal & stok:',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: promptCtrl,
                 maxLines: 3,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Contoh: Masuk rokok sampoerna 1 slop modal 280k jual 32k barcode 89923881',
-                  hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  filled: true,
-                  fillColor: const Color(0xFF090D16),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
+                style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Contoh: Masuk sabun lifebuoy 1 lusin modal 30k jual 3500 stok 12 barcode 8991234',
                 ),
               ),
               if (isAnalyzing) ...[
                 const SizedBox(height: 14),
                 const Row(
                   children: [
-                    SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Color(0xFF38BDF8), strokeWidth: 2)),
+                    SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)),
                     SizedBox(width: 10),
-                    Text('AI sedang mengekstrak data produk...', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 12)),
+                    Text('AI sedang mengekstrak data produk...', style: TextStyle(color: AppColors.primaryDark, fontSize: 12)),
                   ],
                 ),
               ],
@@ -271,13 +280,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
           actions: [
             TextButton(
               onPressed: isAnalyzing ? null : () => Navigator.pop(ctx),
-              child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF38BDF8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
               onPressed: isAnalyzing
                   ? null
                   : () async {
@@ -306,7 +311,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         }
                       }
                     },
-              child: const Text('Ekstrak & Isi Form', style: TextStyle(color: Color(0xFF090D16), fontWeight: FontWeight.bold)),
+              child: const Text('Ekstrak & Isi Form'),
             ),
           ],
         ),
@@ -338,12 +343,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => const AlertDialog(
-        backgroundColor: Color(0xFF111827),
+        backgroundColor: AppColors.surface,
         content: Row(
           children: [
-            CircularProgressIndicator(color: Color(0xFFF59E0B)),
+            CircularProgressIndicator(color: AppColors.primary),
             SizedBox(width: 16),
-            Text('AI Vision menganalisis kemasan...', style: TextStyle(color: Colors.white, fontSize: 13)),
+            Text('AI Vision menganalisis kemasan...', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
           ],
         ),
       ),
@@ -356,7 +361,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       });
 
       final res = await ApiService().post('/ai/analyze-product-image', data: formData);
-      if (mounted) Navigator.pop(context); // pop loading dialog
+      if (!mounted) return;
+      Navigator.pop(context); // pop loading dialog
 
       if (res.statusCode == 200 && res.data != null) {
         _showAddEditProductModal({
@@ -390,15 +396,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => AlertDialog(
-          backgroundColor: const Color(0xFF111827),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Icon(product == null ? Icons.add_box_rounded : Icons.edit_note_rounded, color: const Color(0xFF10B981), size: 22),
+              Icon(product == null ? Icons.add_box_rounded : Icons.edit_note_rounded, color: AppColors.primary, size: 22),
               const SizedBox(width: 10),
               Text(
                 product == null ? 'Tambah Produk Baru' : 'Edit Produk',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -408,12 +414,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
               children: [
                 TextField(
                   controller: nameCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13.5),
                   decoration: const InputDecoration(
                     labelText: 'Nama Produk *',
-                    labelStyle: TextStyle(color: Color(0xFF94A3B8)),
                     hintText: 'Contoh: Minyak Goreng Bimoli 2L',
-                    hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -422,17 +426,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     Expanded(
                       child: TextField(
                         controller: barcodeCtrl,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
                         decoration: const InputDecoration(
                           labelText: 'Barcode / SKU',
-                          labelStyle: TextStyle(color: Color(0xFF94A3B8)),
                           hintText: 'Kosongkan jika auto',
-                          hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 12),
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF10B981)),
+                      icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
                       tooltip: 'Scan Barcode Kamera',
                       onPressed: () {
                         HeavyDutyBarcodeScannerModal.show(ctx, (scannedCode) {
@@ -445,9 +447,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
                   initialValue: selectedCategory,
-                  dropdownColor: const Color(0xFF1E293B),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Kategori', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                  dropdownColor: AppColors.surface,
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  decoration: const InputDecoration(labelText: 'Kategori'),
                   items: _categories.map<DropdownMenuItem<int>>((c) {
                     return DropdownMenuItem<int>(
                       value: c['id'],
@@ -463,8 +465,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       child: TextField(
                         controller: buyPriceCtrl,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(labelText: 'Harga Modal (HPP)', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                        decoration: const InputDecoration(labelText: 'Harga Modal (HPP)'),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -472,8 +474,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       child: TextField(
                         controller: sellPriceCtrl,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(labelText: 'Harga Jual *', labelStyle: TextStyle(color: Color(0xFF10B981))),
+                        style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.bold, fontSize: 13),
+                        decoration: const InputDecoration(labelText: 'Harga Jual *'),
                       ),
                     ),
                   ],
@@ -482,8 +484,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 TextField(
                   controller: stockCtrl,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Jumlah Stok (Pcs) *', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  decoration: const InputDecoration(labelText: 'Jumlah Stok (Pcs) *'),
                 ),
               ],
             ),
@@ -491,13 +493,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
               onPressed: () async {
                 final name = nameCtrl.text.trim();
                 final sellPrice = double.tryParse(sellPriceCtrl.text) ?? 0;
@@ -521,15 +519,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   } else {
                     await ApiService().put('/products/${product['id']}', data: payload);
                   }
+                  if (!mounted) return;
                   if (ctx.mounted) {
                     Navigator.of(ctx).pop();
-                    _fetchData();
-                    PremiumNotification.showSuccess(
-                      context,
-                      title: 'PRODUK TERSIMPAN',
-                      message: 'Data barang "${payload['name']}" berhasil diperbarui ke database!',
-                    );
                   }
+                  _fetchData();
+                  PremiumNotification.showSuccess(
+                    context,
+                    title: 'PRODUK TERSIMPAN',
+                    message: 'Data barang "${payload['name']}" berhasil disimpan ke sistem!',
+                  );
                 } catch (e) {
                   if (ctx.mounted) {
                     PremiumNotification.showAlertModal(
@@ -541,7 +540,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   }
                 }
               },
-              child: const Text('Simpan Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text('Simpan Produk'),
             ),
           ],
         ),
@@ -555,67 +554,131 @@ class _ProductsScreenState extends State<ProductsScreen> {
       final q = _searchQuery.toLowerCase();
       final name = (p['name'] ?? '').toString().toLowerCase();
       final barcode = (p['barcode'] ?? '').toString().toLowerCase();
-      return name.contains(q) || barcode.contains(q);
+      final matchesSearch = name.contains(q) || barcode.contains(q);
+
+      final stock = (p['stock'] is num) ? (p['stock'] as num).toInt() : int.tryParse(p['stock']?.toString() ?? '0') ?? 0;
+      bool matchesStock = true;
+      if (_stockFilter == 'ready') {
+        matchesStock = stock > 5;
+      } else if (_stockFilter == 'low') {
+        matchesStock = stock > 0 && stock <= 5;
+      } else if (_stockFilter == 'empty') {
+        matchesStock = stock <= 0;
+      }
+
+      return matchesSearch && matchesStock;
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: const Text('Manajemen Produk & Stok', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _fetchData,
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Tambah Produk (4 Cara)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('Tambah Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         onPressed: _showAddMethodSelector,
       ),
       body: Column(
         children: [
+          // Search & Filter Bar
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              onChanged: (val) => setState(() => _searchQuery = val),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: '🔍 Cari nama barang / barcode...',
-                hintStyle: const TextStyle(color: Color(0xFF64748B)),
-                filled: true,
-                fillColor: const Color(0xFF111827),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF1E293B))),
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                      decoration: const InputDecoration(
+                        hintText: 'Cari nama barang atau barcode...',
+                        prefixIcon: Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 11),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
+                  onPressed: _fetchData,
+                  tooltip: 'Sinkronkan',
+                ),
+              ],
             ),
           ),
+
+          // Stock Filter Chips
+          Container(
+            height: 36,
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildStockFilterChip('Semua (${_products.length})', 'all'),
+                const SizedBox(width: 8),
+                _buildStockFilterChip('Stok Siap', 'ready'),
+                const SizedBox(width: 8),
+                _buildStockFilterChip('Stok Menipis (≤5)', 'low'),
+                const SizedBox(width: 8),
+                _buildStockFilterChip('Habis (0)', 'empty'),
+              ],
+            ),
+          ),
+
+          // Product List
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : filtered.isEmpty
-                    ? const Center(child: Text('Belum ada data produk', style: TextStyle(color: Color(0xFF64748B))))
+                    ? const Center(
+                        child: Text('Tidak ada produk yang cocok', style: TextStyle(color: AppColors.textSecondary)),
+                      )
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
                         itemCount: filtered.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 8),
+                        separatorBuilder: (_, i) => const SizedBox(height: 10),
                         itemBuilder: (ctx, idx) {
                           final p = filtered[idx];
-                          final stock = p['stock'] ?? 0;
+                          final stock = (p['stock'] is num) ? (p['stock'] as num).toInt() : int.tryParse(p['stock']?.toString() ?? '0') ?? 0;
+                          final isOut = stock <= 0;
+                          final isLow = stock > 0 && stock <= 5;
+
                           return Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF111827),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF1E293B)),
-                            ),
+                            padding: const EdgeInsets.all(14),
+                            decoration: AppTheme.cardDecoration(),
                             child: Row(
                               children: [
+                                // Icon Box
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: isOut ? AppColors.dangerLight : (isLow ? AppColors.warningLight : AppColors.primaryLight),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      (p['name'] ?? 'P').toString().substring(0, 1).toUpperCase(),
+                                      style: TextStyle(
+                                        color: isOut ? AppColors.danger : (isLow ? AppColors.warning : AppColors.primaryDark),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Detail
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -623,42 +686,47 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       Text(
                                         p['name'] ?? '',
                                         style: GoogleFonts.plusJakartaSans(
-                                          color: Colors.white,
+                                          color: AppColors.textPrimary,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 14,
+                                          fontSize: 13.5,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 2),
                                       Text(
-                                        'Barcode: ${p['barcode'] ?? '-'} | HPP: ${_currency.format(p['purchase_price'] ?? 0)}',
-                                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                        'SKU: ${p['barcode'] ?? '-'} · Modal: ${_currency.format(p['purchase_price'] ?? 0)}',
+                                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         _currency.format(p['sale_price'] ?? 0),
-                                        style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w800, fontSize: 13),
+                                        style: const TextStyle(
+                                          color: AppColors.primaryDark,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 13.5,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
+                                // Stock Badge
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: stock <= 5 ? const Color(0xFF7F1D1D).withValues(alpha: 0.3) : const Color(0xFF064E3B),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: stock <= 5 ? const Color(0xFFEF4444) : const Color(0xFF10B981)),
+                                    color: isOut ? AppColors.dangerLight : (isLow ? AppColors.warningLight : AppColors.successLight),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    'Stok: $stock',
+                                    '$stock pcs',
                                     style: TextStyle(
-                                      color: stock <= 5 ? const Color(0xFFFCA5A5) : const Color(0xFF34D399),
+                                      color: isOut ? AppColors.danger : (isLow ? AppColors.warning : AppColors.primaryDark),
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                                      fontSize: 11,
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 4),
                                 IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
+                                  icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
                                   onPressed: () => _showAddEditProductModal(p),
                                 ),
                               ],
@@ -668,6 +736,30 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStockFilterChip(String label, String value) {
+    final isSelected = _stockFilter == value;
+    return InkWell(
+      onTap: () => setState(() => _stockFilter = value),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
       ),
     );
   }

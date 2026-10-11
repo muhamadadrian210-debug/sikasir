@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import '../core/theme/app_theme.dart';
 
 class KdsScreen extends StatefulWidget {
   const KdsScreen({super.key});
@@ -15,7 +15,7 @@ class _KdsScreenState extends State<KdsScreen> {
       'order_id': 'ORD-101',
       'table_no': 'Meja 04',
       'time': DateTime.now().subtract(const Duration(minutes: 6)),
-      'status': 'COOKING', // COOKING, READY, SERVED
+      'status': 'COOKING', // COOKING, READY
       'items': [
         {'name': 'Kopi Susu Gula Aren', 'qty': 2, 'notes': 'Less Sugar & Less Ice'},
         {'name': 'Croissant Butter', 'qty': 1, 'notes': 'Dipanaskan garing'},
@@ -46,41 +46,20 @@ class _KdsScreenState extends State<KdsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.restaurant, color: Color(0xFFEF4444), size: 18),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Kitchen Display System (KDS)', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                const Text('Layar Monitor Pesanan Dapur & Bar Real-Time', style: TextStyle(color: Color(0xFFEF4444), fontSize: 11, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: AppColors.background,
       body: _kitchenOrders.isEmpty
           ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 56),
+                  Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 56),
                   SizedBox(height: 12),
-                  Text('Semua pesanan dapur sudah selesai disajikan!', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
+                  Text('Semua pesanan dapur sudah selesai disajikan!', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               itemCount: _kitchenOrders.length,
               itemBuilder: (ctx, idx) {
                 final ord = _kitchenOrders[idx];
@@ -88,23 +67,30 @@ class _KdsScreenState extends State<KdsScreen> {
                 final timeDiff = DateTime.now().difference(ord['time'] as DateTime).inMinutes;
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF111827),
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isCooking ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      color: isCooking ? AppColors.warning : AppColors.primary,
                       width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
                       // Header Card KDS
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: isCooking ? const Color(0xFF7F1D1D).withValues(alpha: 0.25) : const Color(0xFF064E3B).withValues(alpha: 0.25),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          color: isCooking ? AppColors.warningLight : AppColors.primaryLight,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -113,29 +99,33 @@ class _KdsScreenState extends State<KdsScreen> {
                               children: [
                                 Text(
                                   ord['table_no'],
-                                  style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: isCooking ? const Color(0xFFB45309) : AppColors.primaryDark,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '(${ord['order_id']})',
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                  style: TextStyle(color: isCooking ? const Color(0xFF92400E) : AppColors.textSecondary, fontSize: 12),
                                 ),
                               ],
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: isCooking ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                                color: isCooking ? AppColors.warning : AppColors.primary,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.timer_outlined, color: isCooking ? Colors.white : const Color(0xFF090D16), size: 13),
+                                  const Icon(Icons.timer_outlined, color: Colors.white, size: 13),
                                   const SizedBox(width: 4),
                                   Text(
                                     '$timeDiff Menit Lalu',
-                                    style: TextStyle(
-                                      color: isCooking ? Colors.white : const Color(0xFF090D16),
+                                    style: const TextStyle(
+                                      color: Colors.white,
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -160,12 +150,12 @@ class _KdsScreenState extends State<KdsScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1E293B),
+                                      color: AppColors.surfaceVariant,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       '${item['qty']}x',
-                                      style: const TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold, fontSize: 13),
+                                      style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.bold, fontSize: 13),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -175,12 +165,12 @@ class _KdsScreenState extends State<KdsScreen> {
                                       children: [
                                         Text(
                                           item['name'],
-                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
                                         ),
                                         if ((item['notes'] ?? '').toString().isNotEmpty)
                                           Text(
                                             'Catatan: ${item['notes']}',
-                                            style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 11.5, fontStyle: FontStyle.italic),
+                                            style: const TextStyle(color: AppColors.warning, fontSize: 11.5, fontStyle: FontStyle.italic),
                                           ),
                                       ],
                                     ),
@@ -192,17 +182,17 @@ class _KdsScreenState extends State<KdsScreen> {
                         ),
                       ),
 
-                      // Bottom Action Button
+                      // Action Button
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                         child: SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isCooking ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
-                              foregroundColor: isCooking ? Colors.black : Colors.white,
+                              backgroundColor: isCooking ? AppColors.primary : AppColors.secondary,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             onPressed: () {
                               setState(() {

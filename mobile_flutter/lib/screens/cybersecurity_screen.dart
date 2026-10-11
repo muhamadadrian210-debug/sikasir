@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class CybersecurityScreen extends StatefulWidget {
   const CybersecurityScreen({super.key});
@@ -28,7 +29,7 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memuat status firewall: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memuat status keamanan: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -40,20 +41,9 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
     final blockedIps = (_cyberStatus?['blocked_ips'] as List?) ?? [];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: const Text('Keamanan & Cyber Defense', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _fetchStatus,
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -63,14 +53,14 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF111827),
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF10B981)),
+                      border: Border.all(color: AppColors.primary),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                          blurRadius: 20,
-                          spreadRadius: 2,
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -79,10 +69,10 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF064E3B),
+                            color: AppColors.primaryLight,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.shield_outlined, color: Color(0xFF10B981), size: 36),
+                          child: const Icon(Icons.shield_outlined, color: AppColors.primaryDark, size: 36),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -90,13 +80,13 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '11-Layer Quantum Defense Active',
-                                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                'Sistem Keamanan Toko Aktif',
+                                style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               const SizedBox(height: 4),
                               const Text(
-                                'Anti-SQLi, XSS Sanitizer, Brute Force Blocker, CSRF Token Guard, dan Bot Defender aktif menjaga database toko.',
-                                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                'Data transaksi terenkripsi, proteksi multi-cabang, anti-brute force, dan firewall aktif melindungi data toko Anda.',
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                               ),
                             ],
                           ),
@@ -104,38 +94,45 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // Defense Stats
-                  const Text('Daftar Lapisan Pertahanan Toko', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text('Lapisan Proteksi Keamanan Toko', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
                   const SizedBox(height: 12),
 
-                  _buildLayerTile('L1: IP Blacklist & Rate Limiter', 'Memblokir serangan spam requests dari IP berbahaya', Icons.speed),
-                  _buildLayerTile('L2: Brute Force Login Shield', 'Otomatis mengunci akun setelah 5x salah password', Icons.lock_clock),
+                  _buildLayerTile('L1: Proteksi Rate Limiter', 'Membatasi akses berlebih dari IP berbahaya', Icons.speed),
+                  _buildLayerTile('L2: Brute Force Login Shield', 'Otomatis memproteksi akun dari tebakan password berulang', Icons.lock_clock),
                   _buildLayerTile('L3: CSRF State-Token Guard', 'Melindungi form dari manipulasi token palsu', Icons.vpn_key),
-                  _buildLayerTile('L4: SQLi & Sanitizer Pipeline', 'Membersihkan input transaksi dari injeksi berbahaya', Icons.cleaning_services),
-                  _buildLayerTile('L5: Tenant Isolation Firewall', 'Memastikan data antar toko tidak bisa saling intip', Icons.domain_verification),
+                  _buildLayerTile('L4: Sanitasi Query Transaksi', 'Membersihkan input transaksi dari karakter mencurigakan', Icons.cleaning_services),
+                  _buildLayerTile('L5: Tenant Isolation Cloud', 'Memastikan data antar toko tidak bisa saling intip', Icons.domain_verification),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('IP Terblokir Otomatis', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('IP Terblokir Otomatis', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(6)),
-                        child: Text('${blockedIps.length} Terdeteksi', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(6)),
+                        child: Text('${blockedIps.length} Terdeteksi', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   if (blockedIps.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF1E293B))),
+                      decoration: AppTheme.cardDecoration(),
                       child: const Center(
-                        child: Text('✓ Server aman. Tidak ada aktivitas IP mencurigakan.', style: TextStyle(color: Color(0xFF10B981), fontSize: 13)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+                            SizedBox(width: 8),
+                            Text('Server aman. Tidak ada aktivitas mencurigakan.', style: TextStyle(color: AppColors.primaryDark, fontSize: 13, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ),
                 ],
@@ -148,25 +145,25 @@ class _CybersecurityScreenState extends State<CybersecurityScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111827),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1E293B)),
-      ),
+      decoration: AppTheme.cardDecoration(),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF10B981), size: 22),
-          const SizedBox(width: 14),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: AppColors.primaryDark, size: 20),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                Text(desc, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(desc, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
               ],
             ),
           ),
-          const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 18),
+          const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 18),
         ],
       ),
     );

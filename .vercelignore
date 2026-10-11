@@ -7,6 +7,7 @@ node_modules
 
 # Mobile App & Build Artifacts (Do not upload to Vercel web server)
 mobile/
+mobile_flutter/
 *.apk
 public/downloads/
 android/

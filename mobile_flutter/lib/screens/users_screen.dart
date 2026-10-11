@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
@@ -46,33 +48,33 @@ class _UsersScreenState extends State<UsersScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => AlertDialog(
-          backgroundColor: const Color(0xFF111827),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
-          title: const Text('Tambah Kasir / Staff Baru', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Tambah Staf Kasir Baru', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: userCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Username Staff', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                style: const TextStyle(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Username Staff *'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: passCtrl,
                 obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Password Akun', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                style: const TextStyle(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Password Akun *'),
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 initialValue: role,
-                dropdownColor: const Color(0xFF1E293B),
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Hak Akses (Role)', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+                dropdownColor: AppColors.surface,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Hak Akses (Role)'),
                 items: const [
-                  DropdownMenuItem(value: 'kasir', child: Text('Kasir POS')),
-                  DropdownMenuItem(value: 'admin', child: Text('Admin Utama')),
+                  DropdownMenuItem(value: 'kasir', child: Text('Kasir POS (Operasional Kasir)')),
+                  DropdownMenuItem(value: 'admin', child: Text('Admin Utama (Akses Lengkap)')),
                 ],
                 onChanged: (val) => setModalState(() => role = val ?? 'kasir'),
               ),
@@ -81,15 +83,22 @@ class _UsersScreenState extends State<UsersScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               onPressed: () async {
+                final u = userCtrl.text.trim();
+                final p = passCtrl.text;
+                if (u.isEmpty || p.isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Username dan password wajib diisi!')));
+                  return;
+                }
+
                 try {
                   await ApiService().post('/users', data: {
-                    'username': userCtrl.text.trim(),
-                    'password': passCtrl.text,
+                    'username': u,
+                    'password': p,
                     'role': role,
                   });
                   if (ctx.mounted) {
@@ -102,7 +111,7 @@ class _UsersScreenState extends State<UsersScreen> {
                   }
                 }
               },
-              child: const Text('Buat Akun', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text('Buat Akun Staf'),
             ),
           ],
         ),
@@ -113,84 +122,104 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: const Text('Manajemen Kasir & Pengguna', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add, color: Color(0xFF10B981)),
-            onPressed: _showAddUserModal,
-            tooltip: 'Tambah Staf',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _fetchUsers,
-          ),
-        ],
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+        label: const Text('Tambah Staf', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        onPressed: _showAddUserModal,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-          : _users.isEmpty
-              ? const Center(child: Text('Belum ada data staf kasir', style: TextStyle(color: Color(0xFF64748B))))
-              : ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _users.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, idx) {
-                    final u = _users[idx];
-                    final isAdmin = u['role'] == 'admin';
-                    final date = u['created_at'] != null ? DateTime.tryParse(u['created_at'].toString()) : null;
-                    return Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF111827),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF1E293B)),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: isAdmin ? const Color(0xFF064E3B) : const Color(0xFF1E293B),
-                            child: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person, color: isAdmin ? const Color(0xFF10B981) : const Color(0xFF94A3B8)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
+        children: [
+          // Header Info
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Daftar Akun Kasir & Admin (${_users.length})',
+                  style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
+                  onPressed: _fetchUsers,
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _users.isEmpty
+                    ? const Center(child: Text('Belum ada data staf kasir', style: TextStyle(color: AppColors.textSecondary)))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                        itemCount: _users.length,
+                        separatorBuilder: (_, i) => const SizedBox(height: 10),
+                        itemBuilder: (ctx, idx) {
+                          final u = _users[idx];
+                          final isAdmin = u['role'] == 'admin';
+                          final date = u['created_at'] != null ? DateTime.tryParse(u['created_at'].toString()) : null;
+
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: AppTheme.cardDecoration(),
+                            child: Row(
                               children: [
-                                Text(
-                                  u['username'] ?? '',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: isAdmin ? const Color(0xFFE0F2FE) : AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    isAdmin ? Icons.admin_panel_settings_rounded : Icons.person_rounded,
+                                    color: isAdmin ? const Color(0xFF0284C7) : AppColors.primaryDark,
+                                    size: 24,
+                                  ),
                                 ),
-                                Text(
-                                  'Dibuat: ${date != null ? DateFormat('dd MMM yyyy').format(date) : '-'}',
-                                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        u['username'] ?? '',
+                                        style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Terdaftar: ${date != null ? DateFormat('dd MMM yyyy').format(date) : '-'}',
+                                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isAdmin ? const Color(0xFFE0F2FE) : AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    (u['role'] ?? 'kasir').toString().toUpperCase(),
+                                    style: TextStyle(
+                                      color: isAdmin ? const Color(0xFF0284C7) : AppColors.primaryDark,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isAdmin ? const Color(0xFF064E3B) : const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              (u['role'] ?? 'kasir').toString().toUpperCase(),
-                              style: TextStyle(
-                                color: isAdmin ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class AuthScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -200,25 +201,22 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF1E293B)),
-        ),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.dns_rounded, color: Color(0xFF10B981), size: 20),
+              child: const Icon(Icons.dns_rounded, color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               'Pengaturan Server Backend',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -227,19 +225,19 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ubah alamat API Server backend SiKasir jika berjalan di host / port lain (misal: localhost PC / WiFi IP):',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              'Ubah alamat API Server backend SiKasir jika berjalan di host / port lain:',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: urlCtrl,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: _inputDecoration('https://sikasir-alpha.vercel.app/api'),
+              style: const TextStyle(fontSize: 13),
+              decoration: const InputDecoration(hintText: 'https://sikasir-alpha.vercel.app/api'),
             ),
             const SizedBox(height: 12),
             const Text(
               'Preset Cepat:',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             Wrap(
@@ -247,13 +245,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               runSpacing: 6,
               children: [
                 ActionChip(
-                  label: const Text('☁️ Cloud Resmi (Vercel)', style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
-                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  label: const Text('☁️ Cloud Resmi (Vercel)', style: TextStyle(fontSize: 11, color: AppColors.primaryDark, fontWeight: FontWeight.bold)),
+                  backgroundColor: AppColors.primaryLight,
                   onPressed: () => urlCtrl.text = 'https://sikasir-alpha.vercel.app/api',
                 ),
                 ActionChip(
-                  label: const Text('💻 Localhost PC', style: TextStyle(fontSize: 11, color: Colors.white)),
-                  backgroundColor: const Color(0xFF1E293B),
+                  label: const Text('💻 Localhost PC', style: TextStyle(fontSize: 11, color: AppColors.textPrimary)),
+                  backgroundColor: AppColors.surfaceVariant,
                   onPressed: () => urlCtrl.text = 'http://127.0.0.1:3000/api',
                 ),
               ],
@@ -263,13 +261,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () async {
               final newUrl = urlCtrl.text.trim();
               if (newUrl.isNotEmpty) {
@@ -279,14 +274,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Server URL berhasil diubah ke: $newUrl'),
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: AppColors.primary,
                     ),
                   );
                 }
               }
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Simpan & Terapkan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text('Simpan & Terapkan'),
           ),
         ],
       ),
@@ -296,30 +291,27 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
+      backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
             child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF111827),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF1E293B)),
-                boxShadow: [
+              padding: const EdgeInsets.all(28),
+              decoration: AppTheme.cardDecoration(
+                shadows: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 30,
-                    offset: const Offset(0, 10),
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Luxury Brand Header
+                  // Brand Header (Majoo Clean POS Style)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -327,39 +319,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF0F172A), Color(0xFF090D16)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFF10B981), width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Icon(Icons.point_of_sale_rounded, color: const Color(0xFF10B981), size: 24),
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF38BDF8),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: const Icon(Icons.point_of_sale_rounded, color: Colors.white, size: 26),
                       ),
                       const SizedBox(width: 14),
                       Column(
@@ -370,37 +340,35 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               Text(
                                 'SiKasir',
                                 style: GoogleFonts.plusJakartaSans(
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                  color: AppColors.primaryLight,
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
                                 ),
                                 child: const Text(
-                                  'v3.8.0 Pro Enterprise',
-                                  style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold),
+                                  'Pro POS',
+                                  style: TextStyle(color: AppColors.primaryDark, fontSize: 10.5, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
                           ),
                           const Text(
-                            'Smart POS & Retail Cloud Enterprise',
-                            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w500),
+                            'Sistem Kasir Pintar & Cloud Retail',
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Server connection settings action button
+                  // Server connection settings button
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
@@ -410,10 +378,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: _showServerSettingsDialog,
-                      icon: const Icon(Icons.settings_outlined, size: 14, color: Color(0xFF64748B)),
+                      icon: const Icon(Icons.settings_outlined, size: 14, color: AppColors.textSecondary),
                       label: const Text(
                         'Ubah Server URL',
-                        style: TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -422,21 +390,27 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   // Top Tab Switcher
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF090D16),
+                      color: AppColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF1E293B)),
                     ),
                     padding: const EdgeInsets.all(4),
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
-                      labelColor: const Color(0xFF10B981),
-                      unselectedLabelColor: const Color(0xFF94A3B8),
+                      labelColor: AppColors.primaryDark,
+                      unselectedLabelColor: AppColors.textSecondary,
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       tabs: const [
                         Tab(text: '🔑 Masuk Akun'),
@@ -451,18 +425,18 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF7F1D1D).withValues(alpha: 0.5),
+                        color: AppColors.dangerLight,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFEF4444)),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 18),
+                          const Icon(Icons.error_outline, color: AppColors.danger, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 12),
+                              style: const TextStyle(color: AppColors.danger, fontSize: 12),
                             ),
                           ),
                         ],
@@ -492,16 +466,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         _buildFieldLabel('Company ID (Opsional Multi-Cabang)'),
         TextField(
           controller: _loginCompanyIdCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration('Kosongkan jika toko tunggal'),
+          style: const TextStyle(fontSize: 13),
+          decoration: const InputDecoration(hintText: 'Kosongkan jika toko tunggal'),
         ),
         const SizedBox(height: 14),
 
         _buildFieldLabel('Username'),
         TextField(
           controller: _loginUserCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration('Username akun Anda'),
+          style: const TextStyle(fontSize: 13),
+          decoration: const InputDecoration(hintText: 'Username akun kasir Anda'),
         ),
         const SizedBox(height: 14),
 
@@ -509,12 +483,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         TextField(
           controller: _loginPassCtrl,
           obscureText: !_loginShowPass,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration(
-            'Password akun',
-            suffix: TextButton(
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Password akun',
+            suffixIcon: IconButton(
+              icon: Icon(_loginShowPass ? Icons.visibility_off : Icons.visibility, color: AppColors.textMuted, size: 18),
               onPressed: () => setState(() => _loginShowPass = !_loginShowPass),
-              child: Text(_loginShowPass ? 'Sembunyi' : 'Lihat', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ),
@@ -525,13 +499,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: _isLoading ? null : _handleLogin,
             child: _isLoading
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('MASUK KE DASHBOARD', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                : const Text('MASUK KE KASIR', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
           ),
         ),
       ],
@@ -544,25 +518,25 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       children: [
         const Text(
           'Buat toko baru dan otomatis menjadi Admin Utama.',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 14),
 
         _buildFieldLabel('Nama Toko / Kios'),
         TextField(
           controller: _regStoreNameCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration('Contoh: Minimarket Berkah'),
+          style: const TextStyle(fontSize: 13),
+          decoration: const InputDecoration(hintText: 'Contoh: Minimarket Berkah'),
         ),
         const SizedBox(height: 14),
 
         _buildFieldLabel('Jenis Toko / Bisnis'),
         DropdownButtonFormField<String>(
           initialValue: _selectedStoreType,
-          dropdownColor: const Color(0xFF111827),
+          dropdownColor: AppColors.surface,
           isExpanded: true,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration('— Pilih jenis bisnis —'),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+          decoration: const InputDecoration(hintText: '— Pilih jenis bisnis —'),
           items: _buildStoreTypeItems(),
           onChanged: (val) => setState(() => _selectedStoreType = val),
         ),
@@ -571,16 +545,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         _buildFieldLabel('Company ID (Opsional)'),
         TextField(
           controller: _regCompanyIdCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration('Hanya untuk holding / multi-cabang'),
+          style: const TextStyle(fontSize: 13),
+          decoration: const InputDecoration(hintText: 'Hanya untuk holding / multi-cabang'),
         ),
         const SizedBox(height: 14),
 
         _buildFieldLabel('Username Admin'),
         TextField(
           controller: _regUserCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration('Contoh: admin'),
+          style: const TextStyle(fontSize: 13),
+          decoration: const InputDecoration(hintText: 'Contoh: admin'),
         ),
         const SizedBox(height: 14),
 
@@ -588,12 +562,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         TextField(
           controller: _regPassCtrl,
           obscureText: !_regShowPass,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration(
-            'Minimal 8 karakter',
-            suffix: TextButton(
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Minimal 8 karakter',
+            suffixIcon: IconButton(
+              icon: Icon(_regShowPass ? Icons.visibility_off : Icons.visibility, color: AppColors.textMuted, size: 18),
               onPressed: () => setState(() => _regShowPass = !_regShowPass),
-              child: Text(_regShowPass ? 'Sembunyi' : 'Lihat', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ),
@@ -603,12 +577,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         TextField(
           controller: _regPassConfirmCtrl,
           obscureText: !_regShowPassConfirm,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: _inputDecoration(
-            'Ulangi password',
-            suffix: TextButton(
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Ulangi password',
+            suffixIcon: IconButton(
+              icon: Icon(_regShowPassConfirm ? Icons.visibility_off : Icons.visibility, color: AppColors.textMuted, size: 18),
               onPressed: () => setState(() => _regShowPassConfirm = !_regShowPassConfirm),
-              child: Text(_regShowPassConfirm ? 'Sembunyi' : 'Lihat', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ),
@@ -619,7 +593,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: _isLoading ? null : _handleRegisterStore,
@@ -638,8 +612,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       for (final t in types) {
         items.add(
           DropdownMenuItem<String>(
-            value: t.replaceAll(RegExp(r'^[^\w\s]+ '), ''), // strip emoji for clean DB storage
-            child: Text(t, style: const TextStyle(fontSize: 13, color: Colors.white)),
+            value: t.replaceAll(RegExp(r'^[^\w\s]+ '), ''),
+            child: Text(t, style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)),
           ),
         );
       }
@@ -653,34 +627,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       child: Text(
         label,
         style: const TextStyle(
-          color: Color(0xFFCBD5E1),
+          color: AppColors.textSecondary,
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-      filled: true,
-      fillColor: const Color(0xFF090D16),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF1E293B)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF1E293B)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-      ),
-      suffixIcon: suffix,
     );
   }
 }

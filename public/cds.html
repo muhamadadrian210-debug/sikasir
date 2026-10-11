@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Display — SiKasir</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #10B981;
+      --primary-dark: #059669;
+      --primary-light: #ECFDF5;
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --amber: #F59E0B;
+      --rose: #EF4444;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand img {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .brand p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .live-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .items-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 480px;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+    }
+    .item-info h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .item-info .item-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .item-price {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      text-align: right;
+    }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state img {
+      width: 96px;
+      height: 96px;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+    .summary-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .summary-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+    .summary-row.total {
+      padding-top: 14px;
+      border-top: 2px dashed var(--border);
+      color: var(--text);
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+    .total-amount {
+      color: var(--primary-dark);
+      font-size: 2rem;
+      font-weight: 900;
+    }
+    .pay-banner {
+      background: #FEF3C7;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-top: 16px;
+    }
+    .qris-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #F8FAFC;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-top: 16px;
+      text-align: center;
+    }
+    .qris-qr {
+      width: 200px;
+      height: 200px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .verification-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 8px;
+      background: #ECFDF5;
+      color: #059669;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="/icons/logo.svg" alt="SiKasir" />
+      <div>
+        <h1 id="store-title">SiKasir Toko</h1>
+        <p>Layar Pelanggan (Customer Display)</p>
+      </div>
+    </div>
+    <div class="live-pill">
+      <span class="live-dot"></span>
+      <span id="conn-status">TERHUBUNG KE KASIR</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: Cart Items Table -->
+    <section class="card">
+      <div class="card-title">
+        <span>Rincian Belanjaan</span>
+        <span id="table-badge" style="font-size: 0.85rem; font-weight: 700; color: var(--primary-dark); background: var(--primary-light); padding: 4px 10px; border-radius: 8px; display: none;"></span>
+      </div>
+      <div class="items-list" id="items-container">
+        <div class="empty-state">
+          <img src="/icons/logo.svg" alt="SiKasir" />
+          <h3 style="font-size: 1.15rem; color: var(--text); margin-bottom: 6px;">Selamat Datang!</h3>
+          <p>Barang yang di-scan kasir akan langsung tampil di sini.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Total & Payment Panel -->
+    <section class="card summary-card">
+      <div>
+        <div class="card-title">Ringkasan Pembayaran</div>
+        <div class="summary-lines">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="lbl-subtotal">Rp 0</span>
+          </div>
+          <div class="summary-row" id="row-discount" style="display: none; color: #059669;">
+            <span>Diskon Promo</span>
+            <span id="lbl-discount">-Rp 0</span>
+          </div>
+          <div class="summary-row" id="row-tax" style="display: none;">
+            <span>Pajak PB1 (10%)</span>
+            <span id="lbl-tax">Rp 0</span>
+          </div>
+          <div class="summary-row total">
+            <span>TOTAL BELANJA</span>
+            <span id="lbl-total" class="total-amount">Rp 0</span>
+          </div>
+        </div>
+
+        <div id="payment-display" style="display: none;">
+          <div class="pay-banner">
+            <span style="font-size: 1.3rem;">💳</span>
+            <div>
+              <div id="pay-method-title">Silakan Lakukan Pembayaran</div>
+              <div style="font-size: 0.78rem; font-weight: 500; opacity: 0.85;" id="pay-instruction">Scan QRIS dengan aplikasi e-wallet atau perbankan Anda</div>
+            </div>
+          </div>
+
+          <div class="qris-panel" id="qris-box">
+            <div class="qris-qr">
+              <svg id="qris-svg" viewBox="0 0 100 100" width="180" height="180">
+                <!-- Fallback decorative QR simulation if dynamic QR payload is text -->
+                <rect width="100" height="100" fill="#FFFFFF"/>
+                <!-- Corner 1 -->
+                <rect x="5" y="5" width="28" height="28" fill="#000000" rx="3"/>
+                <rect x="9" y="9" width="20" height="20" fill="#FFFFFF" rx="2"/>
+                <rect x="13" y="13" width="12" height="12" fill="#000000" rx="1"/>
+                <!-- Corner 2 -->
+                <rect x="67" y="5" width="28" height="28" fill="#000000" rx="3"/>
+                <rect x="71" y="9" width="20" height="20" fill="#FFFFFF" rx="2"/>
+                <rect x="75" y="13" width="12" height="12" fill="#000000" rx="1"/>
+                <!-- Corner 3 -->
+                <rect x="5" y="67" width="28" height="28" fill="#000000" rx="3"/>
+                <rect x="9" y="71" width="20" height="20" fill="#FFFFFF" rx="2"/>
+                <rect x="13" y="75" width="12" height="12" fill="#000000" rx="1"/>
+                <!-- Random QR Data Pixels -->
+                <rect x="38" y="10" width="6" height="6" fill="#000000"/>
+                <rect x="48" y="16" width="6" height="6" fill="#000000"/>
+                <rect x="38" y="24" width="6" height="6" fill="#000000"/>
+                <rect x="56" y="24" width="6" height="6" fill="#000000"/>
+                <rect x="38" y="38" width="8" height="8" fill="#000000"/>
+                <rect x="50" y="38" width="6" height="6" fill="#000000"/>
+                <rect x="10" y="38" width="8" height="8" fill="#000000"/>
+                <rect x="24" y="44" width="6" height="6" fill="#000000"/>
+                <rect x="38" y="50" width="6" height="6" fill="#000000"/>
+                <rect x="50" y="52" width="8" height="8" fill="#000000"/>
+                <rect x="68" y="40" width="8" height="8" fill="#000000"/>
+                <rect x="80" y="48" width="8" height="8" fill="#000000"/>
+                <rect x="38" y="68" width="8" height="8" fill="#000000"/>
+                <rect x="52" y="70" width="6" height="6" fill="#000000"/>
+                <rect x="70" y="72" width="6" height="6" fill="#000000"/>
+                <rect x="82" y="78" width="8" height="8" fill="#000000"/>
+                <rect x="44" y="82" width="8" height="8" fill="#000000"/>
+                <rect x="60" y="84" width="6" height="6" fill="#000000"/>
+              </svg>
+            </div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text);">QRIS RESMI TOKO</div>
+            <div class="verification-badge" id="lbl-verif-code">Nominal Terkunci Otomatis</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 20px;">
+        SiKasir Display • Terhubung secara aman via jaringan lokal
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tenantId = urlParams.get('tenant') || 'default';
+
+    function formatRupiah(num) {
+      return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+    }
+
+    async function pollCds() {
+      try {
+        const res = await fetch(`/api/cds/state?tenant_id=${encodeURIComponent(tenantId)}`);
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+
+        document.getElementById('conn-status').textContent = 'TERHUBUNG KE KASIR';
+        document.getElementById('conn-status').parentElement.style.background = '#ECFDF5';
+        document.getElementById('conn-status').parentElement.style.color = '#059669';
+
+        if (data.store_name) {
+          document.getElementById('store-title').textContent = data.store_name;
+        }
+
+        const tableBadge = document.getElementById('table-badge');
+        if (data.table_number && data.table_number.trim() !== '') {
+          tableBadge.textContent = '🍽️ ' + data.table_number;
+          tableBadge.style.display = 'inline-block';
+        } else {
+          tableBadge.style.display = 'none';
+        }
+
+        const container = document.getElementById('items-container');
+        if (!data.items || data.items.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <img src="/icons/logo.svg" alt="SiKasir" />
+              <h3 style="font-size: 1.15rem; color: var(--text); margin-bottom: 6px;">Selamat Datang!</h3>
+              <p>Barang yang di-scan kasir akan langsung tampil di sini.</p>
+            </div>
+          `;
+        } else {
+          container.innerHTML = data.items.map(it => {
+            const modText = it.modifiers && it.modifiers.length ? `<div class="item-meta">✨ ${it.modifiers.join(', ')}</div>` : '';
+            return `
+              <div class="item-row">
+                <div class="item-info">
+                  <h4>${it.name}</h4>
+                  <div class="item-meta">${it.qty} x ${formatRupiah(it.price)}</div>
+                  ${modText}
+                </div>
+                <div class="item-price">${formatRupiah(it.subtotal || (it.qty * it.price))}</div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Summary Lines
+        document.getElementById('lbl-subtotal').textContent = formatRupiah(data.subtotal || 0);
+        document.getElementById('lbl-total').textContent = formatRupiah(data.total || 0);
+
+        const rowDiscount = document.getElementById('row-discount');
+        if (data.discount && data.discount > 0) {
+          document.getElementById('lbl-discount').textContent = '-' + formatRupiah(data.discount);
+          rowDiscount.style.display = 'flex';
+        } else {
+          rowDiscount.style.display = 'none';
+        }
+
+        const rowTax = document.getElementById('row-tax');
+        if (data.tax && data.tax > 0) {
+          document.getElementById('lbl-tax').textContent = formatRupiah(data.tax);
+          rowTax.style.display = 'flex';
+        } else {
+          rowTax.style.display = 'none';
+        }
+
+        // Payment Mode
+        const payPanel = document.getElementById('payment-display');
+        if (data.is_paying) {
+          payPanel.style.display = 'block';
+          const method = (data.payment_method || 'CASH').toUpperCase();
+          if (method === 'QRIS') {
+            document.getElementById('pay-method-title').textContent = 'Bayar dengan QRIS Dinamis';
+            document.getElementById('pay-instruction').textContent = 'Scan QRIS di bawah ini dengan BCA, Mandiri, GoPay, OVO, Dana, dll';
+            document.getElementById('qris-box').style.display = 'flex';
+            if (data.verification_code) {
+              document.getElementById('lbl-verif-code').textContent = 'Kode Verifikasi: #' + data.verification_code;
+            } else {
+              document.getElementById('lbl-verif-code').textContent = 'Nominal Terkunci: ' + formatRupiah(data.total);
+            }
+          } else {
+            document.getElementById('pay-method-title').textContent = 'Pembayaran: ' + method;
+            document.getElementById('pay-instruction').textContent = 'Silakan serahkan uang tunai atau kartu ke kasir';
+            document.getElementById('qris-box').style.display = 'none';
+          }
+        } else {
+          payPanel.style.display = 'none';
+        }
+
+      } catch (err) {
+        document.getElementById('conn-status').textContent = 'MENUNGGU KONEKSI KASIR...';
+        document.getElementById('conn-status').parentElement.style.background = '#FEF2F2';
+        document.getElementById('conn-status').parentElement.style.color = '#EF4444';
+      }
+    }
+
+    // Poll every 800ms
+    setInterval(pollCds, 800);
+    pollCds();
+  </script>
+</body>
+</html>

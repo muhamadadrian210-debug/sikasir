@@ -1,22 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 enum AlertType { success, warning, error, info }
 
 class PremiumNotification {
+  static OverlayEntry? _activeToast;
+
   static void showToast(
     BuildContext context, {
     required String title,
     required String message,
     AlertType type = AlertType.success,
     IconData? icon,
+    Duration duration = const Duration(milliseconds: 2800),
   }) {
+    // Haptic feedback for tactile feel
+    try {
+      if (type == AlertType.success) {
+        HapticFeedback.mediumImpact();
+      } else if (type == AlertType.error || type == AlertType.warning) {
+        HapticFeedback.heavyImpact();
+      } else {
+        HapticFeedback.selectionClick();
+      }
+    } catch (_) {}
+
+    // Clean up previous toast if active
+    try {
+      _activeToast?.remove();
+    } catch (_) {}
+    _activeToast = null;
+
     final overlay = Overlay.of(context);
     late OverlayEntry entry;
 
     entry = OverlayEntry(
       builder: (ctx) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
+        top: MediaQuery.of(context).padding.top + 12,
         left: 16,
         right: 16,
         child: Material(
@@ -26,13 +48,89 @@ class PremiumNotification {
             message: message,
             type: type,
             icon: icon,
-            onDismiss: () => entry.remove(),
+            duration: duration,
+            onDismiss: () {
+              if (_activeToast == entry) {
+                try {
+                  entry.remove();
+                } catch (_) {}
+                _activeToast = null;
+              }
+            },
           ),
         ),
       ),
     );
 
+    _activeToast = entry;
     overlay.insert(entry);
+  }
+
+  /// Notifikasi Selesai Pembayaran (Simple, Clean, Modern, Bukan Murahan)
+  static void showPaymentSuccess(
+    BuildContext context, {
+    required String invoiceId,
+    required double total,
+    String? method,
+  }) {
+    final methodStr = method != null && method.isNotEmpty ? '  ·  $method' : '';
+    showToast(
+      context,
+      title: 'PEMBAYARAN SELESAI',
+      message: '#$invoiceId  ·  Rp ${_formatRupiah(total)}$methodStr',
+      type: AlertType.success,
+      icon: Icons.check_circle_rounded,
+      duration: const Duration(milliseconds: 3200),
+    );
+  }
+
+  /// Notifikasi Pembayaran / Pesanan Dibatalkan (Void / Cancel)
+  static void showPaymentCancelled(
+    BuildContext context, {
+    String reason = 'Pembayaran Dibatalkan',
+    double? amount,
+  }) {
+    final amountStr = amount != null && amount > 0 ? '  ·  Rp ${_formatRupiah(amount)}' : '';
+    showToast(
+      context,
+      title: 'PEMBAYARAN DIBATALKAN',
+      message: '$reason$amountStr',
+      type: AlertType.warning,
+      icon: Icons.remove_circle_outline_rounded,
+      duration: const Duration(milliseconds: 3000),
+    );
+  }
+
+  /// Notifikasi Item Dibatalkan (Void Item)
+  static void showItemVoided(
+    BuildContext context, {
+    required String itemName,
+    required double amount,
+  }) {
+    showToast(
+      context,
+      title: 'ITEM DIBATALKAN (VOID)',
+      message: '$itemName  ·  -Rp ${_formatRupiah(amount)}',
+      type: AlertType.error,
+      icon: Icons.delete_sweep_rounded,
+      duration: const Duration(milliseconds: 2800),
+    );
+  }
+
+  /// Notifikasi Keranjang Dikosongkan
+  static void showCartCleared(
+    BuildContext context, {
+    required int itemCount,
+    required double totalAmount,
+  }) {
+    showToast(
+      context,
+      title: 'KERANJANG DIKOSONGKAN',
+      message: '$itemCount item dibatalkan  ·  Rp ${_formatRupiah(totalAmount)}',
+      type: AlertType.warning,
+      icon: Icons.remove_shopping_cart_rounded,
+      duration: const Duration(milliseconds: 2800),
+    );
   }
 
   static void showSuccess(BuildContext context, {required String title, required String message}) {
@@ -55,7 +153,7 @@ class PremiumNotification {
     showToast(
       context,
       title: 'SCAN BERHASIL!',
-      message: '$productName  ·  Rp ${price.toStringAsFixed(0)}',
+      message: '$productName  ·  Rp ${_formatRupiah(price)}',
       type: AlertType.success,
       icon: Icons.qr_code_scanner_rounded,
     );
@@ -80,6 +178,13 @@ class PremiumNotification {
       ),
     );
   }
+
+  static String _formatRupiah(double val) {
+    return val.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+  }
 }
 
 class _AnimatedToastWidget extends StatefulWidget {
@@ -87,6 +192,7 @@ class _AnimatedToastWidget extends StatefulWidget {
   final String message;
   final AlertType type;
   final IconData? icon;
+  final Duration duration;
   final VoidCallback onDismiss;
 
   const _AnimatedToastWidget({
@@ -94,6 +200,7 @@ class _AnimatedToastWidget extends StatefulWidget {
     required this.message,
     required this.type,
     this.icon,
+    this.duration = const Duration(milliseconds: 2800),
     required this.onDismiss,
   });
 
@@ -102,50 +209,54 @@ class _AnimatedToastWidget extends StatefulWidget {
 }
 
 class _AnimatedToastWidgetState extends State<_AnimatedToastWidget> with TickerProviderStateMixin {
-  late AnimationController _controller;
+  late AnimationController _slideController;
+  late AnimationController _progressController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseGlow;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 350),
     );
 
-    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _progressController = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+
+    _scaleAnimation = CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic);
+    _fadeAnimation = CurvedAnimation(parent: _slideController, curve: Curves.easeIn);
     _slideAnimation = Tween<Offset>(begin: const Offset(0, -0.6), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
     );
 
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-    _pulseGlow = Tween<double>(begin: 4.0, end: 14.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+    _slideController.forward();
+    _progressController.forward();
 
-    _controller.forward();
-
-    // Auto dismiss after 2.8s
-    Future.delayed(const Duration(milliseconds: 2800), () async {
+    // Auto dismiss after duration
+    Future.delayed(widget.duration, () async {
       if (mounted) {
-        await _controller.reverse();
-        widget.onDismiss();
+        await _dismissGracefully();
       }
     });
   }
 
+  Future<void> _dismissGracefully() async {
+    if (!mounted) return;
+    await _slideController.reverse();
+    if (mounted) {
+      widget.onDismiss();
+    }
+  }
+
   @override
   void dispose() {
-    _controller.dispose();
-    _pulseController.dispose();
+    _slideController.dispose();
+    _progressController.dispose();
     super.dispose();
   }
 
@@ -154,16 +265,16 @@ class _AnimatedToastWidgetState extends State<_AnimatedToastWidget> with TickerP
       case AlertType.success: return const Color(0xFF10B981);
       case AlertType.warning: return const Color(0xFFF59E0B);
       case AlertType.error: return const Color(0xFFEF4444);
-      case AlertType.info: return const Color(0xFF38BDF8);
+      case AlertType.info: return const Color(0xFF3B82F6);
     }
   }
 
-  Color get _bgGradientStart {
+  Color get _bgColor {
     switch (widget.type) {
-      case AlertType.success: return const Color(0xFF064E3B);
-      case AlertType.warning: return const Color(0xFF78350F);
-      case AlertType.error: return const Color(0xFF7F1D1D);
-      case AlertType.info: return const Color(0xFF0C4A6E);
+      case AlertType.success: return const Color(0xFFECFDF5);
+      case AlertType.warning: return const Color(0xFFFFFBEB);
+      case AlertType.error: return const Color(0xFFFEF2F2);
+      case AlertType.info: return const Color(0xFFEFF6FF);
     }
   }
 
@@ -179,85 +290,110 @@ class _AnimatedToastWidgetState extends State<_AnimatedToastWidget> with TickerP
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: AnimatedBuilder(
-            animation: _pulseGlow,
-            builder: (ctx, child) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_bgGradientStart, const Color(0xFF111827)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+    return GestureDetector(
+      onVerticalDragUpdate: (details) {
+        if (details.primaryDelta != null && details.primaryDelta! < -4) {
+          _dismissGracefully();
+        }
+      },
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _primaryColor.withValues(alpha: 0.35), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                    BoxShadow(
+                      color: _primaryColor.withValues(alpha: 0.12),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _primaryColor, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryColor.withValues(alpha: 0.35),
-                    blurRadius: _pulseGlow.value,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _primaryColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: _primaryColor.withValues(alpha: 0.6),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Icon(_defaultIcon, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.title.toUpperCase(),
-                          style: GoogleFonts.plusJakartaSans(
-                            color: _primaryColor,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            letterSpacing: 0.6,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: _bgColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(_defaultIcon, color: _primaryColor, size: 20),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.message,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.title,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: _primaryColor,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 11,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 1.5),
+                                Text(
+                                  widget.message,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textMuted),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                            onPressed: _dismissGracefully,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    widget.type == AlertType.success ? Icons.auto_awesome : Icons.notifications_active_rounded,
-                    color: _primaryColor.withValues(alpha: 0.8),
-                    size: 18,
-                  ),
-                ],
+                    // Micro Progress Bar at the bottom edge
+                    AnimatedBuilder(
+                      animation: _progressController,
+                      builder: (context, child) {
+                        return Container(
+                          height: 2,
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: 1.0 - _progressController.value,
+                            child: Container(
+                              color: _primaryColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -286,45 +422,42 @@ class _AnimatedAlertModalWidget extends StatefulWidget {
   State<_AnimatedAlertModalWidget> createState() => _AnimatedAlertModalWidgetState();
 }
 
-class _AnimatedAlertModalWidgetState extends State<_AnimatedAlertModalWidget> with TickerProviderStateMixin {
+class _AnimatedAlertModalWidgetState extends State<_AnimatedAlertModalWidget> with SingleTickerProviderStateMixin {
   late AnimationController _badgeController;
   late Animation<double> _badgeScale;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseGlow;
 
   @override
   void initState() {
     super.initState();
     _badgeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
     );
-    _badgeScale = CurvedAnimation(parent: _badgeController, curve: Curves.elasticOut);
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _pulseGlow = Tween<double>(begin: 8.0, end: 22.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
+    _badgeScale = CurvedAnimation(parent: _badgeController, curve: Curves.easeOutBack);
     _badgeController.forward();
   }
 
   @override
   void dispose() {
     _badgeController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
   Color get _primaryColor {
     switch (widget.type) {
-      case AlertType.success: return const Color(0xFF10B981);
-      case AlertType.warning: return const Color(0xFFF59E0B);
-      case AlertType.error: return const Color(0xFFEF4444);
-      case AlertType.info: return const Color(0xFF38BDF8);
+      case AlertType.success: return AppColors.primary;
+      case AlertType.warning: return AppColors.warning;
+      case AlertType.error: return AppColors.danger;
+      case AlertType.info: return AppColors.secondary;
+    }
+  }
+
+  Color get _bgColor {
+    switch (widget.type) {
+      case AlertType.success: return AppColors.primaryLight;
+      case AlertType.warning: return AppColors.warningLight;
+      case AlertType.error: return AppColors.dangerLight;
+      case AlertType.info: return AppColors.secondaryLight;
     }
   }
 
@@ -340,33 +473,23 @@ class _AnimatedAlertModalWidgetState extends State<_AnimatedAlertModalWidget> wi
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: _primaryColor.withValues(alpha: 0.4))),
-      backgroundColor: const Color(0xFF111827),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedBuilder(
-              animation: _pulseGlow,
-              builder: (ctx, child) => ScaleTransition(
-                scale: _badgeScale,
-                child: Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: _primaryColor,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _primaryColor.withValues(alpha: 0.5),
-                        blurRadius: _pulseGlow.value,
-                        spreadRadius: 3,
-                      ),
-                    ],
-                  ),
-                  child: Icon(_icon, color: Colors.white, size: 38),
+            ScaleTransition(
+              scale: _badgeScale,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: _bgColor,
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(_icon, color: _primaryColor, size: 34),
               ),
             ),
             const SizedBox(height: 16),
@@ -374,16 +497,16 @@ class _AnimatedAlertModalWidgetState extends State<_AnimatedAlertModalWidget> wi
               widget.title,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 17,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               widget.message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.4),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -393,7 +516,7 @@ class _AnimatedAlertModalWidgetState extends State<_AnimatedAlertModalWidget> wi
                   backgroundColor: _primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -401,7 +524,7 @@ class _AnimatedAlertModalWidgetState extends State<_AnimatedAlertModalWidget> wi
                 },
                 child: Text(
                   widget.confirmText,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
             ),
@@ -419,6 +542,7 @@ class AnimatedSuccessCheckoutModal extends StatefulWidget {
   final double change;
   final List<Map<String, dynamic>> items;
   final VoidCallback onPrint;
+  final VoidCallback? onWhatsApp;
   final VoidCallback onNewTransaction;
 
   const AnimatedSuccessCheckoutModal({
@@ -429,6 +553,7 @@ class AnimatedSuccessCheckoutModal extends StatefulWidget {
     required this.change,
     required this.items,
     required this.onPrint,
+    this.onWhatsApp,
     required this.onNewTransaction,
   });
 
@@ -436,159 +561,148 @@ class AnimatedSuccessCheckoutModal extends StatefulWidget {
   State<AnimatedSuccessCheckoutModal> createState() => _AnimatedSuccessCheckoutModalState();
 }
 
-class _AnimatedSuccessCheckoutModalState extends State<AnimatedSuccessCheckoutModal> with TickerProviderStateMixin {
+class _AnimatedSuccessCheckoutModalState extends State<AnimatedSuccessCheckoutModal> with SingleTickerProviderStateMixin {
   late AnimationController _badgeController;
   late Animation<double> _badgeScale;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseGlow;
 
   @override
   void initState() {
     super.initState();
     _badgeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 550),
     );
-    _badgeScale = CurvedAnimation(parent: _badgeController, curve: Curves.elasticOut);
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _pulseGlow = Tween<double>(begin: 8.0, end: 24.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
+    _badgeScale = CurvedAnimation(parent: _badgeController, curve: Curves.easeOutBack);
     _badgeController.forward();
   }
 
   @override
   void dispose() {
     _badgeController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: const BorderSide(color: Color(0xFF1E293B))),
-      backgroundColor: const Color(0xFF111827),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Glowing Animated Green Checkmark
-            AnimatedBuilder(
-              animation: _pulseGlow,
-              builder: (ctx, child) => ScaleTransition(
-                scale: _badgeScale,
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF10B981), Color(0xFF059669)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.5),
-                        blurRadius: _pulseGlow.value,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.check_rounded, color: Colors.white, size: 44),
+            ScaleTransition(
+              scale: _badgeScale,
+              child: Container(
+                width: 68,
+                height: 68,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.check_rounded, color: AppColors.primary, size: 40),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             Text(
-              'TRANSAKSI SUKSES!',
+              'Pembayaran Berhasil!',
               style: GoogleFonts.plusJakartaSans(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w900,
-                fontSize: 20,
-                letterSpacing: 0.5,
+                fontSize: 19,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               'Invoice #${widget.invoiceId}',
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            // Card Nominal Kembalian Jumbo
+            // Card Kembalian Bersih
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF090D16),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
               child: Column(
                 children: [
                   const Text(
                     'UANG KEMBALIAN',
-                    style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1),
+                    style: TextStyle(color: AppColors.primaryDark, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Rp ${widget.change.toStringAsFixed(0)}',
                     style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF10B981),
-                      fontSize: 28,
+                      color: AppColors.primaryDark,
+                      fontSize: 26,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const Divider(color: Color(0xFF1E293B), height: 20),
+                  const Divider(color: AppColors.border, height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total: Rp ${widget.total.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                      Text('Bayar: Rp ${widget.paid.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      Text('Total: Rp ${widget.total.toStringAsFixed(0)}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      Text('Bayar: Rp ${widget.paid.toStringAsFixed(0)}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
-            // Action Buttons
+            // Tombol Cetak Struk
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                icon: const Icon(Icons.print_rounded, size: 20),
-                label: const Text('Cetak Struk Thermal (58mm)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: const Text('Cetak Struk (Printer Thermal)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
                 onPressed: widget.onPrint,
               ),
             ),
-            const SizedBox(height: 10),
+            if (widget.onWhatsApp != null) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.chat_rounded, size: 18),
+                  label: const Text('Kirim Struk WhatsApp (Paperless)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                  onPressed: widget.onWhatsApp,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFF334155)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  foregroundColor: AppColors.textPrimary,
+                  side: const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: widget.onNewTransaction,
-                child: const Text('Selesai & Transaksi Baru', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                child: const Text('Selesai / Transaksi Baru', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
               ),
             ),
           ],

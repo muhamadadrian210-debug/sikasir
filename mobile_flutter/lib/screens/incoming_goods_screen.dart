@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class IncomingGoodsScreen extends StatefulWidget {
   const IncomingGoodsScreen({super.key});
@@ -45,44 +47,50 @@ class _IncomingGoodsScreenState extends State<IncomingGoodsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF1E293B))),
-        title: const Text('Catat Barang Masuk (Restock)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Catat Barang Masuk (Restock)', style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: descCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Deskripsi Barang / Supplier', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+              style: const TextStyle(fontSize: 13),
+              decoration: const InputDecoration(labelText: 'Deskripsi Barang / Supplier *'),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: qtyCtrl,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Jumlah Kuantitas Masuk', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              decoration: const InputDecoration(labelText: 'Jumlah Kuantitas Masuk *'),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: unitCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Satuan (pcs, box, dus)', labelStyle: TextStyle(color: Color(0xFF94A3B8))),
+              style: const TextStyle(fontSize: 13),
+              decoration: const InputDecoration(labelText: 'Satuan (pcs, box, dus)'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () async {
+              final qty = int.tryParse(qtyCtrl.text) ?? 0;
+              if (descCtrl.text.trim().isEmpty || qty <= 0) {
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Deskripsi dan jumlah wajib diisi!')));
+                return;
+              }
+
               try {
                 await ApiService().post('/incoming-goods', data: {
                   'description': descCtrl.text.trim(),
-                  'quantity': int.tryParse(qtyCtrl.text) ?? 1,
+                  'quantity': qty,
                   'unit': unitCtrl.text.trim(),
                 });
                 if (ctx.mounted) {
@@ -95,7 +103,7 @@ class _IncomingGoodsScreenState extends State<IncomingGoodsScreen> {
                 }
               }
             },
-            child: const Text('Simpan Log', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text('Simpan Log'),
           ),
         ],
       ),
@@ -105,84 +113,95 @@ class _IncomingGoodsScreenState extends State<IncomingGoodsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090D16),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF111827),
-        elevation: 1,
-        title: const Text('Log Barang Masuk (Restock)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF10B981)),
-            onPressed: _showAddIncomingModal,
-            tooltip: 'Tambah Barang Masuk',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            onPressed: _fetchIncoming,
-          ),
-        ],
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Catat Masuk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        onPressed: _showAddIncomingModal,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-          : _logs.isEmpty
-              ? const Center(child: Text('Belum ada log barang masuk', style: TextStyle(color: Color(0xFF64748B))))
-              : ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _logs.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, idx) {
-                    final it = _logs[idx];
-                    final date = it['created_at'] != null ? DateTime.tryParse(it['created_at'].toString()) : null;
-                    return Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF111827),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF1E293B)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF064E3B),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.move_to_inbox, color: Color(0xFF34D399), size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
+        children: [
+          // Header Info
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Riwayat Restock & Barang Masuk (${_logs.length})',
+                  style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
+                  onPressed: _fetchIncoming,
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _logs.isEmpty
+                    ? const Center(child: Text('Belum ada log barang masuk', style: TextStyle(color: AppColors.textSecondary)))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                        itemCount: _logs.length,
+                        separatorBuilder: (_, i) => const SizedBox(height: 10),
+                        itemBuilder: (ctx, idx) {
+                          final it = _logs[idx];
+                          final date = it['created_at'] != null ? DateTime.tryParse(it['created_at'].toString()) : null;
+
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: AppTheme.cardDecoration(),
+                            child: Row(
                               children: [
-                                Text(
-                                  it['description'] ?? it['product_name'] ?? 'Barang Masuk',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.move_to_inbox_rounded, color: AppColors.primaryDark, size: 22),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Penerima: ${it['created_by_name'] ?? 'Admin'} | ${date != null ? DateFormat('dd MMM yyyy, HH:mm').format(date) : '-'}',
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        it['description'] ?? it['product_name'] ?? 'Barang Masuk',
+                                        style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Petugas: ${it['created_by_name'] ?? 'Admin'} · ${date != null ? DateFormat('dd MMM yyyy, HH:mm').format(date) : '-'}',
+                                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.successLight,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '+${it['quantity']} ${it['unit'] ?? 'pcs'}',
+                                    style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w800, fontSize: 13),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '+${it['quantity']} ${it['unit'] ?? 'pcs'}',
-                              style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+          ),
+        ],
+      ),
     );
   }
 }
