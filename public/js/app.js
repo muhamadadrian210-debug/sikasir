@@ -262,7 +262,29 @@ function getStoreType(name) {
   return m ? m[1].trim() : 'Lainnya';
 }
 const storeType = getStoreType(tenantName);
-const isApotek = storeType === 'Apotek / Toko Obat';
+const isApotek = storeType === 'Apotek / Toko Obat' || tenantName.toLowerCase().includes('apotek') || tenantName.toLowerCase().includes('obat');
+const isBengkel = storeType.includes('Bengkel') || storeType.includes('Otomotif') || tenantName.toLowerCase().includes('bengkel') || tenantName.toLowerCase().includes('motor') || tenantName.toLowerCase().includes('mobil');
+const isLaundry = storeType.includes('Laundry') || tenantName.toLowerCase().includes('laundry') || tenantName.toLowerCase().includes('cuci');
+const isBarber = storeType.includes('Barbershop') || storeType.includes('Salon') || tenantName.toLowerCase().includes('barber') || tenantName.toLowerCase().includes('salon') || tenantName.toLowerCase().includes('pangkas');
+const isGasGalon = storeType.includes('Agen Gas') || tenantName.toLowerCase().includes('gas') || tenantName.toLowerCase().includes('galon');
+const isFnB = storeType === 'Toko Makanan & Minuman' ||
+              storeType === 'Cafe / Kedai Kopi' ||
+              storeType === 'Restoran / Rumah Makan / Cafe' ||
+              storeType === 'Restoran' ||
+              storeType === 'Warung Makan / Tegal' ||
+              storeType === 'Toko Kue / Bakery' ||
+              tenantName.toLowerCase().includes('cafe') ||
+              tenantName.toLowerCase().includes('kopi') ||
+              tenantName.toLowerCase().includes('resto') ||
+              tenantName.toLowerCase().includes('makanan') ||
+              tenantName.toLowerCase().includes('dine') ||
+              tenantName.toLowerCase().includes('kuliner');
+
+setTimeout(() => {
+  if (typeof initDineInEcosystem === 'function') {
+    initDineInEcosystem();
+  }
+}, 200);
 
 const StoreTypeConfig = {
   'Apotek / Toko Obat': {
@@ -270,6 +292,40 @@ const StoreTypeConfig = {
     extraFields: [
       { key: 'batch_number', label: 'Nomor Batch', placeholder: 'Contoh: B1234', type: 'text', class: 'pf-batch' },
       { key: 'expiry_date', label: 'Tanggal Kadaluarsa', type: 'date', class: 'pf-expiry' }
+    ]
+  },
+  'Bengkel Motor / Mobil': {
+    nameLabel: 'Nama Spare Part / Layanan Servis',
+    extraFields: [
+      { key: 'is_service', label: 'Tipe Item (Barang / Jasa Montir)', placeholder: '0 = Barang Fisik, 1 = Jasa Servis', type: 'text', class: 'pf-service' },
+      { key: 'brand', label: 'Merek / Pabrikan', placeholder: 'Contoh: Honda, Yamalube, Federal, Bosch', type: 'text', class: 'pf-brand' },
+      { key: 'warranty', label: 'Garansi Servis / Part', placeholder: 'Contoh: 1 Minggu, 1 Bulan', type: 'text', class: 'pf-warranty' }
+    ]
+  },
+  'Laundry Kiloan / Satuan': {
+    nameLabel: 'Paket / Layanan Laundry',
+    extraFields: [
+      { key: 'unit', label: 'Satuan Cucian (kg / pcs / meter)', placeholder: 'Contoh: kg, pcs, meter', type: 'text', class: 'pf-unit' },
+      { key: 'is_service', label: 'Tipe Layanan (1 = Jasa Cuci)', placeholder: '1 = Jasa Cuci, 0 = Produk Fisik', type: 'text', class: 'pf-service' }
+    ]
+  },
+  'Barbershop / Pangkas Rambut': {
+    nameLabel: 'Nama Layanan / Treatment',
+    extraFields: [
+      { key: 'is_service', label: 'Tipe (1 = Jasa Potong, 0 = Produk)', placeholder: '1 = Jasa Potong, 0 = Produk Pomade', type: 'text', class: 'pf-service' }
+    ]
+  },
+  'Salon Kecantikan': {
+    nameLabel: 'Nama Treatment / Kosmetik',
+    extraFields: [
+      { key: 'is_service', label: 'Tipe (1 = Jasa Treatment, 0 = Produk)', placeholder: '1 = Treatment, 0 = Produk Skincare', type: 'text', class: 'pf-service' }
+    ]
+  },
+  'Agen Gas & Galon': {
+    nameLabel: 'Nama Produk Gas / Galon',
+    extraFields: [
+      { key: 'brand', label: 'Merek', placeholder: 'Contoh: Pertamina, Aqua, Le Minerale, Vit', type: 'text', class: 'pf-brand' },
+      { key: 'rack_location', label: 'Area Gudang Tabung', placeholder: 'Contoh: Sektor Depan (Isi), Belakang (Kosong)', type: 'text', class: 'pf-rack' }
     ]
   },
   'Toko Kosmetik / Kecantikan': {
@@ -458,6 +514,10 @@ const storedMode = normalizeMode();
 localStorage.setItem(MODE_KEY, storedMode);
 const NAV_ADMIN = [
   { id: 'pos', label: 'Kasir', title: 'Kasir', icon: '🛒' },
+  ...(isFnB ? [
+    { id: 'dinein', label: 'Cek Meja (Dine-In)', title: 'Meja & Pesanan QR (Dine-In)', icon: '🍽️' },
+    { id: 'kds', label: 'Layar Dapur (KDS)', title: 'Layar Dapur & Antrean Koki (KDS)', icon: '👨‍🍳' }
+  ] : []),
   { id: 'scan', label: 'Scan & Daftarkan', title: 'Scan & Daftarkan Barang', icon: '📷' },
   { id: 'products', label: 'Produk', title: 'Manajemen Produk', icon: '📦' },
   { id: 'incoming', label: 'Barang Masuk', title: 'Barang Masuk (log)', icon: '📥' },
@@ -473,11 +533,17 @@ const NAV_ADMIN = [
 
 const NAV_KASIR = [
   { id: 'pos', label: 'Kasir', title: 'Kasir', icon: '🛒' },
+  ...(isFnB ? [
+    { id: 'dinein', label: 'Cek Meja (Dine-In)', title: 'Meja & Pesanan QR (Dine-In)', icon: '🍽️' },
+    { id: 'kds', label: 'Layar Dapur (KDS)', title: 'Layar Dapur & Antrean Koki (KDS)', icon: '👨‍🍳' }
+  ] : []),
   { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
 ];
 
 const TITLE_LOOKUP = {
   expenses: 'Bayar Nota & Kas Keluar',
+  dinein: 'Manajemen Meja & Pesanan QR (Dine-In)',
+  kds: 'Layar Dapur & Antrean Koki (Kitchen Display System)',
 };
 
 [NAV_ADMIN, NAV_KASIR].forEach((arr) => {
@@ -642,6 +708,10 @@ function buildSidebar() {
       title: 'Operasional',
       items: [
         { id: 'pos', label: 'Kasir POS', icon: '🛒' },
+        ...(isFnB ? [
+          { id: 'dinein', label: 'Cek Meja (Dine-In)', icon: '🍽️' },
+          { id: 'kds', label: 'Layar Dapur (KDS)', icon: '👨‍🍳' }
+        ] : []),
         { id: 'history', label: 'Riwayat Transaksi', icon: '🕐' },
         { id: 'incoming', label: StoreConfig.getMenuLabel('incoming', 'Barang Masuk'), icon: '📥' },
       ]
@@ -677,7 +747,7 @@ function buildSidebar() {
   groups.forEach(g => {
     let visibleItems = g.items;
     if (storedMode === 'kasir') {
-      visibleItems = visibleItems.filter(it => it.id === 'pos' || it.id === 'history');
+      visibleItems = visibleItems.filter(it => it.id === 'pos' || it.id === 'history' || it.id === 'dinein' || it.id === 'kds');
     } else if (storedMode === 'admin') {
       visibleItems = visibleItems.filter(it => it.id !== 'pos');
     }
@@ -701,6 +771,8 @@ function buildSidebar() {
       showView(btn.dataset.view);
       document.getElementById('sidebar').classList.remove('open');
       document.getElementById('sidebar-overlay').classList.remove('visible');
+      if (btn.dataset.view === 'dinein') loadDineInPanel();
+      if (btn.dataset.view === 'kds') renderKDS();
       if (btn.dataset.view === 'reports') loadReports();
       if (btn.dataset.view === 'products') loadProductsTable();
       if (btn.dataset.view === 'stock') loadStockTable();
@@ -743,17 +815,22 @@ function renderPosCatalog(filterText = '') {
     return;
   }
 
-  grid.innerHTML = list.map(p => `
-    <div class="pos-product-card ${p.stock <= 0 ? 'out-of-stock' : ''}" data-barcode="${p.barcode || ''}" data-id="${p.id}">
-      <div class="pos-product-name">${p.name}</div>
-      <div class="pos-product-meta">
-        <div class="pos-product-price">${money(p.sale_price)}</div>
-        <div class="pos-product-stock" style="color: ${p.stock > 5 ? 'var(--primary)' : p.stock > 0 ? 'var(--warning)' : 'var(--danger)'}">
-          ${p.stock > 0 ? p.stock + ' pcs' : 'Habis'}
+  grid.innerHTML = list.map(p => {
+    const isSvc = Boolean(p.is_service);
+    const unitLabel = p.unit || 'pcs';
+    const isOut = !isSvc && p.stock <= 0;
+    return `
+      <div class="pos-product-card ${isOut ? 'out-of-stock' : ''}" data-barcode="${p.barcode || ''}" data-id="${p.id}">
+        <div class="pos-product-name">${p.name}</div>
+        <div class="pos-product-meta">
+          <div class="pos-product-price">${money(p.sale_price)}</div>
+          <div class="pos-product-stock" style="color: ${isSvc ? '#38bdf8' : p.stock > 5 ? 'var(--primary)' : p.stock > 0 ? 'var(--warning)' : 'var(--danger)'}">
+            ${isSvc ? '⚡ JASA' : p.stock > 0 ? p.stock + ' ' + unitLabel : 'Habis'}
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   grid.querySelectorAll('.pos-product-card').forEach(card => {
     card.onclick = () => {
@@ -761,7 +838,7 @@ function renderPosCatalog(filterText = '') {
       const pid = Number(card.dataset.id);
       const prod = productsCache.find(p => p.id === pid || (b && p.barcode === b));
       if (prod) {
-        if (prod.stock < 1) {
+        if (!prod.is_service && prod.stock < 1) {
           showAlert(`Stok "${prod.name}" habis.`, 'warn');
           return;
         }
@@ -847,6 +924,75 @@ function renderCart(newItemName) {
       renderCart();
     };
   });
+}
+
+function getIndustryMetaHtml() {
+  if (isBengkel) {
+    return `
+      <div style="background:var(--bg-card); border:1.5px solid rgba(245, 158, 11, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+        <div style="font-size:0.85rem; font-weight:800; color:#fbbf24; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
+          <span>🔧</span> Data Kendaraan &amp; Servis Bengkel
+        </div>
+        <input type="text" id="pos-meta-nopol" class="pos-search-input" placeholder="Plat Nomor (Nopol) Kendaraan *" style="margin-bottom:0.4rem; font-size:0.85rem; font-weight:800; text-transform:uppercase;" />
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
+          <input type="text" id="pos-meta-mekanik" class="pos-search-input" placeholder="Nama Mekanik" style="font-size:0.82rem;" />
+          <input type="text" id="pos-meta-km" class="pos-search-input" placeholder="KM / Odometer" style="font-size:0.82rem;" />
+        </div>
+      </div>
+    `;
+  }
+  if (isLaundry) {
+    return `
+      <div style="background:var(--bg-card); border:1.5px solid rgba(56, 189, 248, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+        <div style="font-size:0.85rem; font-weight:800; color:#38bdf8; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
+          <span>🧺</span> Data Cucian &amp; Rak Laundry
+        </div>
+        <input type="text" id="pos-meta-rack" class="pos-search-input" placeholder="Nomor Rak / Gantungan (misal: Rak B-02) *" style="margin-bottom:0.4rem; font-size:0.85rem; font-weight:700;" />
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
+          <input type="text" id="pos-meta-estimate" class="pos-search-input" placeholder="Estimasi Selesai (misal: 2 Hari / 15 Okt)" style="font-size:0.82rem;" />
+          <input type="tel" id="pos-meta-phone" class="pos-search-input" placeholder="No. WA Pelanggan (08xxx)" style="font-size:0.82rem;" />
+        </div>
+      </div>
+    `;
+  }
+  if (isBarber) {
+    return `
+      <div style="background:var(--bg-card); border:1.5px solid rgba(168, 85, 247, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+        <div style="font-size:0.85rem; font-weight:800; color:#c084fc; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
+          <span>✂️</span> Penugasan Kapster / Stylist
+        </div>
+        <input type="text" id="pos-meta-kapster" class="pos-search-input" placeholder="Nama Kapster / Stylist Yang Melayani" style="font-size:0.85rem; font-weight:700;" />
+      </div>
+    `;
+  }
+  if (isApotek) {
+    return `
+      <div style="background:var(--bg-card); border:1.5px solid rgba(16, 185, 129, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+        <div style="font-size:0.85rem; font-weight:800; color:#34d399; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
+          <span>💊</span> Data Resep Dokter (Apotek)
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
+          <input type="text" id="pos-meta-recipe" class="pos-search-input" placeholder="No. Resep (Opsional)" style="font-size:0.82rem;" />
+          <input type="text" id="pos-meta-doctor" class="pos-search-input" placeholder="Nama Dokter" style="font-size:0.82rem;" />
+        </div>
+      </div>
+    `;
+  }
+  if (isGasGalon) {
+    return `
+      <div style="background:var(--bg-card); border:1.5px solid rgba(234, 179, 8, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
+        <div style="font-size:0.85rem; font-weight:800; color:#facc15; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
+          <span>💧</span> Status Tabung / Galon
+        </div>
+        <select id="pos-meta-tabung" class="pos-search-input" style="font-size:0.82rem; font-weight:700;">
+          <option value="Tukar Tabung/Galon Kosong">🔄 Tukar Tabung/Galon Kosong (Normal)</option>
+          <option value="Beli Baru + Tabung/Galon">🆕 Beli Baru Termasuk Tabung/Galon</option>
+          <option value="Pinjam Tabung (Uang Jaminan)">📋 Pinjam Tabung (Uang Jaminan Titip)</option>
+        </select>
+      </div>
+    `;
+  }
+  return '';
 }
 
 function renderPOS() {
@@ -943,6 +1089,8 @@ function renderPOS() {
             <strong class="mono" id="pos-change" style="font-size:1.15rem; color:var(--text-bright);">${money(0)}</strong>
           </div>
         </div>
+
+        ${getIndustryMetaHtml()}
 
         <button type="button" class="btn btn-primary btn-block" id="pos-checkout" style="padding:0.85rem; font-size:1.02rem; font-weight:800;">
           PROSES BAYAR
@@ -1042,13 +1190,14 @@ async function onPosScan(code) {
     showAlert(`⚠️ ${typeLabel} "${p.name}" sudah KADALUARSA! Jangan dijual!`, 'error');
     return;
   }
-  if (p.stock < 1) {
+  const isSvc = Boolean(p.is_service);
+  if (!isSvc && p.stock < 1) {
     showAlert(`Stok "${p.name}" habis.`, 'warn');
     return;
   }
   const existing = cart.find((c) => c.product_id === p.id);
   if (existing) {
-    if (existing.qty >= p.stock) {
+    if (!isSvc && existing.qty >= p.stock) {
       showAlert(`Stok "${p.name}" tidak mencukupi.`, 'warn');
       return;
     }
@@ -1060,7 +1209,9 @@ async function onPosScan(code) {
       name: p.name,
       sale_price: Number(p.sale_price),
       qty: 1,
-      maxStock: p.stock,
+      maxStock: isSvc ? 999999 : p.stock,
+      is_service: isSvc,
+      unit: p.unit || 'pcs',
     });
   }
   showAlert('', '');
@@ -1082,9 +1233,21 @@ async function checkout() {
   }
   try {
     const items = cart.map((c) => ({ product_id: c.product_id, qty: c.qty }));
+    const metadata = {};
+    if (document.getElementById('pos-meta-nopol')?.value) metadata.nopol = document.getElementById('pos-meta-nopol').value.trim();
+    if (document.getElementById('pos-meta-mekanik')?.value) metadata.mekanik = document.getElementById('pos-meta-mekanik').value.trim();
+    if (document.getElementById('pos-meta-km')?.value) metadata.km = document.getElementById('pos-meta-km').value.trim();
+    if (document.getElementById('pos-meta-rack')?.value) metadata.rack_no = document.getElementById('pos-meta-rack').value.trim();
+    if (document.getElementById('pos-meta-estimate')?.value) metadata.estimate = document.getElementById('pos-meta-estimate').value.trim();
+    if (document.getElementById('pos-meta-phone')?.value) metadata.phone = document.getElementById('pos-meta-phone').value.trim();
+    if (document.getElementById('pos-meta-kapster')?.value) metadata.kapster = document.getElementById('pos-meta-kapster').value.trim();
+    if (document.getElementById('pos-meta-recipe')?.value) metadata.recipe_no = document.getElementById('pos-meta-recipe').value.trim();
+    if (document.getElementById('pos-meta-doctor')?.value) metadata.doctor_name = document.getElementById('pos-meta-doctor').value.trim();
+    if (document.getElementById('pos-meta-tabung')?.value) metadata.tabung_status = document.getElementById('pos-meta-tabung').value;
+
     const res = await api('/transactions/checkout', {
       method: 'POST',
-      body: { items, paid },
+      body: { items, paid, apply_pb1: applyPB1, metadata },
     });
     lastReceipt = {
       id: res.transaction_id,
@@ -1093,10 +1256,37 @@ async function checkout() {
       paid: res.paid,
       change: res.change,
       kasir: user.username,
+      metadata,
       time: new Date().toISOString(),
     };
     document.getElementById('pos-print-last').disabled = false;
     window.dispatchEvent(new CustomEvent('sikasir:tx-success', { detail: lastReceipt }));
+
+    // Auto-settle Dine-In Table Order if loaded from a table
+    if (activeDineInOrder) {
+      try {
+        await api('/dine-in/settle', {
+          method: 'POST',
+          body: {
+            order_id: activeDineInOrder.id,
+            order_code: activeDineInOrder.order_code,
+            table_number: activeDineInOrder.table_number,
+          },
+        });
+        window.showMinimalNotification({
+          type: 'success',
+          title: 'MEJA DILUNASI',
+          message: `Pesanan Meja ${activeDineInOrder.table_number} (${activeDineInOrder.order_code}) lunas & meja dikosongkan!`
+        });
+      } catch (err) {
+        console.warn('Gagal settle meja dine-in:', err);
+      }
+      activeDineInOrder = null;
+      const banner = document.getElementById('pos-table-banner');
+      if (banner) banner.remove();
+      if (typeof pollDineInOrders === 'function') pollDineInOrders();
+    }
+
     cart = [];
     renderCart();
     document.getElementById('pos-paid').value = '';
@@ -1158,7 +1348,37 @@ function printReceiptPdf(rec) {
   doc.text(`Bayar: ${money(rec.paid)}`, 4, y);
   y += 5;
   doc.text(`Kembali: ${money(rec.change)}`, 4, y);
-  y += 8;
+  y += 6;
+
+  if (rec.metadata) {
+    doc.setFontSize(7);
+    if (rec.metadata.nopol) {
+      doc.text(`Plat: ${rec.metadata.nopol} | Mekanik: ${rec.metadata.mekanik || '-'}`, 4, y);
+      y += 4;
+      if (rec.metadata.km) {
+        doc.text(`KM Kendaraan: ${rec.metadata.km}`, 4, y);
+        y += 4;
+      }
+    }
+    if (rec.metadata.rack_no) {
+      doc.text(`Rak Cucian: ${rec.metadata.rack_no} | Est: ${rec.metadata.estimate || '-'}`, 4, y);
+      y += 4;
+    }
+    if (rec.metadata.kapster) {
+      doc.text(`Kapster/Stylist: ${rec.metadata.kapster}`, 4, y);
+      y += 4;
+    }
+    if (rec.metadata.recipe_no) {
+      doc.text(`No. Resep: ${rec.metadata.recipe_no} | dr: ${rec.metadata.doctor_name || '-'}`, 4, y);
+      y += 4;
+    }
+    if (rec.metadata.tabung_status) {
+      doc.text(`Status: ${rec.metadata.tabung_status}`, 4, y);
+      y += 4;
+    }
+  }
+
+  y += 4;
   doc.setFontSize(6);
   doc.setTextColor(120);
   doc.text('Product by Sivilize Corp', 36, Math.min(y + 4, 192), { align: 'center' });
@@ -2834,3 +3054,598 @@ window.addEventListener('sikasir:tx-success', (e) => {
     };
   }
 });
+
+/* ==========================================================================
+   SIVILIZE DINE LITE 2-WAY CANGKOK INTEGRATION (CEK MEJA & LIVE ORDER SYNC)
+   ========================================================================== */
+let activeDineInOrder = null;
+let cachedTableOrders = [];
+let dineInPollTimer = null;
+let lastKnownOrderCodes = new Set();
+
+function initDineInEcosystem() {
+  if (!isFnB) return;
+
+  // Initialize topbar buttons
+  const btnTopbarMeja = document.getElementById('btn-topbar-cek-meja');
+  if (btnTopbarMeja) {
+    btnTopbarMeja.style.display = 'inline-flex';
+    btnTopbarMeja.onclick = () => {
+      showView('dinein');
+      loadDineInPanel();
+    };
+  }
+
+  const btnTopbarKds = document.getElementById('btn-topbar-kds');
+  if (btnTopbarKds) {
+    btnTopbarKds.style.display = 'inline-flex';
+    btnTopbarKds.onclick = () => {
+      showView('kds');
+      renderKDS();
+    };
+  }
+
+  // Close modal button
+  const modalClose = document.getElementById('modal-table-order-close');
+  if (modalClose) {
+    modalClose.onclick = () => {
+      document.getElementById('modal-table-order')?.classList.remove('open');
+    };
+  }
+
+  // Start Background Poller
+  pollDineInOrders();
+  if (dineInPollTimer) clearInterval(dineInPollTimer);
+  dineInPollTimer = setInterval(pollDineInOrders, 6000);
+}
+
+async function pollDineInOrders() {
+  if (!getToken() || !isFnB) return;
+  try {
+    const res = await api('/dine-in/tables');
+    const orders = res?.orders || [];
+    cachedTableOrders = orders;
+
+    // Update Topbar Badge Counter
+    const badge = document.getElementById('badge-pending-meja');
+    if (badge) {
+      if (orders.length > 0) {
+        badge.textContent = orders.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Detect new orders for audio/toast alert
+    orders.forEach((o) => {
+      if (!lastKnownOrderCodes.has(o.order_code)) {
+        lastKnownOrderCodes.add(o.order_code);
+        window.showMinimalNotification({
+          type: 'warning',
+          title: `🔔 PESANAN MEJA ${o.table_number}!`,
+          message: `${o.customer_name} memesan ${o.items?.length || 0} menu (Total: ${money(o.total_amount)})`
+        });
+      }
+    });
+
+    // If currently on the dinein panel, re-render the tables
+    if (currentView === 'dinein') {
+      renderDineInTables(orders);
+    }
+  } catch (err) {
+    // Network retry silent
+  }
+}
+
+async function loadDineInPanel() {
+  const container = document.getElementById('view-dinein');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h2 style="margin:0; font-size:1.4rem; font-weight:900;">🍽️ Cek Meja & Pesanan Dine-In</h2>
+          <span style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.4); font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:9999px;">
+            SIVILIZE DINE LITE 2-WAY SYNC
+          </span>
+        </div>
+        <p style="margin:4px 0 0; color:var(--text-muted); font-size:0.86rem;">
+          Pantau pesanan scan QR pelanggan di meja cafe/restoran secara langsung. Klik meja untuk proses pembayaran di kasir!
+        </p>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="btn btn-secondary" id="btn-refresh-dinein" style="font-size:0.84rem; padding:0.5rem 0.9rem;">
+          🔄 Segarkan Data Meja
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Matrix -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem; margin-bottom:1.25rem;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:0.85rem;">
+        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">TOTAL KAPASITAS MEJA</div>
+        <div style="font-size:1.5rem; font-weight:900; color:var(--text-bright);">20 Meja</div>
+      </div>
+      <div style="background:var(--bg-card); border:1px solid rgba(239, 68, 68, 0.35); border-radius:12px; padding:0.85rem; background:rgba(239,68,68,0.04);">
+        <div style="font-size:0.75rem; color:#ef4444; font-weight:800;">MEJA TERISI (PENDING)</div>
+        <div id="stat-occupied-tables" style="font-size:1.5rem; font-weight:900; color:#ef4444;">0</div>
+      </div>
+      <div style="background:var(--bg-card); border:1px solid rgba(16, 185, 129, 0.35); border-radius:12px; padding:0.85rem; background:rgba(16,185,129,0.04);">
+        <div style="font-size:0.75rem; color:var(--primary); font-weight:800;">MEJA KOSONG</div>
+        <div id="stat-empty-tables" style="font-size:1.5rem; font-weight:900; color:var(--primary);">20</div>
+      </div>
+    </div>
+
+    <!-- Active Table Order Banner (if cart is currently serving a table) -->
+    ${activeDineInOrder ? `
+      <div style="background:rgba(245, 158, 11, 0.15); border:1.5px solid #f59e0b; border-radius:12px; padding:0.85rem 1.15rem; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="color:#fbbf24; font-weight:900; font-size:0.95rem;">⚡ SEDANG MELAYANI: MEJA ${activeDineInOrder.table_number}</div>
+          <div style="font-size:0.82rem; color:var(--text-bright);">Order Code: ${activeDineInOrder.order_code} · Pelanggan: ${activeDineInOrder.customer_name} · Total: ${money(activeDineInOrder.total_amount)}</div>
+        </div>
+        <button type="button" class="btn btn-primary" id="btn-goto-pos-paying" style="font-size:0.85rem; font-weight:800; padding:0.5rem 1rem;">
+          🛒 Buka Kasir POS untuk Bayar
+        </button>
+      </div>
+    ` : ''}
+
+    <!-- Table Grid Host -->
+    <div id="dinein-tables-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:1rem;">
+      <div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-muted);">
+        Memuat data meja...
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btn-refresh-dinein').onclick = () => {
+    pollDineInOrders();
+  };
+
+  const btnGotoPos = document.getElementById('btn-goto-pos-paying');
+  if (btnGotoPos) {
+    btnGotoPos.onclick = () => showView('pos');
+  }
+
+  await pollDineInOrders();
+}
+
+function renderDineInTables(orders = cachedTableOrders) {
+  const grid = document.getElementById('dinein-tables-grid');
+  if (!grid) return;
+
+  const occupiedCount = orders.length;
+  setElText('stat-occupied-tables', occupiedCount);
+  setElText('stat-empty-tables', Math.max(0, 20 - occupiedCount));
+
+  // Build mapping by table number
+  const orderMap = {};
+  orders.forEach((o) => {
+    const rawNum = String(o.table_number).replace(/\D/g, '').padStart(2, '0');
+    orderMap[rawNum] = o;
+    orderMap[String(o.table_number)] = o;
+  });
+
+  // Generate 20 Tables (Meja 01 s/d 20)
+  const tablesHtml = Array.from({ length: 20 }, (_, i) => {
+    const tableNum = String(i + 1).padStart(2, '0');
+    const order = orderMap[tableNum] || orderMap[String(i + 1)];
+
+    if (order) {
+      // OCCUPIED TABLE CARD
+      const itemCount = (order.items || []).reduce((acc, it) => acc + (Number(it.qty || it.quantity) || 1), 0);
+      const itemsSnippet = (order.items || []).slice(0, 2).map((it) => `${it.qty || it.quantity || 1}x ${it.name || it.menu_name}`).join(', ');
+
+      return `
+        <div class="dinein-table-card occupied" data-table="${tableNum}" style="
+          background: #111827;
+          border: 2px solid #ef4444;
+          border-radius: 14px;
+          padding: 1rem;
+          box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          position: relative;
+        ">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:1.1rem; font-weight:900; color:#ffffff;">Meja ${tableNum}</span>
+              <span style="background:rgba(239,68,68,0.2); color:#f87171; font-size:0.65rem; font-weight:900; padding:2px 6px; border-radius:4px; border:1px solid #ef4444;">
+                ADA ORDER
+              </span>
+            </div>
+            <span style="font-size:0.72rem; color:var(--text-muted); font-family:monospace;">${order.order_code}</span>
+          </div>
+
+          <div style="font-size:0.84rem; color:var(--text-bright); font-weight:700;">
+            👤 ${order.customer_name || 'Pelanggan'}
+          </div>
+
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.3; min-height:32px;">
+            ${itemsSnippet}${order.items?.length > 2 ? ' ...' : ''} (${itemCount} porsi)
+          </div>
+
+          ${order.order_note ? `
+            <div style="font-size:0.72rem; color:#fbbf24; background:rgba(245,158,11,0.1); padding:2px 6px; border-radius:4px;">
+              📝 ${order.order_note}
+            </div>
+          ` : ''}
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed rgba(255,255,255,0.15); padding-top:6px; margin-top:auto;">
+            <span style="font-size:0.75rem; color:var(--text-muted);">Total Tagihan:</span>
+            <span class="mono" style="font-size:1.05rem; font-weight:900; color:#10b981;">${money(order.total_amount)}</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;">
+            <button type="button" class="btn btn-primary btn-load-table-cart" data-table="${tableNum}" style="padding:0.45rem; font-size:0.78rem; font-weight:800;">
+              💳 Bayar
+            </button>
+            <button type="button" class="btn btn-secondary btn-view-table-detail" data-table="${tableNum}" style="padding:0.45rem; font-size:0.78rem;">
+              👁️ Detail
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // EMPTY TABLE CARD
+    return `
+      <div class="dinein-table-card empty" data-table="${tableNum}" style="
+        background: var(--bg-card);
+        border: 1.5px solid rgba(16, 185, 129, 0.25);
+        border-radius: 14px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        opacity: 0.85;
+      ">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:1.1rem; font-weight:900; color:var(--text-bright);">Meja ${tableNum}</span>
+          <span style="background:rgba(16,185,129,0.12); color:var(--primary); font-size:0.65rem; font-weight:800; padding:2px 6px; border-radius:4px;">
+            KOSONG
+          </span>
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:auto;">
+          Siap melayani pesanan scan QR
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.innerHTML = tablesHtml;
+
+  // Event handlers for occupied table buttons
+  grid.querySelectorAll('.btn-load-table-cart').forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const tNum = btn.dataset.table;
+      const order = orderMap[tNum];
+      if (order) loadTableOrderToPos(order);
+    };
+  });
+
+  grid.querySelectorAll('.btn-view-table-detail').forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const tNum = btn.dataset.table;
+      const order = orderMap[tNum];
+      if (order) openTableOrderModal(order, tNum);
+    };
+  });
+}
+
+function openTableOrderModal(order, tableNum) {
+  const modal = document.getElementById('modal-table-order');
+  if (!modal) return;
+
+  setElText('table-order-title', `🍽️ Pesanan Meja ${tableNum}`);
+  setElText('table-order-code', order ? order.order_code : 'KOSONG');
+  setElText('table-order-customer-name', order?.customer_name || 'Pelanggan Meja ' + tableNum);
+  setElText('table-order-time', order?.created_at ? new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-');
+
+  const noteWrap = document.getElementById('table-order-note-wrap');
+  if (noteWrap) {
+    if (order?.order_note) {
+      setElText('table-order-note', order.order_note);
+      noteWrap.style.display = 'block';
+    } else {
+      noteWrap.style.display = 'none';
+    }
+  }
+
+  const list = document.getElementById('table-order-items-list');
+  if (list && order?.items) {
+    list.innerHTML = order.items.map((it) => {
+      const q = it.qty || it.quantity || 1;
+      const p = it.price || 0;
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:0.85rem;">
+          <div>
+            <div style="font-weight:700; color:var(--text-bright);">${it.name || it.menu_name}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${q}x @${money(p)}${it.note ? ` · (${it.note})` : ''}</div>
+          </div>
+          <strong class="mono" style="color:var(--text-bright);">${money(q * p)}</strong>
+        </div>
+      `;
+    }).join('');
+  }
+
+  setElText('table-order-total', money(order?.total_amount || 0));
+
+  const btnLoad = document.getElementById('btn-table-load-cart');
+  if (btnLoad) {
+    btnLoad.onclick = () => {
+      modal.classList.remove('open');
+      loadTableOrderToPos(order);
+    };
+  }
+
+  const btnMarkPaid = document.getElementById('btn-table-mark-paid');
+  if (btnMarkPaid) {
+    btnMarkPaid.onclick = async () => {
+      if (!confirm(`Tandai pesanan Meja ${tableNum} (${order.order_code}) lunas dan kosongkan meja?`)) return;
+      try {
+        await api('/dine-in/settle', {
+          method: 'POST',
+          body: {
+            order_id: order.id,
+            order_code: order.order_code,
+            table_number: order.table_number,
+          },
+        });
+        window.showMinimalNotification({
+          type: 'success',
+          title: 'MEJA DIKOSONGKAN',
+          message: `Meja ${tableNum} telah berhasil ditandai Lunas & Selesai!`
+        });
+        modal.classList.remove('open');
+        pollDineInOrders();
+      } catch (err) {
+        alert(err.message || 'Gagal mengosongkan meja');
+      }
+    };
+  }
+
+  modal.classList.add('open');
+}
+
+function loadTableOrderToPos(order) {
+  if (!order) return;
+
+  // Clear current cart and load items from order
+  cart = [];
+  (order.items || []).forEach((it) => {
+    const itemName = it.name || it.menu_name;
+    const qty = Number(it.qty || it.quantity) || 1;
+    const price = Number(it.price) || 0;
+
+    // Match with productsCache if available
+    const matched = productsCache.find((p) => p.name.toLowerCase() === itemName.toLowerCase());
+
+    cart.push({
+      product_id: matched ? matched.id : 999990 + Math.floor(Math.random() * 1000),
+      barcode: matched ? matched.barcode : 'DINEIN-' + Math.floor(Math.random() * 10000),
+      name: matched ? matched.name : itemName,
+      sale_price: matched ? Number(matched.sale_price) : price,
+      qty,
+      maxStock: matched ? matched.stock : 999,
+    });
+  });
+
+  activeDineInOrder = order;
+
+  // Switch to POS screen
+  showView('pos');
+  renderCart();
+
+  // Add banner atop POS cart
+  const posCartWrap = document.querySelector('.pos-cart-panel') || document.getElementById('view-pos');
+  const existingBanner = document.getElementById('pos-table-banner');
+  if (existingBanner) existingBanner.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'pos-table-banner';
+  banner.style.cssText = `
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.25));
+    border: 1.5px solid #f59e0b;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    animation: popInBounce 0.3s ease;
+  `;
+  banner.innerHTML = `
+    <div>
+      <div style="color:#fbbf24; font-weight:900; font-size:0.88rem;">🍽️ PESANAN MEJA ${order.table_number} DIMUAT</div>
+      <div style="font-size:0.75rem; color:var(--text-bright);">Code: ${order.order_code} · Pelanggan: ${order.customer_name || 'Pelanggan'}</div>
+    </div>
+    <button type="button" id="btn-cancel-table-load" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem; border-color:rgba(239,68,68,0.4); color:#ef4444;">
+      ✕ Batalkan
+    </button>
+  `;
+
+  const cartHeader = document.querySelector('.pos-cart-header') || posCartWrap?.firstChild;
+  if (cartHeader && cartHeader.parentNode) {
+    cartHeader.parentNode.insertBefore(banner, cartHeader.nextSibling);
+  }
+
+  document.getElementById('btn-cancel-table-load')?.addEventListener('click', () => {
+    activeDineInOrder = null;
+    banner.remove();
+    cart = [];
+    renderCart();
+    window.showMinimalNotification({
+      type: 'info',
+      title: 'PESANAN MEJA DIBATALKAN',
+      message: 'Muatan pesanan meja dari keranjang kasir telah dibatalkan'
+    });
+  });
+
+  window.showMinimalNotification({
+    type: 'success',
+    title: `MEJA ${order.table_number} DIMUAT DI KASIR`,
+    message: `${order.items?.length || 0} menu loaded · Silakan terima uang & klik PROSES BAYAR`
+  });
+}
+
+/* ==========================================================================
+   KITCHEN DISPLAY SYSTEM (KDS) - LIVE ORDER MONITOR FOR CHEFS & WAITER
+   ========================================================================== */
+let kdsAutoRefreshTimer = null;
+let kdsCookStatuses = {}; // order_code -> 'cooking' | 'ready'
+
+async function renderKDS() {
+  const el = document.getElementById('view-kds');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div style="padding: 1.25rem 0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="margin:0; font-size:1.6rem; font-weight:900; color:var(--text-bright); display:flex; align-items:center; gap:8px;">
+            <span>👨‍🍳</span> Layar Dapur &amp; Koki (KDS)
+          </h2>
+          <p style="margin:0.25rem 0 0 0; font-size:0.85rem; color:var(--text-muted);">
+            Layar real-time dapur koki. Pesanan meja scan QR otomatis masuk ke sini tanpa perlu kertas!
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button type="button" class="btn btn-secondary" id="btn-kds-refresh" style="font-weight:700;">
+            🔄 Segarkan Layar
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-kds-back-pos" style="font-weight:800;">
+            🛒 Buka Kasir
+          </button>
+        </div>
+      </div>
+
+      <div id="kds-cards-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.15rem;">
+        <div style="padding:2.5rem; text-align:center; color:var(--text-muted); grid-column:1/-1;">
+          Memuat antrean pesanan dapur...
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btn-kds-refresh')?.addEventListener('click', loadKdsOrders);
+  document.getElementById('btn-kds-back-pos')?.addEventListener('click', () => showView('pos'));
+
+  await loadKdsOrders();
+
+  if (kdsAutoRefreshTimer) clearInterval(kdsAutoRefreshTimer);
+  kdsAutoRefreshTimer = setInterval(() => {
+    if (currentView === 'kds') loadKdsOrders();
+  }, 5000);
+}
+
+async function loadKdsOrders() {
+  const grid = document.getElementById('kds-cards-grid');
+  if (!grid) return;
+
+  try {
+    const res = await api('/dine-in/tables');
+    const orders = res?.orders || [];
+
+    if (!orders.length) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1; background:var(--bg-card); border:1.5px dashed var(--border); border-radius:16px; padding:3.5rem 1.5rem; text-align:center;">
+          <div style="font-size:3.5rem; margin-bottom:12px;">👨‍🍳 ✨</div>
+          <h3 style="margin:0 0 8px 0; color:var(--text-bright); font-size:1.3rem;">Dapur Bersih &amp; Terkendali!</h3>
+          <p style="margin:0; font-size:0.88rem; color:var(--text-muted);">Belum ada pesanan aktif dari meja pelanggan. Pesanan baru akan otomatis masuk ke layar ini secara langsung!</p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = orders.map((o) => {
+      const status = kdsCookStatuses[o.order_code] || 'pending';
+      const isCooking = status === 'cooking';
+      const isReady = status === 'ready';
+
+      const timeAgo = o.created_at ? Math.max(1, Math.round((Date.now() - new Date(o.created_at).getTime()) / 60000)) + ' mnt lalu' : 'Baru';
+
+      return `
+        <div class="kds-card" style="background:${isReady ? 'rgba(16, 185, 129, 0.12)' : isCooking ? 'rgba(245, 158, 11, 0.12)' : 'var(--bg-card)'}; border:2px solid ${isReady ? '#10b981' : isCooking ? '#f59e0b' : 'var(--border)'}; border-radius:16px; padding:1.15rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 10px 25px rgba(0,0,0,0.25);">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.6rem;">
+              <div>
+                <span style="font-size:1.4rem; font-weight:900; color:${isReady ? '#34d399' : '#fbbf24'};">Meja ${o.table_number}</span>
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">${o.order_code} · ${o.customer_name || 'Pelanggan'}</div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:0.72rem; padding:3px 8px; border-radius:9999px; font-weight:800; background:${isReady ? '#10b981' : isCooking ? '#f59e0b' : '#3b82f6'}; color:white;">
+                  ${isReady ? '✅ SIAP SAJI' : isCooking ? '🍳 SEDANG DIMASAK' : '⏳ ANTRI'}
+                </span>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">⏱️ ${timeAgo}</div>
+              </div>
+            </div>
+
+            ${o.order_note ? `
+              <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:6px 10px; margin-bottom:0.75rem; font-size:0.78rem; color:#fca5a5; font-weight:700;">
+                📢 Catatan Tamu: ${o.order_note}
+              </div>
+            ` : ''}
+
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:1rem;">
+              ${(o.items || []).map((it) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <span style="font-size:1rem; font-weight:900; color:var(--text-bright);">${it.name || it.menu_name}</span>
+                    ${it.note ? `<div style="font-size:0.75rem; color:#fbbf24; font-weight:700;">* ${it.note}</div>` : ''}
+                  </div>
+                  <span style="font-size:1.15rem; font-weight:900; color:var(--primary); padding:2px 8px; background:rgba(16,185,129,0.15); border-radius:6px;">
+                    ${it.qty || it.quantity || 1}x
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; border-top:1px solid rgba(255,255,255,0.08); padding-top:0.75rem;">
+            <button type="button" class="btn btn-secondary btn-kds-cook" data-code="${o.order_code}" style="font-weight:800; font-size:0.8rem; background:${isCooking ? '#f59e0b' : ''}; color:${isCooking ? '#000' : ''};">
+              🍳 Sedang Masak
+            </button>
+            <button type="button" class="btn btn-primary btn-kds-ready" data-code="${o.order_code}" data-table="${o.table_number}" style="font-weight:800; font-size:0.8rem; background:${isReady ? '#10b981' : ''};">
+              ✅ Siap Saji
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind Cook buttons
+    grid.querySelectorAll('.btn-kds-cook').forEach((btn) => {
+      btn.onclick = () => {
+        const code = btn.dataset.code;
+        kdsCookStatuses[code] = 'cooking';
+        loadKdsOrders();
+      };
+    });
+
+    // Bind Ready buttons
+    grid.querySelectorAll('.btn-kds-ready').forEach((btn) => {
+      btn.onclick = () => {
+        const code = btn.dataset.code;
+        const table = btn.dataset.table;
+        kdsCookStatuses[code] = 'ready';
+        window.showMinimalNotification({
+          type: 'success',
+          title: `🔔 MEJA ${table} SIAP SAJI!`,
+          message: `Pesanan (${code}) matang! Pelayan silakan antar ke meja.`
+        });
+        loadKdsOrders();
+      };
+    });
+  } catch (err) {
+    console.warn('Gagal muat KDS:', err);
+  }
+}
+
+

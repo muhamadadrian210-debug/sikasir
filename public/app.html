@@ -55,6 +55,13 @@
           <h2 id="page-title">Kasir POS</h2>
           
           <div style="display:flex; align-items:center; gap: 0.75rem; margin-left: auto;">
+            <button type="button" id="btn-topbar-cek-meja" class="btn" style="display:none; align-items:center; gap: 6px; font-size: 0.82rem; font-weight: 800; color: #fbbf24; background: rgba(245, 158, 11, 0.15); border: 1.5px solid rgba(245, 158, 11, 0.4); border-radius: var(--radius-full); padding: 0.35rem 0.85rem; cursor: pointer;">
+              🍽️ Cek Meja (Dine-In)
+              <span id="badge-pending-meja" style="background:#ef4444; color:white; font-size:0.7rem; padding:1px 6px; border-radius:9999px; font-weight:900; margin-left:2px; display:none;">0</span>
+            </button>
+            <button type="button" id="btn-topbar-kds" class="btn" style="display:none; align-items:center; gap: 6px; font-size: 0.82rem; font-weight: 800; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: var(--radius-full); padding: 0.35rem 0.85rem; cursor: pointer;">
+              👨‍🍳 Layar Dapur (KDS)
+            </button>
             <div style="display:flex; align-items:center; gap: 6px; font-size: 0.82rem; font-weight: 700; color: var(--primary); background: rgba(16, 185, 129, 0.12); padding: 0.35rem 0.75rem; border-radius: var(--radius-full); border: 1px solid rgba(16, 185, 129, 0.25);">
               <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); display: inline-block;"></span>
               ONLINE
@@ -68,6 +75,8 @@
 
           <!-- Section Views -->
           <section id="view-pos" class="view"></section>
+          <section id="view-dinein" class="view panel hidden"></section>
+          <section id="view-kds" class="view panel hidden"></section>
           <section id="view-scan" class="view panel hidden"></section>
           <section id="view-products" class="view panel hidden"></section>
           <section id="view-reports" class="view panel hidden"></section>
@@ -117,6 +126,46 @@
               🛒 Transaksi Baru
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Detail Pesanan Meja (Dine-In Sivilize Dine Lite) -->
+    <div class="modal-backdrop" id="modal-table-order">
+      <div class="modal" style="max-width: 500px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 0.75rem;">
+          <div>
+            <h3 id="table-order-title" style="margin:0; font-size:1.25rem;">🍽️ Pesanan Meja</h3>
+            <span id="table-order-code" style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">ORD-0000</span>
+          </div>
+          <button type="button" class="btn btn-secondary" id="modal-table-order-close" style="padding:0.35rem 0.65rem;">✕</button>
+        </div>
+
+        <div id="table-order-customer-info" style="background:var(--bg-base); padding:0.85rem; border-radius:12px; border:1px solid var(--border); margin-bottom:0.75rem; font-size:0.88rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span>👤 Pelanggan: <strong id="table-order-customer-name">-</strong></span>
+            <span id="table-order-time" style="font-size:0.75rem; color:var(--text-muted);">-</span>
+          </div>
+          <div id="table-order-note-wrap" style="color:#fbbf24; background:rgba(245, 158, 11, 0.1); padding:4px 8px; border-radius:6px; font-size:0.82rem; margin-top:6px; display:none;">
+            📝 Catatan: <span id="table-order-note">-</span>
+          </div>
+        </div>
+
+        <div style="font-size:0.78rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Rincian Menu Dipesan</div>
+        <div id="table-order-items-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; padding:0.6rem; background:rgba(0,0,0,0.25); margin-bottom:1rem;"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-base); padding:0.85rem 1.1rem; border-radius:12px; border:1.5px solid var(--primary); margin-bottom:1.15rem;">
+          <span style="font-size:0.88rem; font-weight:800; color:var(--text-bright);">TOTAL TAGIHAN</span>
+          <span id="table-order-total" class="mono" style="font-size:1.45rem; font-weight:900; color:var(--primary);">Rp 0</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+          <button type="button" class="btn btn-primary btn-block" id="btn-table-load-cart" style="padding:0.85rem; font-weight:900; font-size:0.95rem; box-shadow:0 4px 15px rgba(16,185,129,0.3);">
+            💳 Proses Bayar di Kasir (Load ke Cart POS)
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-table-mark-paid" style="padding:0.65rem; font-size:0.85rem; border-color:rgba(16,185,129,0.3); color:var(--primary);">
+            ✅ Tandai Selesai & Kosongkan Meja
+          </button>
         </div>
       </div>
     </div>

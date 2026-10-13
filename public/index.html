@@ -87,6 +87,9 @@
             <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
               🏪 Daftar Toko
             </button>
+            <button type="button" class="auth-tab" id="tab-activate" data-panel="activate" aria-selected="false">
+              ⚡ Aktivasi Kode
+            </button>
           </div>
 
           <!-- Login Form -->
@@ -193,10 +196,57 @@
               DAFTAR &amp; MASUK TOKO
             </button>
           </form>
+
+          <!-- Activation Form -->
+          <form id="activate-form" class="auth-panel hidden" data-panel="activate">
+            <p class="auth-hint">Masukkan kode aktivasi dari paket sewa website untuk aktivasi instan SiKasir &amp; Dine Lite.</p>
+            <div class="field">
+              <label for="act-code">Kode Aktivasi Lisensi</label>
+              <input id="act-code" name="code" required placeholder="Contoh: SIV-FNB-30D" style="text-transform: uppercase; font-family: monospace; font-weight: 700; letter-spacing: 1px;" />
+            </div>
+            <div class="field">
+              <label for="act-store-name">Nama Toko / Usaha Anda</label>
+              <input id="act-store-name" name="store_name" required placeholder="Contoh: Kopi Nusantara Berkah" />
+            </div>
+            <div class="field">
+              <label for="act-store-type">Jenis Toko / Bisnis</label>
+              <select id="act-store-type" name="store_type" required>
+                <optgroup label="Kuliner (F&amp;B) - Termasuk Fitur Meja">
+                  <option value="Cafe / Kedai Kopi" selected>☕ Cafe / Kedai Kopi</option>
+                  <option value="Restoran">🍽️ Restoran</option>
+                  <option value="Warung Makan / Tegal">🍲 Warung Makan / Tegal</option>
+                  <option value="Toko Kue / Bakery">🍞 Toko Kue / Bakery</option>
+                </optgroup>
+                <optgroup label="Retail &amp; Non-F&amp;B (Tanpa Fitur Meja)">
+                  <option value="Minimarket">🛒 Minimarket</option>
+                  <option value="Apotek / Toko Obat">💊 Apotek / Toko Obat</option>
+                  <option value="Toko Pakaian / Fashion">👗 Toko Pakaian / Fashion</option>
+                  <option value="Bengkel Motor / Mobil">🔧 Bengkel Motor / Mobil</option>
+                  <option value="Lainnya">📦 Retail Lainnya</option>
+                </optgroup>
+              </select>
+            </div>
+            <button type="submit" id="btn-activate-submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem; background: linear-gradient(135deg, #2563eb, #7c3aed); border: none; font-weight: 700;">
+              ⚡ AKTIFKAN SEKARANG
+            </button>
+          </form>
         </div>
       </div>
     </div>
     <footer class="app-footer-watermark">Copyright © 2026 Muhamad Adrian. All rights reserved. Owned and Published by Sivilize Corp.</footer>
+
+    <!-- Celebration Modal Aktivasi Lisensi -->
+    <div id="modal-activation-success" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
+      <div style="background: #0f172a; color: #fff; border: 2px solid #3b82f6; border-radius: 20px; padding: 32px 24px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.4);">
+        <div style="font-size: 3.8rem; margin-bottom: 12px; line-height: 1;">🎉</div>
+        <h3 style="margin: 0 0 12px 0; font-size: 1.45rem; font-weight: 800; color: #60a5fa; letter-spacing: -0.5px;">Aktivasi Lisensi Berhasil!</h3>
+        <p id="act-success-message" style="margin: 0 0 24px 0; font-size: 1.05rem; line-height: 1.5; color: #f8fafc; font-weight: 600; padding: 14px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.35); text-transform: none;"></p>
+        <button type="button" id="btn-proceed-dashboard" class="btn btn-primary btn-block" style="padding: 0.95rem; font-size: 1.05rem; font-weight: 800; background: #2563eb; border: none; border-radius: 10px; cursor: pointer;">
+          🚀 Buka Aplikasi Kasir Sekarang
+        </button>
+      </div>
+    </div>
+
     <script src="/js/samsung-redirect.js"></script>
     <script type="module" src="/js/login.js"></script>
   </body>

@@ -12,7 +12,7 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const tid = tenantId(req);
-    const { items, paid, apply_pb1 = false } = req.body || {};
+    const { items, paid, apply_pb1 = false, notes = '', metadata = null } = req.body || {};
     if (!Array.isArray(items) || !items.length) {
       return res.status(400).json({ error: 'Keranjang kosong' });
     }
@@ -25,20 +25,21 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
     const lines = [];
     for (const it of items) {
       const pid = parseInt(it.product_id, 10);
-      const qty = parseInt(it.qty, 10);
-      if (Number.isNaN(pid) || Number.isNaN(qty) || qty < 1) {
+      const qty = Number(it.qty);
+      if (Number.isNaN(pid) || Number.isNaN(qty) || qty <= 0) {
         return res.status(400).json({ error: 'Item tidak valid' });
       }
       // Zero-Trust: Scope product lookup strictly to tenant & lock row FOR UPDATE to prevent race conditions
       const [prows] = await conn.execute(
-        'SELECT id, sale_price, stock, name FROM products WHERE id = ? AND tenant_id = ? FOR UPDATE',
+        'SELECT id, sale_price, stock, name, is_service FROM products WHERE id = ? AND tenant_id = ? FOR UPDATE',
         [pid, tid]
       );
       if (!prows.length) {
         return res.status(400).json({ error: `Produk #${pid} tidak ditemukan di toko ini` });
       }
       const p = prows[0];
-      if (p.stock < qty) {
+      const isService = Boolean(p.is_service);
+      if (!isService && p.stock < qty) {
         return res.status(400).json({ error: `Stok "${p.name}" tidak mencukupi (sisa ${p.stock} pcs)` });
       }
 
@@ -57,7 +58,7 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
       const unit = Number(p.sale_price) + modExtra;
       const sub = unit * qty;
       subtotal += sub;
-      lines.push({ product_id: pid, qty, unit_price: unit, subtotal: sub });
+      lines.push({ product_id: pid, qty, unit_price: unit, subtotal: sub, is_service: isService });
     }
 
     // Zero-Trust Auto Promo Engine (Backend calculates discount independently)
@@ -80,9 +81,10 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
     }
 
     await conn.beginTransaction();
+    const metadataStr = metadata ? JSON.stringify(metadata) : null;
     const [ins] = await conn.execute(
-      'INSERT INTO transactions (tenant_id, user_id, total, paid, change_amount) VALUES (?, ?, ?, ?, ?)',
-      [tid, req.user.id, finalTotal, paidNum, changeAmt]
+      'INSERT INTO transactions (tenant_id, user_id, total, paid, change_amount, notes, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [tid, req.user.id, finalTotal, paidNum, changeAmt, notes || null, metadataStr]
     );
     const txId = ins.insertId;
 
@@ -92,10 +94,12 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
          VALUES (?, ?, ?, ?, ?)`,
         [txId, line.product_id, line.qty, line.unit_price, line.subtotal]
       );
-      await conn.execute(
-        'UPDATE products SET stock = stock - ? WHERE id = ? AND tenant_id = ?',
-        [line.qty, line.product_id, tid]
-      );
+      if (!line.is_service) {
+        await conn.execute(
+          'UPDATE products SET stock = stock - ? WHERE id = ? AND tenant_id = ?',
+          [line.qty, line.product_id, tid]
+        );
+      }
     }
 
     await conn.commit();

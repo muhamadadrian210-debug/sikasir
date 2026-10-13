@@ -2,9 +2,14 @@ import { api, setToken, setUser, clearAuth } from './api.js';
 
 const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
+const activateForm = document.getElementById('activate-form');
 const alertEl = document.getElementById('login-alert');
 const tabLogin = document.getElementById('tab-login');
 const tabRegister = document.getElementById('tab-register');
+const tabActivate = document.getElementById('tab-activate');
+const modalSuccess = document.getElementById('modal-activation-success');
+const actSuccessMessage = document.getElementById('act-success-message');
+const btnProceedDashboard = document.getElementById('btn-proceed-dashboard');
 
 // If already logged in, skip to app
 if (localStorage.getItem('sikasir_token')) {
@@ -35,18 +40,27 @@ function hideAlert() {
 }
 
 function switchPanel(panel) {
-  const loginActive = panel === 'login';
-  loginForm.classList.toggle('hidden', !loginActive);
-  registerForm.classList.toggle('hidden', loginActive);
-  tabLogin.classList.toggle('active', loginActive);
-  tabRegister.classList.toggle('active', !loginActive);
-  tabLogin.setAttribute('aria-selected', loginActive);
-  tabRegister.setAttribute('aria-selected', !loginActive);
+  const isLogin = panel === 'login';
+  const isRegister = panel === 'register';
+  const isActivate = panel === 'activate';
+
+  loginForm.classList.toggle('hidden', !isLogin);
+  registerForm.classList.toggle('hidden', !isRegister);
+  if (activateForm) activateForm.classList.toggle('hidden', !isActivate);
+
+  tabLogin.classList.toggle('active', isLogin);
+  tabRegister.classList.toggle('active', isRegister);
+  if (tabActivate) tabActivate.classList.toggle('active', isActivate);
+
+  tabLogin.setAttribute('aria-selected', isLogin);
+  tabRegister.setAttribute('aria-selected', isRegister);
+  if (tabActivate) tabActivate.setAttribute('aria-selected', isActivate);
   hideAlert();
 }
 
 tabLogin.addEventListener('click', () => switchPanel('login'));
 tabRegister.addEventListener('click', () => switchPanel('register'));
+if (tabActivate) tabActivate.addEventListener('click', () => switchPanel('activate'));
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -124,3 +138,56 @@ document.querySelectorAll('.btn-pw-toggle').forEach((btn) => {
     btn.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
   });
 });
+
+if (activateForm) {
+  activateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+    const code = document.getElementById('act-code').value.trim();
+    const store_name = document.getElementById('act-store-name').value.trim();
+    const store_type = document.getElementById('act-store-type').value;
+
+    const btnSubmit = document.getElementById('btn-activate-submit');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Memverifikasi kode...';
+    }
+
+    try {
+      const data = await api('/license/activate', {
+        method: 'POST',
+        body: { code, store_name, store_type },
+      });
+
+      // Save token and state
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('sikasir_app_mode', 'both');
+      localStorage.setItem('sikasir_license_code', data.license_code);
+      localStorage.setItem('sikasir_expires_at', data.expires_at);
+
+      // Show celebratory notification modal
+      const modalMessage = data.message || `selamat toko ${data.store_name}, telah mengaktifkan aktivasi, sisa waktu anda ${data.duration_days} hari lagi`;
+      if (actSuccessMessage) {
+        actSuccessMessage.textContent = modalMessage;
+      }
+      if (modalSuccess) {
+        modalSuccess.classList.remove('hidden');
+      }
+
+      if (btnProceedDashboard) {
+        btnProceedDashboard.onclick = () => {
+          window.location.href = '/app.html';
+        };
+      }
+    } catch (err) {
+      showAlert(err.message || 'Gagal mengaktifkan kode lisensi');
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '⚡ AKTIFKAN SEKARANG';
+      }
+    }
+  });
+}
+

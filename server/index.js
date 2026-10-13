@@ -28,6 +28,8 @@ const expensesRoutes = require('./routes/expenses');
 const shiftsRoutes = require('./routes/shifts');
 
 const cdsRoutes = require('./routes/cds');
+const dineInRoutes = require('./routes/dineIn');
+const licenseRoutes = require('./routes/license');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -55,6 +57,12 @@ app.get('/api/health', (req, res) => {
 
 /** Customer Display System (CDS) — akses terbuka lokal per tenant */
 app.use('/api/cds', cdsRoutes);
+
+/** Dine-In & QR Table Integration — Ekosistem Sivilize Dine Lite (2-way sync) */
+app.use('/api/dine-in', dineInRoutes);
+
+/** License Activation — Aktivasi Kode Sewa Website Sivilize Ecosystem */
+app.use('/api/license', licenseRoutes);
 
 /** Setup admin pertama — tidak butuh auth */
 app.use('/api/setup', setupRoutes);
