@@ -144,7 +144,7 @@ if (activateForm) {
     e.preventDefault();
     hideAlert();
     const code = document.getElementById('act-code').value.trim();
-    const store_name = document.getElementById('act-store-name').value.trim();
+    const store_name = document.getElementById('act-store-name').value.trim() || 'Mitra Toko Sivilize';
     const store_type = document.getElementById('act-store-type').value;
 
     const btnSubmit = document.getElementById('btn-activate-submit');
