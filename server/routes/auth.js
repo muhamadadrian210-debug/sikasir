@@ -186,39 +186,41 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const { username, password } = req.body || {};
+    const { username, password, company_id } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ error: 'Username dan password wajib diisi' });
     }
 
-    const [rows] = await pool.execute(
-      `SELECT u.id, u.tenant_id, u.username, u.password_hash, u.role, t.name AS tenant_name 
-       FROM users u 
-       JOIN tenants t ON u.tenant_id = t.id 
-       WHERE u.username = ? LIMIT 1`,
-      [String(username).trim()]
-    );
+    const cleanUsername = String(username).trim();
+    const cleanCompany = String(company_id || '').trim();
 
-    let user = null;
-    let ok = false;
-    if (rows.length) {
-      user = rows[0];
-      ok = await bcrypt.compare(password, user.password_hash);
+    let sql = `
+      SELECT u.id, u.tenant_id, u.username, u.password_hash, u.role, t.name AS tenant_name, t.slug AS tenant_slug 
+      FROM users u 
+      JOIN tenants t ON u.tenant_id = t.id 
+      WHERE u.username = ?
+    `;
+    const params = [cleanUsername];
+
+    if (cleanCompany) {
+      sql += ' AND (t.id = ? OR t.slug = ? OR t.name LIKE ?)';
+      params.push(cleanCompany, cleanCompany, `%${cleanCompany}%`);
     }
 
-    if (!user) {
+    const [rows] = await pool.execute(sql, params);
+
+    let matchedUser = null;
+    for (const cand of rows) {
+      const isMatch = await bcrypt.compare(password, cand.password_hash);
+      if (isMatch) {
+        matchedUser = cand;
+        break;
+      }
+    }
+
+    if (!matchedUser) {
       const fail = await recordLoginFailure(ip);
       if (fail.locked) {
-        return res.status(429).json({
-          error: 'Terlalu banyak percobaan gagal. Coba lagi setelah 1 jam.',
-        });
-      }
-      return res.status(401).json({ error: 'Username atau password salah' });
-    }
-
-    if (!ok) {
-      const r = await recordLoginFailure(ip);
-      if (r.locked) {
         return res.status(429).json({
           error: 'Terlalu banyak percobaan gagal. Coba lagi setelah 1 jam.',
         });
@@ -230,13 +232,19 @@ router.post('/login', async (req, res) => {
 
     const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id },
+      { id: matchedUser.id, username: matchedUser.username, role: matchedUser.role, tenant_id: matchedUser.tenant_id },
       secret,
       { expiresIn: '7d' }
     );
     res.json({
       token,
-      user: { id: user.id, username: user.username, role: user.role, tenant_id: user.tenant_id, tenant_name: user.tenant_name },
+      user: {
+        id: matchedUser.id,
+        username: matchedUser.username,
+        role: matchedUser.role,
+        tenant_id: matchedUser.tenant_id,
+        tenant_name: matchedUser.tenant_name
+      },
     });
   } catch (e) {
     if (['ENOTFOUND', 'ECONNREFUSED', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST'].includes(e.code)) {

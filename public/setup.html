@@ -127,13 +127,19 @@
       async function checkStatus() {
         try {
           const res = await fetch('/api/setup/status');
-          const data = await res.json();
-          if (data.hasAdmin) {
-            // Admin sudah ada, redirect ke login
-            window.location.href = '/';
+          if (res.ok) {
+            const data = await res.json();
+            if (data.hasAdmin) {
+              // Admin/Toko sudah ada di sistem, arahkan ke login
+              showAlert('Setup awal sudah selesai. Mengalihkan ke Halaman Login...', 'success');
+              setTimeout(() => { window.location.href = '/'; }, 1000);
+            }
+          } else {
+            const data = await res.json().catch(() => ({}));
+            showAlert(data.error || 'Server sedang menyambungkan ke database. Mohon tunggu...', 'error');
           }
         } catch {
-          // Server belum siap, biarkan form tampil
+          showAlert('Tidak dapat terhubung ke server SiKasir. Periksa koneksi internet Anda.', 'error');
         }
       }
       checkStatus();

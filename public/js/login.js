@@ -16,16 +16,18 @@ if (localStorage.getItem('sikasir_token')) {
   window.location.href = '/app.html';
 }
 
-// Cek apakah setup sudah dilakukan — kalau belum ada tenant, redirect ke setup
+// Cek apakah setup sudah dilakukan — HANYA redirect jika server explicitly merespon hasAdmin === false
 (async () => {
   try {
     const res = await fetch('/api/setup/status');
-    const data = await res.json();
-    if (!data.hasAdmin) {
-      window.location.href = '/setup.html';
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.hasAdmin === false) {
+        window.location.href = '/setup.html';
+      }
     }
   } catch {
-    // Server belum siap, biarkan halaman login tampil
+    // Server offline / starting up, biarkan halaman login tetap tampil
   }
 })();
 

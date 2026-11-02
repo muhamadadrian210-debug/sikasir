@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT COUNT(*) AS cnt FROM tenants');
     if (rows[0].cnt > 0) {
-      return res.status(403).json({ error: 'Setup sudah dilakukan. Tidak bisa diulang.' });
+      return res.status(403).json({ error: 'Setup awal sudah selesai dilakukan sebelumnya. Silakan langsung masuk di Halaman Utama atau gunakan tab Daftar Toko.' });
     }
 
     const { store_name, username, password } = req.body || {};

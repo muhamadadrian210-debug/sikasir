@@ -51,8 +51,24 @@ app.use(sanitizeBody);
 app.get('/api/csrf-token', issueCsrf);
 
 /** Health check — berguna untuk debugging koneksi */
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  try {
+    const { pool } = require('./config/db');
+    const [rows] = await pool.query('SELECT 1 AS alive');
+    res.json({
+      status: 'ok',
+      db: 'connected',
+      ping: rows[0]?.alive === 1 ? 'pong' : 'ok',
+      time: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'error',
+      db: 'disconnected',
+      message: err.message,
+      time: new Date().toISOString()
+    });
+  }
 });
 
 /** Customer Display System (CDS) — akses terbuka lokal per tenant */

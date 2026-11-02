@@ -8,8 +8,12 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'sikasir',
   waitForConnections: true,
-  connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS) || 8000,
+  connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS) || 10000,
   
+  // TCP KeepAlive untuk mencegah koneksi diputus oleh firewall cloud / Aiven
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+
   // Batas maksimal koneksi yang dipertahankan dalam Pool (Connection Pool).
   // Dibatasi 10 koneksi untuk mencegah Connection Exhaustion pada Cloud DB (Aiven / RDS)
   // maupun MySQL lokal (XAMPP/Laragon).
