@@ -1151,6 +1151,15 @@ function renderPOS() {
             <button type="button" class="pos-pm-btn ${currentPaymentMethod === 'KASBON' ? 'active' : ''}" id="pos-pm-kasbon">Kasbon</button>
           </div>
 
+          <!-- QRIS Statis / Standar Cafe Panel (Conditional) -->
+          <div id="pos-qris-container" class="${currentPaymentMethod === 'QRIS' ? '' : 'hidden'}" style="margin-top:0.5rem; padding:0.65rem 0.75rem; background:var(--primary-subtle); border:1px solid var(--border); border-radius:var(--radius-sm);">
+            <div style="font-size:0.78rem; font-weight:700; color:var(--primary); margin-bottom:0.25rem;">Pembayaran QRIS Toko / Meja Kasir</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); line-height:1.4; margin-bottom:0.45rem;">
+              Pelanggan scan QRIS akrilik/toko sesuai nominal tagihan. Cek bukti bayar pelanggan, lalu klik <strong>Bayar Sekarang</strong>.
+            </div>
+            <input type="text" id="pos-qris-ref" class="pos-search-input" placeholder="Nama Pengirim / No. Ref QRIS (Opsional)" style="font-size:0.8rem; background:var(--bg-card);" />
+          </div>
+
           <!-- Kasbon Inputs (Conditional) -->
           <div id="pos-kasbon-inputs" class="${currentPaymentMethod === 'KASBON' ? '' : 'hidden'}" style="margin-top:0.5rem;">
             <input type="text" id="pos-kasbon-name" class="pos-search-input" placeholder="Nama Pelanggan Kasbon *" style="margin-bottom:0.4rem; font-size:0.82rem;" />
@@ -1193,13 +1202,86 @@ function renderPOS() {
 
   renderCategoryChips();
 
+  const getCartTotalWithTax = () => {
+    const sub = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
+    return sub + (applyPB1 ? Math.round(sub * 0.1) : 0);
+  };
+
   const paidEl = document.getElementById('pos-paid');
   const updateChange = () => {
-    const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
+    const total = getCartTotalWithTax();
     const paid = Number(paidEl ? paidEl.value : 0) || 0;
     setElText('pos-change', money(Math.max(0, paid - total)));
   };
   if (paidEl) paidEl.addEventListener('input', updateChange);
+
+  const setPaymentMethod = (method) => {
+    currentPaymentMethod = method;
+    document.getElementById('pos-pm-cash')?.classList.toggle('active', method === 'CASH');
+    document.getElementById('pos-pm-qris')?.classList.toggle('active', method === 'QRIS');
+    document.getElementById('pos-pm-kasbon')?.classList.toggle('active', method === 'KASBON');
+    document.getElementById('pos-cash-container')?.classList.toggle('hidden', method !== 'CASH');
+    document.getElementById('pos-qris-container')?.classList.toggle('hidden', method !== 'QRIS');
+    document.getElementById('pos-kasbon-inputs')?.classList.toggle('hidden', method !== 'KASBON');
+    if (method === 'QRIS' && paidEl) {
+      paidEl.value = getCartTotalWithTax();
+      updateChange();
+    }
+  };
+
+  if (document.getElementById('pos-pm-cash')) document.getElementById('pos-pm-cash').onclick = () => setPaymentMethod('CASH');
+  if (document.getElementById('pos-pm-qris')) document.getElementById('pos-pm-qris').onclick = () => setPaymentMethod('QRIS');
+  if (document.getElementById('pos-pm-kasbon')) document.getElementById('pos-pm-kasbon').onclick = () => setPaymentMethod('KASBON');
+
+  const pb1Check = document.getElementById('pos-apply-pb1');
+  if (pb1Check) {
+    pb1Check.onchange = (e) => {
+      applyPB1 = e.target.checked;
+      renderCart();
+      updateChange();
+    };
+  }
+
+  const splitMinus = document.getElementById('pos-split-minus');
+  const splitPlus = document.getElementById('pos-split-plus');
+  const splitVal = document.getElementById('pos-split-val');
+  if (splitMinus && splitPlus && splitVal) {
+    splitMinus.onclick = () => {
+      if (splitBillWays > 1) {
+        splitBillWays -= 1;
+        splitVal.textContent = `${splitBillWays} Orang`;
+        renderCart();
+      }
+    };
+    splitPlus.onclick = () => {
+      if (splitBillWays < 20) {
+        splitBillWays += 1;
+        splitVal.textContent = `${splitBillWays} Orang`;
+        renderCart();
+      }
+    };
+  }
+
+  const holdBtn = document.getElementById('pos-hold-bill');
+  const loadBtn = document.getElementById('pos-load-bill');
+  if (holdBtn) {
+    holdBtn.onclick = () => {
+      if (!cart.length) return;
+      heldBills.push({ items: [...cart], time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) });
+      cart = [];
+      renderCart();
+      window.showMinimalNotification({ type: 'info', title: 'PESANAN DITAHAN', message: `Pesanan disimpan ke antrian (${heldBills.length})` });
+    };
+  }
+  if (loadBtn) {
+    loadBtn.onclick = () => {
+      if (!heldBills.length) return;
+      const restored = heldBills.pop();
+      cart = restored.items;
+      renderCart();
+      window.showMinimalNotification({ type: 'info', title: 'ANTRIAN DIMUAT', message: `Pesanan jam ${restored.time} dikembalikan ke keranjang` });
+    };
+  }
 
   function openScanModal(onCode) {
     openWebBarcodeScanner(onCode);
@@ -1327,19 +1409,42 @@ async function onPosScan(code) {
 let lastReceipt = null;
 
 async function checkout() {
-  const total = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
-  const paid = Number(document.getElementById('pos-paid').value) || 0;
+  const subtotal = cart.reduce((s, i) => s + i.qty * i.sale_price, 0);
+  const taxAmount = applyPB1 ? Math.round(subtotal * 0.1) : 0;
+  const total = subtotal + taxAmount;
   if (!cart.length) {
     showAlert('Keranjang kosong.', 'warn');
     return;
   }
-  if (paid < total) {
+
+  let paid = Number(document.getElementById('pos-paid')?.value) || 0;
+  if (currentPaymentMethod === 'QRIS' || currentPaymentMethod === 'KASBON') {
+    paid = total;
+  }
+
+  if (currentPaymentMethod === 'KASBON') {
+    const kName = document.getElementById('pos-kasbon-name')?.value?.trim();
+    if (!kName) {
+      showAlert('Nama pelanggan kasbon wajib diisi.', 'warn');
+      return;
+    }
+  } else if (paid < total) {
     showAlert('Uang kurang.', 'warn');
     return;
   }
+
   try {
     const items = cart.map((c) => ({ product_id: c.product_id, qty: c.qty }));
-    const metadata = {};
+    const metadata = {
+      payment_method: currentPaymentMethod === 'QRIS' ? 'QRIS' : (currentPaymentMethod === 'KASBON' ? 'KASBON' : 'TUNAI'),
+    };
+    if (currentPaymentMethod === 'QRIS' && document.getElementById('pos-qris-ref')?.value) {
+      metadata.qris_ref = document.getElementById('pos-qris-ref').value.trim();
+    }
+    if (currentPaymentMethod === 'KASBON') {
+      metadata.kasbon_name = document.getElementById('pos-kasbon-name')?.value?.trim();
+      metadata.kasbon_phone = document.getElementById('pos-kasbon-phone')?.value?.trim() || '';
+    }
     if (document.getElementById('pos-meta-nopol')?.value) metadata.nopol = document.getElementById('pos-meta-nopol').value.trim();
     if (document.getElementById('pos-meta-mekanik')?.value) metadata.mekanik = document.getElementById('pos-meta-mekanik').value.trim();
     if (document.getElementById('pos-meta-km')?.value) metadata.km = document.getElementById('pos-meta-km').value.trim();
@@ -1355,6 +1460,18 @@ async function checkout() {
       method: 'POST',
       body: { items, paid, apply_pb1: applyPB1, metadata },
     });
+
+    if (currentPaymentMethod === 'KASBON' && metadata.kasbon_name) {
+      await api('/kasbon', {
+        method: 'POST',
+        body: {
+          customer_name: metadata.kasbon_name,
+          phone: metadata.kasbon_phone,
+          amount: res.total,
+          notes: `Invoice #${res.transaction_id} (${cart.map(c => `${c.name} x${c.qty}`).join(', ')})`
+        }
+      }).catch(() => {});
+    }
     lastReceipt = {
       id: res.transaction_id,
       items: [...cart],
@@ -1446,6 +1563,9 @@ function generateThermalHtml(rec) {
 
   let metaHtml = '';
   if (rec.metadata) {
+    if (rec.metadata.payment_method) {
+      metaHtml += `<div class="thermal-receipt-meta">Metode Bayar: <strong>${escapeHtml(rec.metadata.payment_method)}</strong>${rec.metadata.qris_ref ? ` (${escapeHtml(rec.metadata.qris_ref)})` : ''}</div>`;
+    }
     if (rec.metadata.table_number || rec.metadata.table) {
       metaHtml += `<div class="thermal-receipt-meta">Nomor Meja: <strong>${escapeHtml(String(rec.metadata.table_number || rec.metadata.table))}</strong></div>`;
     }
