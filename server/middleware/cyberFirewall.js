@@ -396,7 +396,7 @@ const firewallLayers = [
     description: 'Pencegahan eksploitasi query (UNION, Tautologi OR 1=1, SQL comments).',
     branches: ['UNION SELECT Injection Detector', 'Tautology Operator Matcher', 'Semicolon Query Separator Check', 'Stored Procedure Keyword Search', 'SQL Comment Truncate Block', 'Blind Injection Delay Command Check', 'Database Catalog Probing Protection'],
     check: (req) => {
-      const sqliPattern = /union\s+select|or\s+1\s*=\s*1|--|\/\*|select\s+.*\s+from|sleep\(\d+\)|pg_sleep\(/i;
+      const sqliPattern = /union\s+select|or\s+1\s*=\s*1|['";]\s*--|\/\*\s*select|select\s+.*\s+from\s+(users|tenants|information_schema)|sleep\(\d+\)|pg_sleep\(/i;
       
       for (const k of Object.keys(req.query || {})) {
         if (sqliPattern.test(req.query[k])) return { branch: 'UNION SELECT Injection Detector', honeypot: 'Vulnerable Search Sandbox' };
@@ -509,13 +509,9 @@ const firewallLayers = [
 ];
 
 /**
- * Express middleware entrypoint (Dinonaktifkan sementara agar operasional toko 100% lancar tanpa tarpit/hambatan)
+ * Express middleware entrypoint (11-Layer Active Defense, safe for authenticated store operations)
  */
 async function cyberFirewallMiddleware(req, res, next) {
-  return next();
-}
-
-async function _disabled_cyberFirewallMiddleware(req, res, next) {
   const ip = clientIp(req);
 
   // Skip options/preflight checks
@@ -524,6 +520,11 @@ async function _disabled_cyberFirewallMiddleware(req, res, next) {
   // Resolve tenant ID early
   const tenantId = getTenantIdFromRequest(req);
   const tidKey = tenantId ? String(tenantId) : 'global';
+
+  // Special direct bypass for cybersecurity dashboard & simulation APIs
+  if (req.originalUrl.startsWith('/api/cybersecurity') || req.originalUrl.startsWith('/api/security')) {
+    return next();
+  }
 
   // Determine loop setting for current tenant
   let loopEnabled = true;
@@ -543,67 +544,9 @@ async function _disabled_cyberFirewallMiddleware(req, res, next) {
     loopEnabled = loopVal !== undefined ? loopVal : true;
   }
 
-  // 1. Signature Verification (Anti-Reverse Engineering / Client Authentication)
-  const isSecurityOrWriteRequest = req.originalUrl.startsWith('/api/cybersecurity') || ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
-  const bypassPaths = [
-    '/api/csrf-token',
-    '/api/auth/login',
-    '/api/auth/register',
-    '/api/auth/register-tenant',
-    '/api/setup/status',
-    '/api/setup',
-  ];
-  
-  if (isSecurityOrWriteRequest && !bypassPaths.some(p => req.originalUrl.startsWith(p))) {
-    if (!validateRequestSignature(req)) {
-      const layer8 = firewallLayers[7]; // Layer 8 (index 7)
-      if (loopEnabled) {
-        return triggerLoopTrap(req, res, ip, tenantId, layer8, 'Client Request Signature Mismatch', 'Anti-Reverse Engineering Decoy');
-      } else {
-        return serveHoneypot(req, res, ip, tenantId, layer8, 'Client Request Signature Mismatch', 'Anti-Reverse Engineering Decoy');
-      }
-    }
-  }
-
-  // Special direct bypass for dashboard APIs after their signature has been verified
-  if (req.originalUrl.startsWith('/api/cybersecurity')) {
-    return next();
-  }
-
-  // 2. ESCALATION CHECK (FRUSTRATION OVERDRIVE):
-  // Check violation statistics from Redis or local cache in isolated tenant spaces
-  let violationCount = 0;
-  
-  try {
-    const redis = getRedisClient();
-    const redisKey = `cyber:firewall:tenant:${tidKey}:ip:${ip}`;
-    const stats = await redis.hgetall(redisKey);
-    violationCount = Number(stats.count || 0);
-  } catch (err) {
-    // Fallback to local memory statistical tracking per tenant
-    const tenantMap = localTenantStats.get(tidKey);
-    if (tenantMap) {
-      const currentStat = tenantMap.get(ip);
-      violationCount = currentStat ? currentStat.count : 0;
-    }
-  }
-
-  // Auto-escalation trigger (Strictly isolated by Tenant!)
-  if (violationCount >= FRUSTRATION_THRESHOLD && loopEnabled) {
-    const dummyLayer = { level: 99, name: 'Permanent IP Isolation Tarpit' };
-    return triggerLoopTrap(
-      req,
-      res,
-      ip,
-      tenantId,
-      dummyLayer,
-      'IP Block Escalation Trigger',
-      'Persistent Infinite Memory Bloater'
-    );
-  }
-
-  // Intercept via 11-Layer firewall
+  // Intercept via 11-Layer firewall (skip Layer 7 CSRF check here since csurf/api middleware handles it)
   for (const layer of firewallLayers) {
+    if (layer.level === 7) continue;
     const violation = layer.check(req);
     if (violation) {
       if (loopEnabled) {
