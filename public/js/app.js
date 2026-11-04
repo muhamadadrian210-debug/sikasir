@@ -1,5 +1,10 @@
 
 let selectedCategory = 'ALL';
+let cart = [];
+let heldBills = [];
+let splitBillWays = 1;
+let applyPB1 = false;
+let currentPaymentMethod = 'CASH';
 
 const NAV_ICONS = {
   pos: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>',
@@ -116,10 +121,10 @@ window.showMinimalNotification = function({ type = 'success', title, message, du
   if (existing) existing.remove();
 
   const colors = {
-    success: { primary: '#10b981', bg: '#064e3b', , border: 'rgba(16,185,129,0.4)' },
-    warning: { primary: '#f59e0b', bg: '#451a03', , border: 'rgba(245,158,11,0.4)' },
-    error: { primary: '#ef4444', bg: '#450a0a', , border: 'rgba(239,68,68,0.4)' },
-    info: { primary: '#3b82f6', bg: '#172554', , border: 'rgba(59,130,246,0.4)' }
+    success: { primary: '#10b981', bg: '#064e3b', border: 'rgba(16,185,129,0.4)' },
+    warning: { primary: '#f59e0b', bg: '#451a03', border: 'rgba(245,158,11,0.4)' },
+    error: { primary: '#ef4444', bg: '#450a0a', border: 'rgba(239,68,68,0.4)' },
+    info: { primary: '#3b82f6', bg: '#172554', border: 'rgba(59,130,246,0.4)' }
   };
   const theme = colors[type] || colors.info;
 
@@ -807,11 +812,6 @@ function buildSidebar() {
 }
 
 /* -------- POS (MAJOO-STYLE INTERACTIVE CATALOG & CHECKOUT) -------- */
-let cart = [];
-let heldBills = [];
-let splitBillWays = 1;
-let applyPB1 = false;
-let currentPaymentMethod = 'CASH';
 
 function renderCategoryChips() {
   const container = document.getElementById('pos-category-chips');
@@ -2946,6 +2946,163 @@ async function loadCybersecurityPanel() {
 
   await refresh();
 }
+
+/* -------- Init -------- */
+const menuToggleEl = document.getElementById('menu-toggle');
+if (menuToggleEl) {
+  menuToggleEl.onclick = () => {
+    document.getElementById('sidebar')?.classList.toggle('open');
+    document.getElementById('sidebar-overlay')?.classList.toggle('visible');
+  };
+}
+
+const sidebarOverlayEl = document.getElementById('sidebar-overlay');
+if (sidebarOverlayEl) {
+  sidebarOverlayEl.onclick = () => {
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebar-overlay')?.classList.remove('visible');
+  };
+}
+
+const btnLogoutEl = document.getElementById('btn-logout');
+if (btnLogoutEl) {
+  btnLogoutEl.onclick = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem(MODE_KEY);
+    window.location.href = '/';
+  };
+}
+
+async function init() {
+  initTheme();
+  buildSidebar();
+  
+  // Tampilkan nama toko di topbar
+  const storeLabelEl = document.getElementById('topbar-store-name');
+  if (storeLabelEl) {
+    const cleanStoreName = (tenantName || '').replace(/\s*\([^)]+\)$/, '').trim();
+    storeLabelEl.textContent = cleanStoreName || 'SiKasir Store';
+  }
+
+  try {
+    await loadCategories();
+  } catch (e) {
+    // Silently ignore category load error
+  }
+
+  const start = getDefaultStartView();
+
+  if (start === 'pos') renderPOS();
+  if (start === 'scan') renderScanPanel();
+  if (start === 'products') await loadProductsTable();
+  if (start === 'incoming') await loadIncomingPanel();
+  if (start === 'reports') await loadReports();
+  if (start === 'stock') await loadStockTable();
+  if (start === 'users') await loadUsersTable();
+  if (start === 'audit') await loadAuditTable();
+  if (start === 'history') await loadHistoryTable();
+  if (start === 'cybersecurity') await loadCybersecurityPanel();
+
+  showView(start);
+
+  const btnChangeMode = document.getElementById('btn-change-mode');
+  if (btnChangeMode) {
+    if (isAdmin) {
+      btnChangeMode.style.display = '';
+      btnChangeMode.onclick = () => {
+        window.location.href = '/mode.html';
+      };
+    } else {
+      btnChangeMode.style.display = 'none';
+    }
+  }
+
+  // PWA install button
+  const btnInstall = document.getElementById('btn-install-pwa');
+  if (btnInstall) {
+    btnInstall.onclick = () => window.__installPWA?.();
+  }
+
+  // Hardware back button — intercept popstate so Android back doesn't exit app
+  history.pushState({ view: start }, '');
+  window.addEventListener('popstate', (e) => {
+    // If scan modal is open, close it
+    if (document.getElementById('modal-scan')?.classList.contains('open')) {
+      closeScanModal();
+      scanCallback = null;
+      history.pushState({ view: currentView }, '');
+      return;
+    }
+    // If sidebar is open, close it
+    if (document.getElementById('sidebar')?.classList.contains('open')) {
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar-overlay')?.classList.remove('visible');
+      history.pushState({ view: currentView }, '');
+      return;
+    }
+    // Otherwise push state again to prevent exit
+    history.pushState({ view: currentView }, '');
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+}
+
+init();
+
+/* -------- Hardware Barcode Scanner Listener -------- */
+let hwBarcodeBuffer = '';
+let hwBarcodeTimeout = null;
+
+window.addEventListener('keydown', (e) => {
+  // Abaikan ketikan yang menggunakan modifier (Ctrl/Alt/Meta)
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  // Jika user sedang mengetik di dalam input atau textarea, abaikan.
+  // Pengecualian: jika mereka fokus di pos-barcode-input, kita biarkan logic jalan saat Enter.
+  const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+  
+  if (e.key === 'Enter') {
+    // Tangani manual input 'Enter' di text field barcode
+    if (e.target.id === 'pos-barcode-input') {
+      const code = e.target.value.trim();
+      if (code) {
+        onPosScan(code);
+        e.target.value = '';
+      }
+      hwBarcodeBuffer = '';
+      return;
+    }
+
+    // Jika ini adalah Enter dari hardware scanner (global)
+    if (!isInput && hwBarcodeBuffer.length > 2) {
+      const scannedCode = hwBarcodeBuffer;
+      hwBarcodeBuffer = '';
+      
+      // Memicu scan otomatis jika sedang di menu POS
+      if (currentView === 'pos') {
+        onPosScan(scannedCode);
+      } else {
+        showAlert('Barcode ditangkap: ' + scannedCode + ' (Otomatis masuk ke keranjang hanya di menu Kasir)', 'success');
+      }
+    }
+    return;
+  }
+
+  // Jika bukan Enter, tangkap karakternya jika bukan input box
+  if (!isInput && e.key.length === 1) {
+    hwBarcodeBuffer += e.key;
+    
+    // Clear buffer jika jeda antar ketikan lebih dari 40ms 
+    // (manusia mengetik lambat, hardware scanner sangat cepat)
+    clearTimeout(hwBarcodeTimeout);
+    hwBarcodeTimeout = setTimeout(() => {
+      hwBarcodeBuffer = '';
+    }, 40);
+  }
+});
 
 function openAddProductOptions() {
   const modalId = 'modal-add-product-options';
