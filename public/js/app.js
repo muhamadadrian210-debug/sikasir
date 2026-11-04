@@ -98,7 +98,7 @@ window.showScanToast = function(message) {
         <div style="font-size: 0.75rem; font-weight: 800; color: #34d399; letter-spacing: 0.5px;">SCAN BERHASIL!</div>
         <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">${message}</div>
       </div>
-      <div style="color: #34d399; margin-left: auto;">✨</div>
+      
     </div>
   `;
   document.body.appendChild(overlay);
@@ -116,10 +116,10 @@ window.showMinimalNotification = function({ type = 'success', title, message, du
   if (existing) existing.remove();
 
   const colors = {
-    success: { primary: '#10b981', bg: '#064e3b', icon: '✓', border: 'rgba(16,185,129,0.4)' },
-    warning: { primary: '#f59e0b', bg: '#451a03', icon: '✕', border: 'rgba(245,158,11,0.4)' },
-    error: { primary: '#ef4444', bg: '#450a0a', icon: '!', border: 'rgba(239,68,68,0.4)' },
-    info: { primary: '#3b82f6', bg: '#172554', icon: 'ℹ', border: 'rgba(59,130,246,0.4)' }
+    success: { primary: '#10b981', bg: '#064e3b', , border: 'rgba(16,185,129,0.4)' },
+    warning: { primary: '#f59e0b', bg: '#451a03', , border: 'rgba(245,158,11,0.4)' },
+    error: { primary: '#ef4444', bg: '#450a0a', , border: 'rgba(239,68,68,0.4)' },
+    info: { primary: '#3b82f6', bg: '#172554', , border: 'rgba(59,130,246,0.4)' }
   };
   const theme = colors[type] || colors.info;
 
@@ -244,72 +244,14 @@ window.showPremiumSuccessModal = function({ title, subtitle, total, paid, change
 };
 
 // ==========================================
-// WEB AI LIVE CRASH INSPECTOR & AUTO-REPAIR
+// CLIENT ERROR LOGGER
 // ==========================================
 window.addEventListener('error', function(e) {
-  showWebAiCrashInspector(e.message, e.filename, e.lineno);
+  console.warn('[SiKasir Error]', e.message, e.filename, e.lineno);
 });
 window.addEventListener('unhandledrejection', function(e) {
-  showWebAiCrashInspector(e.reason?.message || 'Asynchronous Promise Glitch', 'app.js', 0);
+  console.warn('[SiKasir UnhandledRejection]', e.reason);
 });
-
-function showWebAiCrashInspector(msg, file, line) {
-  if (document.getElementById('web-ai-crash-banner')) return;
-  const banner = document.createElement('div');
-  banner.id = 'web-ai-crash-banner';
-  banner.className = 'web-ai-crash-banner';
-  banner.innerHTML = `
-    <div class="ai-crash-content">
-      <div class="ai-crash-badge">
-        <span class="pulse-dot"></span> 🤖 SiKasir AI Crash Inspector & Auto-Repair
-      </div>
-      <div class="ai-crash-title">Glitch Terdeteksi di: <strong>${file ? file.split('/').pop() : 'Web App'}</strong> ${line ? `(Baris ${line})` : ''}</div>
-      <div class="ai-crash-desc">${msg || 'State mismatch detected'}</div>
-      <div class="ai-crash-actions">
-        <button id="btn-web-ai-autofix" class="btn-ai-autofix">✨ 🤖 AI Auto-Fix & Pulihkan</button>
-        <button id="btn-web-ai-dismiss" class="btn-ai-dismiss">✕ Tutup</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(banner);
-
-  document.getElementById('btn-web-ai-dismiss').onclick = () => banner.remove();
-  document.getElementById('btn-web-ai-autofix').onclick = async () => {
-    const btn = document.getElementById('btn-web-ai-autofix');
-    btn.innerHTML = '⏳ AI Sedang Memperbaiki...';
-    btn.disabled = true;
-
-    try {
-      const token = getToken();
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('/api/ai/auto-repair', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          componentName: 'Web POS View',
-          errorMessage: msg,
-          currentAction: 'User in Web POS'
-        })
-      });
-      const data = await res.json().catch(() => ({}));
-      btn.innerHTML = '✓ Sistem & Data Berhasil Dipulihkan!';
-      btn.style.backgroundColor = '#10b981';
-      
-      setTimeout(() => {
-        banner.remove();
-        window.location.reload();
-      }, 900);
-    } catch(err) {
-      btn.innerHTML = '✓ Memori Dinormalisasi!';
-      setTimeout(() => {
-        banner.remove();
-        window.location.reload();
-      }, 900);
-    }
-  };
-}
 
 const MODE_KEY = 'sikasir_app_mode';
 
@@ -577,31 +519,31 @@ function normalizeMode() {
 const storedMode = normalizeMode();
 localStorage.setItem(MODE_KEY, storedMode);
 const NAV_ADMIN = [
-  { id: 'pos', label: 'Kasir', title: 'Kasir', icon: '🛒' },
+  { id: 'pos', label: 'Kasir', title: 'Kasir' },
   ...(isFnB ? [
-    { id: 'dinein', label: 'Cek Meja (Dine-In)', title: 'Meja & Pesanan QR (Dine-In)', icon: '🍽️' },
-    { id: 'kds', label: 'Layar Dapur (KDS)', title: 'Layar Dapur & Antrean Koki (KDS)', icon: '👨‍🍳' }
+    { id: 'dinein', label: 'Cek Meja (Dine-In)', title: 'Meja & Pesanan QR (Dine-In)',  },
+    { id: 'kds', label: 'Layar Dapur (KDS)', title: 'Layar Dapur & Antrean Koki (KDS)',  }
   ] : []),
-  { id: 'scan', label: 'Scan & Daftarkan', title: 'Scan & Daftarkan Barang', icon: '📷' },
-  { id: 'products', label: 'Produk', title: 'Manajemen Produk', icon: '📦' },
-  { id: 'incoming', label: 'Barang Masuk', title: 'Barang Masuk (log)', icon: '📥' },
-  { id: 'reports', label: 'Laporan & Untung', title: 'Laporan & Untung', icon: '📊' },
-  { id: 'stock', label: 'Stok', title: 'Manajemen Stok', icon: '🗃️' },
-  { id: 'mutasi', label: 'Mutasi Stok', title: 'Mutasi Antar Cabang', icon: '🔄' },
-  { id: 'kasbon-global', label: 'Kasbon', title: 'Kasbon Global', icon: '💳' },
-  { id: 'users', label: 'Kasir', title: 'Manajemen Kasir', icon: '👥' },
-  { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin', icon: '📝' },
-  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
-  { id: 'cybersecurity', label: 'Keamanan Toko', title: 'Keamanan Toko', icon: '🛡️' }
+  { id: 'scan', label: 'Scan & Daftarkan', title: 'Scan & Daftarkan Barang',  },
+  { id: 'products', label: 'Produk', title: 'Manajemen Produk',  },
+  { id: 'incoming', label: 'Barang Masuk', title: 'Barang Masuk (log)',  },
+  { id: 'reports', label: 'Laporan & Untung', title: 'Laporan & Untung',  },
+  { id: 'stock', label: 'Stok', title: 'Manajemen Stok',  },
+  { id: 'mutasi', label: 'Mutasi Stok', title: 'Mutasi Antar Cabang',  },
+  { id: 'kasbon-global', label: 'Kasbon', title: 'Kasbon Global',  },
+  { id: 'users', label: 'Kasir', title: 'Manajemen Kasir',  },
+  { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin',  },
+  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi',  },
+  { id: 'cybersecurity', label: 'Keamanan Toko', title: 'Keamanan Toko',  }
 ];
 
 const NAV_KASIR = [
-  { id: 'pos', label: 'Kasir', title: 'Kasir', icon: '🛒' },
+  { id: 'pos', label: 'Kasir', title: 'Kasir' },
   ...(isFnB ? [
-    { id: 'dinein', label: 'Cek Meja (Dine-In)', title: 'Meja & Pesanan QR (Dine-In)', icon: '🍽️' },
-    { id: 'kds', label: 'Layar Dapur (KDS)', title: 'Layar Dapur & Antrean Koki (KDS)', icon: '👨‍🍳' }
+    { id: 'dinein', label: 'Cek Meja (Dine-In)', title: 'Meja & Pesanan QR (Dine-In)',  },
+    { id: 'kds', label: 'Layar Dapur (KDS)', title: 'Layar Dapur & Antrean Koki (KDS)',  }
   ] : []),
-  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi', icon: '🕐' },
+  { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi',  },
 ];
 
 const TITLE_LOOKUP = {
@@ -689,10 +631,10 @@ function showAlert(msg, kind = 'error') {
 
   // Trigger Animated Floating Premium Toast
   const colorMap = {
-    success: { bg: 'linear-gradient(135deg, #064e3b, #065f46)', border: '#10b981', glow: '#34d399', icon: '✓', title: 'BERHASIL' },
-    warn: { bg: 'linear-gradient(135deg, #78350f, #92400e)', border: '#f59e0b', glow: '#fbbf24', icon: '⚠️', title: 'PERINGATAN' },
-    error: { bg: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '#ef4444', glow: '#f87171', icon: '✕', title: 'PERHATIAN' },
-    info: { bg: 'linear-gradient(135deg, #0c4a6e, #0369a1)', border: '#38bdf8', glow: '#7dd3fc', icon: 'ℹ️', title: 'INFORMASI' }
+    success: { bg: 'linear-gradient(135deg, #064e3b, #065f46)', border: '#10b981', glow: '#34d399', , title: 'BERHASIL' },
+    warn: { bg: 'linear-gradient(135deg, #78350f, #92400e)', border: '#f59e0b', glow: '#fbbf24', , title: 'PERINGATAN' },
+    error: { bg: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '#ef4444', glow: '#f87171', , title: 'PERHATIAN' },
+    info: { bg: 'linear-gradient(135deg, #0c4a6e, #0369a1)', border: '#38bdf8', glow: '#7dd3fc', , title: 'INFORMASI' }
   };
   const theme = colorMap[kind] || colorMap.error;
 
@@ -971,7 +913,7 @@ function renderCart(newItemName) {
 
   const loadBtn = document.getElementById('pos-load-bill');
   if (loadBtn) {
-    loadBtn.textContent = heldBills.length > 0 ? `📂 Muat Antrian (${heldBills.length})` : '📂 Muat Antrian';
+    loadBtn.textContent = heldBills.length > 0 ? `Muat Antrian (${heldBills.length})` : 'Muat Antrian';
     loadBtn.disabled = heldBills.length === 0;
   }
 
@@ -1018,7 +960,7 @@ function getIndustryMetaHtml() {
     return `
       <div style="background:var(--bg-card); border:1.5px solid rgba(245, 158, 11, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
         <div style="font-size:0.85rem; font-weight:800; color:#fbbf24; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
-          <span>🔧</span> Data Kendaraan &amp; Servis Bengkel
+           Data Kendaraan &amp; Servis Bengkel
         </div>
         <input type="text" id="pos-meta-nopol" class="pos-search-input" placeholder="Plat Nomor (Nopol) Kendaraan *" style="margin-bottom:0.4rem; font-size:0.85rem; font-weight:800; text-transform:uppercase;" />
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
@@ -1032,7 +974,7 @@ function getIndustryMetaHtml() {
     return `
       <div style="background:var(--bg-card); border:1.5px solid rgba(56, 189, 248, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
         <div style="font-size:0.85rem; font-weight:800; color:#38bdf8; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
-          <span>🧺</span> Data Cucian &amp; Rak Laundry
+           Data Cucian &amp; Rak Laundry
         </div>
         <input type="text" id="pos-meta-rack" class="pos-search-input" placeholder="Nomor Rak / Gantungan (misal: Rak B-02) *" style="margin-bottom:0.4rem; font-size:0.85rem; font-weight:700;" />
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
@@ -1046,7 +988,7 @@ function getIndustryMetaHtml() {
     return `
       <div style="background:var(--bg-card); border:1.5px solid rgba(168, 85, 247, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
         <div style="font-size:0.85rem; font-weight:800; color:#c084fc; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
-          <span>✂️</span> Penugasan Kapster / Stylist
+           Penugasan Kapster / Stylist
         </div>
         <input type="text" id="pos-meta-kapster" class="pos-search-input" placeholder="Nama Kapster / Stylist Yang Melayani" style="font-size:0.85rem; font-weight:700;" />
       </div>
@@ -1056,7 +998,7 @@ function getIndustryMetaHtml() {
     return `
       <div style="background:var(--bg-card); border:1.5px solid rgba(16, 185, 129, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
         <div style="font-size:0.85rem; font-weight:800; color:#34d399; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
-          <span>💊</span> Data Resep Dokter (Apotek)
+           Data Resep Dokter (Apotek)
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
           <input type="text" id="pos-meta-recipe" class="pos-search-input" placeholder="No. Resep (Opsional)" style="font-size:0.82rem;" />
@@ -1069,12 +1011,12 @@ function getIndustryMetaHtml() {
     return `
       <div style="background:var(--bg-card); border:1.5px solid rgba(234, 179, 8, 0.4); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
         <div style="font-size:0.85rem; font-weight:800; color:#facc15; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
-          <span>💧</span> Status Tabung / Galon
+           Status Tabung / Galon
         </div>
         <select id="pos-meta-tabung" class="pos-search-input" style="font-size:0.82rem; font-weight:700;">
-          <option value="Tukar Tabung/Galon Kosong">🔄 Tukar Tabung/Galon Kosong (Normal)</option>
+          <option value="Tukar Tabung/Galon Kosong">Tukar Tabung/Galon Kosong (Normal)</option>
           <option value="Beli Baru + Tabung/Galon">🆕 Beli Baru Termasuk Tabung/Galon</option>
-          <option value="Pinjam Tabung (Uang Jaminan)">📋 Pinjam Tabung (Uang Jaminan Titip)</option>
+          <option value="Pinjam Tabung (Uang Jaminan)">Pinjam Tabung (Uang Jaminan Titip)</option>
         </select>
       </div>
     `;
@@ -1312,7 +1254,7 @@ async function onPosScan(code) {
   const hasExpiry = ['Apotek / Toko Obat', 'Toko Kosmetik / Kecantikan', 'Toko Makanan & Minuman'].includes(storeType);
   if (hasExpiry && p.expiry_date && new Date(p.expiry_date) < new Date()) {
     const typeLabel = storeType === 'Apotek / Toko Obat' ? 'Obat' : (storeType === 'Toko Makanan & Minuman' ? 'Makanan/Minuman' : 'Kosmetik');
-    showAlert(`⚠️ ${typeLabel} "${p.name}" sudah KADALUARSA! Jangan dijual!`, 'error');
+    showAlert(`${typeLabel} "${p.name}" sudah KADALUARSA! Jangan dijual!`, 'error');
     return;
   }
   const isSvc = Boolean(p.is_service);
@@ -1631,19 +1573,19 @@ function openScanModal(cb) {
               animation: popIn 0.3s ease-out;
             ">
               <div>
-                <div style="font-weight:700;color:#1e3a5f;font-size:1rem;">✅ ${escapeHtml(p.name)}</div>
+                <div style="font-weight:700;color:#1e3a5f;font-size:1rem;">${escapeHtml(p.name)}</div>
                 <div style="font-size:0.85rem;color:#475569;margin-top:2px;">
                   Harga: <strong>${money(p.sale_price)}</strong> · Stok: ${p.stock}
                 </div>
               </div>
-              <div style="font-size:1.5rem;">🛒</div>
+              
             </div>`;
           // Langsung callback tanpa tutup kamera!
           scanCallback?.(code);
         } else {
           previewEl.innerHTML = `
             <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:0.75rem 1rem;margin-top:0.5rem;color:#b91c1c;font-size:0.9rem;animation: popIn 0.3s ease-out;">
-              ⚠️ Barcode <strong>${escapeHtml(code)}</strong> belum terdaftar
+              Barcode <strong>${escapeHtml(code)}</strong> belum terdaftar
             </div>`;
           // Tetap panggil callback agar form pendaftaran terbuka dengan barcode terisi
           scanCallback?.(code);
@@ -1944,42 +1886,42 @@ async function loadReports() {
       <div style="display:flex; align-items:center; gap:0.75rem;">
         <label style="font-weight:700; font-size:0.9rem; color:var(--text-bright);">Rentang Waktu:</label>
         <select id="rep-period" class="pos-search-input" style="padding:0.5rem 1rem; width:auto; border-radius:10px;">
-          <option value="daily">📅 Hari Ini</option>
-          <option value="weekly">📅 Minggu Ini</option>
-          <option value="monthly">📅 Bulan Ini</option>
+          <option value="daily">Hari Ini</option>
+          <option value="weekly">Minggu Ini</option>
+          <option value="monthly">Bulan Ini</option>
         </select>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <button type="button" class="btn btn-secondary" id="rep-export-pdf" style="font-size:0.85rem;">📄 Cetak PDF</button>
-        <button type="button" class="btn btn-secondary" id="rep-export-csv" style="font-size:0.85rem;">📊 Ekspor Excel</button>
+        <button type="button" class="btn btn-secondary" id="rep-export-pdf" style="font-size:0.85rem;">Cetak PDF</button>
+        <button type="button" class="btn btn-secondary" id="rep-export-csv" style="font-size:0.85rem;">Ekspor Excel</button>
       </div>
     </div>
 
     <!-- Executive KPI Cards (Realtime Omset & Kas Keluar) -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.15); color:#10b981;">💰</div>
+        <div class="kpi-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></div>
         <div>
           <div class="kpi-label">Omset Kotor</div>
           <div class="kpi-val" id="kpi-revenue" style="color:#10b981;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(239,68,68,0.15); color:#ef4444;">💸</div>
+        <div class="kpi-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
         <div>
           <div class="kpi-label">Pengeluaran / Bayar Nota</div>
           <div class="kpi-val" id="kpi-expense" style="color:#f87171;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.15); color:#3b82f6;">💵</div>
+        <div class="kpi-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/></svg></div>
         <div>
           <div class="kpi-label">Omset Bersih Kas</div>
           <div class="kpi-val" id="kpi-net-revenue" style="color:#60a5fa;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(139,92,246,0.15); color:#8b5cf6;">📈</div>
+        <div class="kpi-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
         <div>
           <div class="kpi-label">Laba Bersih Akhir</div>
           <div class="kpi-val" id="kpi-profit" style="color:#c084fc;">Rp 0</div>
@@ -1990,7 +1932,7 @@ async function loadReports() {
     <!-- Chart & Profit Breakdown -->
     <div style="display:grid; grid-template-columns:1fr; gap:1.5rem; margin-bottom:1.5rem;">
       <div class="panel">
-        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">📊 Grafik Tren Penjualan</h4>
+        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">Grafik Tren Penjualan</h4>
         <div class="chart-box" style="height:280px;"><canvas id="chart-sales"></canvas></div>
       </div>
     </div>
@@ -2014,13 +1956,13 @@ async function loadReports() {
 
     <!-- Profit per product table -->
     <div class="panel">
-      <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">🏆 Rincian Laba per Produk</h4>
+      <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">Rincian Laba per Produk</h4>
       <div id="rep-margin-table"></div>
     </div>
 
     <!-- Critical low stock -->
     <div class="panel">
-      <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">⚠️ Peringatan Stok Menipis (&le;10 pcs)</h4>
+      <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">Peringatan Stok Menipis (&le;10 pcs)</h4>
       <div id="rep-low-stock"></div>
     </div>`;
 
@@ -2575,75 +2517,94 @@ async function loadCybersecurityPanel() {
   el.innerHTML = `
     <div class="cyber-page-head">
       <div>
-        <h3>🛡️ Keamanan Toko & AI Anti-Fraud Center</h3>
-        <p>Pantau ancaman siber secara realtime dengan kemampuan <strong>AI Self-Healing & Auto-Recovery</strong> otonom.</p>
+        <h3>Pusat Keamanan &amp; Audit Toko</h3>
+        <p>Pemantauan aktivitas mencurigakan, pembatasan akses firewall, dan audit integritas operasional.</p>
       </div>
       <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button type="button" class="btn" id="cyber-ai-heal" style="background:linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color:#fff; border:none; font-weight:800; padding:0.6rem 1.1rem; box-shadow:0 4px 15px rgba(99,102,241,0.35);">
-          ✨ 🩺 AI Self-Heal & Pulihkan Sistem
+        <button type="button" class="btn btn-primary" id="cyber-ai-heal">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          Verifikasi Integritas Sistem
         </button>
-        <button type="button" class="btn btn-secondary" id="cyber-refresh">🔄 Refresh Data</button>
+        <button type="button" class="btn btn-secondary" id="cyber-refresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Segarkan Data
+        </button>
       </div>
     </div>
 
-    <!-- AI Self-Healing Live Status Card -->
-    <div class="cyber-section" id="cyber-ai-heal-section" style="background:linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.08) 100%); border-color:rgba(168,85,247,0.4); margin-bottom:1.25rem;">
+    <!-- System Integrity Status Card -->
+    <div class="cyber-section" id="cyber-ai-heal-section">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
-        <h4 style="margin:0; color:#c084fc; display:flex; align-items:center; gap:6px;">
-          <span>🤖</span> AI Autonomous Self-Healing & Diagnostic Engine
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Status Integritas Basis Data &amp; Proteksi
         </h4>
-        <span class="cyber-badge cyber-badge-safe" id="cyber-ai-heal-badge">🛡️ Siap Memulihkan</span>
+        <span class="cyber-badge cyber-badge-safe" id="cyber-ai-heal-badge">Sistem Normal</span>
       </div>
-      <div id="cyber-ai-heal-report" style="font-size:0.9rem; line-height:1.55; color:var(--text-bright);">
-        Klik tombol <strong>"✨ 🩺 AI Self-Heal & Pulihkan Sistem"</strong> untuk menganalisis log ancaman, mengkarantina IP penyerang secara otomatis, memverifikasi integritas database, dan memulihkan kondisi operasional toko.
+      <div id="cyber-ai-heal-report" class="cyber-muted" style="font-size:0.88rem; margin-bottom:0;">
+        Klik tombol <strong>"Verifikasi Integritas Sistem"</strong> untuk menganalisis anomali stok negatif, memverifikasi tabel transaksi, dan memastikan firewall toko aktif.
       </div>
-      <div id="cyber-ai-heal-actions" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:4px;"></div>
+      <div id="cyber-ai-heal-actions" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:6px;"></div>
     </div>
 
     <!-- Security Stat Cards -->
     <div class="cyber-metrics-grid" id="cyber-metrics-cards">
       <div class="cyber-stat-card">
-        <span class="cyber-stat-label">Total Ancaman Dicegah</span>
+        <span class="cyber-stat-label">Total Pelanggaran Dicegah</span>
         <span class="cyber-stat-val" id="cyber-stat-total">0</span>
       </div>
       <div class="cyber-stat-card">
-        <span class="cyber-stat-label">IP Mencurigakan</span>
+        <span class="cyber-stat-label">Alamat IP Terpantau</span>
         <span class="cyber-stat-val" id="cyber-stat-ip-count">0</span>
       </div>
       <div class="cyber-stat-card">
-        <span class="cyber-stat-label">Status Proteksi</span>
-        <span class="cyber-stat-val" id="cyber-stat-status" style="font-size:1.1rem; color:#10b981;">🛡️ Aktif & Aman</span>
+        <span class="cyber-stat-label">Status Firewall</span>
+        <span class="cyber-stat-val" id="cyber-stat-status" style="font-size:1.05rem;">
+          <span class="cyber-badge cyber-badge-safe">Aktif</span>
+        </span>
       </div>
     </div>
 
     <div class="grid-2" style="margin-bottom:1.25rem;">
       <div class="cyber-section" style="margin-bottom:0;">
-        <h4>⚙️ Pengaturan Proteksi Otomatis</h4>
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Kebijakan Pemblokiran Otomatis
+        </h4>
         <label class="cyber-check-row">
           <input type="checkbox" id="cyber-auto-block" />
-          <span>Blokir Otomatis IP & Akses Berbahaya</span>
+          <span>Blokir Otomatis IP &amp; Akses Berbahaya</span>
         </label>
-        <p class="cyber-muted">Jika aktif, sistem AI security akan otomatis memutus koneksi IP yang melakukan brute force / inject.</p>
+        <p class="cyber-muted">Memutus sambungan bila sistem mendeteksi percobaan injeksi SQL, manipulasi token, atau brute force berulang.</p>
       </div>
       <div class="cyber-section" style="margin-bottom:0;">
-        <h4>🧪 Uji Coba Simulasi Keamanan</h4>
-        <p class="cyber-muted">Verifikasi deteksi firewall dengan simulasi serangan terkontrol (hanya masuk ke log toko ini):</p>
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Uji Respon Firewall (Sandbox)
+        </h4>
+        <p class="cyber-muted">Simulasi terisolasi untuk memverifikasi kesiapan filter keamanan aplikasi:</p>
         <div class="cyber-test-actions">
-          <button type="button" class="btn" data-cyber-test="sqli">💉 Tes SQL Injection</button>
-          <button type="button" class="btn" data-cyber-test="xss">⚡ Tes XSS Script</button>
-          <button type="button" class="btn" data-cyber-test="bot">🤖 Tes Bot Kasir</button>
-          <button type="button" class="btn" data-cyber-test="api_abuse">📂 Tes File Scanner</button>
+          <button type="button" class="btn btn-secondary" data-cyber-test="sqli">Tes SQL Injection</button>
+          <button type="button" class="btn btn-secondary" data-cyber-test="xss">Tes Filter XSS</button>
+          <button type="button" class="btn btn-secondary" data-cyber-test="bot">Tes Pola Bot</button>
+          <button type="button" class="btn btn-secondary" data-cyber-test="api_abuse">Tes Path Scanner</button>
         </div>
       </div>
     </div>
 
     <div class="cyber-section">
-      <h4>🚨 Daftar Alamat IP Mencurigakan</h4>
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        Daftar Alamat IP Terpantau
+      </h4>
       <div id="cyber-ip-list">Memuat data IP...</div>
     </div>
 
     <div class="cyber-section">
-      <h4>📜 Catatan Kejadian & Log Audit Serangan</h4>
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Catatan Kejadian &amp; Log Audit Keamanan
+      </h4>
       <div id="cyber-log-list">Memuat log kejadian...</div>
     </div>`;
 
@@ -2656,34 +2617,34 @@ async function loadCybersecurityPanel() {
     if (healBtn) healBtn.disabled = true;
     if (badgeEl) {
       badgeEl.className = 'cyber-badge cyber-badge-warn';
-      badgeEl.textContent = '⏳ AI Sedang Mendiagnosis...';
+      badgeEl.textContent = 'Memeriksa Sistem...';
     }
-    if (reportEl) reportEl.innerHTML = '<span style="color:#a855f7;">✨ AI sedang memindai kerentanan, mengisolasi ancaman, dan memulihkan integritas data toko...</span>';
+    if (reportEl) reportEl.innerHTML = '<span style="color:var(--text-muted);">Memindai anomali integritas data dan memverifikasi filter toko...</span>';
     if (actionsEl) actionsEl.innerHTML = '';
 
     try {
       const res = await api('/cybersecurity/ai-heal', { method: 'POST' });
       if (badgeEl) {
         badgeEl.className = 'cyber-badge cyber-badge-safe';
-        badgeEl.textContent = '✓ Sistem Berhasil Dipulihkan';
+        badgeEl.textContent = 'Sistem Normal';
       }
       if (reportEl) {
-        reportEl.innerHTML = `<strong>Diagnosa AI:</strong> ${escapeHtml(res.aiDiagnosis || '')}`;
+        reportEl.innerHTML = `<strong>Hasil Verifikasi:</strong> ${escapeHtml(res.aiDiagnosis || 'Integritas sistem dan basis data aman.')}`;
       }
       if (actionsEl && Array.isArray(res.healedActions)) {
         actionsEl.innerHTML = res.healedActions
-          .map(act => `<div style="font-size:0.84rem; color:#10b981; display:flex; align-items:center; gap:6px;">${escapeHtml(act)}</div>`)
+          .map(act => `<div style="font-size:0.84rem; color:var(--primary); display:flex; align-items:center; gap:6px;">${escapeHtml(act.replace(/^[🛡️✨🤖\s]+/, ''))}</div>`)
           .join('');
       }
-      showAlert('✨ Pemulihan Keamanan AI Berhasil Dijalankan!', 'success');
+      showAlert('Pemeriksaan integritas sistem selesai.', 'success');
       await refresh();
     } catch (e) {
       if (badgeEl) {
         badgeEl.className = 'cyber-badge cyber-badge-danger';
-        badgeEl.textContent = '❌ Gagal Pemulihan';
+        badgeEl.textContent = 'Gagal Pemeriksaan';
       }
-      if (reportEl) reportEl.textContent = 'Error: ' + e.message;
-      showAlert(e.message || 'Gagal menjalankan AI Self-Heal', 'error');
+      if (reportEl) reportEl.textContent = 'Kesalahan: ' + e.message;
+      showAlert(e.message || 'Gagal memverifikasi integritas sistem', 'error');
     } finally {
       if (healBtn) healBtn.disabled = false;
     }
@@ -2711,9 +2672,9 @@ async function loadCybersecurityPanel() {
       const statusEl = document.getElementById('cyber-stat-status');
       if (statusEl) {
         if (ipStats.length > 0) {
-          statusEl.innerHTML = '<span class="cyber-badge cyber-badge-warn">⚠️ Perlu Tindakan</span>';
+          statusEl.innerHTML = '<span class="cyber-badge cyber-badge-warn">Perlu Perhatian</span>';
         } else {
-          statusEl.innerHTML = '<span class="cyber-badge cyber-badge-safe">✓ 100% Terlindungi</span>';
+          statusEl.innerHTML = '<span class="cyber-badge cyber-badge-safe">Terlindungi</span>';
         }
       }
 
@@ -2726,11 +2687,11 @@ async function loadCybersecurityPanel() {
                   <td class="mono"><code>${escapeHtml(item.ip)}</code></td>
                   <td><span class="cyber-badge cyber-badge-warn">${Number(item.count || 0)}x</span></td>
                   <td>${cyberTime(item.lastSeen)}</td>
-                  <td><button type="button" class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.78rem;" data-kick-ip="${escapeHtml(item.ip)}">🚫 Blokir IP</button></td>
+                  <td><button type="button" class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.78rem;" data-kick-ip="${escapeHtml(item.ip)}">Blokir IP</button></td>
                 </tr>`).join('')}
             </tbody>
           </table></div>`
-        : '<p style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">✓ Belum ada akses mencurigakan yang terdeteksi untuk toko Anda.</p>';
+        : '<p style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">Belum ada akses mencurigakan yang terdeteksi untuk toko Anda.</p>';
 
       document.getElementById('cyber-log-list').innerHTML = logs.length
         ? `<div class="table-wrap"><table class="data">
@@ -2746,7 +2707,7 @@ async function loadCybersecurityPanel() {
                 </tr>`).join('')}
             </tbody>
           </table></div>`
-        : '<p style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">✓ Log bersih, sistem berjalan normal tanpa gangguan.</p>';
+        : '<p style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">Log bersih, sistem berjalan normal tanpa gangguan.</p>';
 
       el.querySelectorAll('[data-kick-ip]').forEach((btn) => {
         btn.onclick = async () => {
@@ -2778,7 +2739,7 @@ async function loadCybersecurityPanel() {
         showAlert('Tes keamanan berhasil dieksekusi.', 'success');
         await refresh();
       } catch (e) {
-        showAlert(e.message, 'error');
+        showAlert(e.message || 'Gagal simulasi', 'error');
       } finally {
         btn.disabled = false;
       }
@@ -2788,154 +2749,6 @@ async function loadCybersecurityPanel() {
   await refresh();
 }
 
-/* -------- Init -------- */
-document.getElementById('menu-toggle').onclick = () => {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('visible');
-};
-document.getElementById('sidebar-overlay').onclick = () => {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('visible');
-};
-
-document.getElementById('btn-logout').onclick = () => {
-  setToken(null);
-  setUser(null);
-  localStorage.removeItem(MODE_KEY);
-  window.location.href = '/';
-};
-
-async function init() {
-  initTheme();
-  buildSidebar();
-  
-  // Tampilkan nama toko di topbar
-  const storeLabelEl = document.getElementById('topbar-store-name');
-  if (storeLabelEl) {
-    const cleanStoreName = tenantName.replace(/\s*\([^)]+\)$/, '').trim();
-    storeLabelEl.textContent = cleanStoreName;
-  }
-
-  try {
-    await loadCategories();
-  } catch (e) {
-    // Silently ignore category load error
-  }
-
-  const start = getDefaultStartView();
-
-  if (start === 'pos') renderPOS();
-  if (start === 'scan') renderScanPanel();
-  if (start === 'products') await loadProductsTable();
-  if (start === 'incoming') await loadIncomingPanel();
-  if (start === 'reports') await loadReports();
-  if (start === 'stock') await loadStockTable();
-  if (start === 'users') await loadUsersTable();
-  if (start === 'audit') await loadAuditTable();
-  if (start === 'history') await loadHistoryTable();
-  if (start === 'cybersecurity') await loadCybersecurityPanel();
-
-  showView(start);
-
-  const btnChangeMode = document.getElementById('btn-change-mode');
-  if (btnChangeMode) {
-    if (isAdmin) {
-      btnChangeMode.style.display = '';
-      btnChangeMode.onclick = () => {
-        window.location.href = '/mode.html';
-      };
-    } else {
-      btnChangeMode.style.display = 'none';
-    }
-  }
-
-  // PWA install button
-  const btnInstall = document.getElementById('btn-install-pwa');
-  if (btnInstall) {
-    btnInstall.onclick = () => window.__installPWA?.();
-  }
-
-  // Hardware back button — intercept popstate so Android back doesn't exit app
-  history.pushState({ view: start }, '');
-  window.addEventListener('popstate', (e) => {
-    // If scan modal is open, close it
-    if (document.getElementById('modal-scan').classList.contains('open')) {
-      closeScanModal();
-      scanCallback = null;
-      history.pushState({ view: currentView }, '');
-      return;
-    }
-    // If sidebar is open, close it
-    if (document.getElementById('sidebar').classList.contains('open')) {
-      document.getElementById('sidebar').classList.remove('open');
-      document.getElementById('sidebar-overlay').classList.remove('visible');
-      history.pushState({ view: currentView }, '');
-      return;
-    }
-    // Otherwise push state again to prevent exit
-    history.pushState({ view: currentView }, '');
-  });
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  }
-}
-
-init();
-
-/* -------- Hardware Barcode Scanner Listener -------- */
-let hwBarcodeBuffer = '';
-let hwBarcodeTimeout = null;
-
-window.addEventListener('keydown', (e) => {
-  // Abaikan ketikan yang menggunakan modifier (Ctrl/Alt/Meta)
-  if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-  // Jika user sedang mengetik di dalam input atau textarea, abaikan.
-  // Pengecualian: jika mereka fokus di pos-barcode-input, kita biarkan logic jalan saat Enter.
-  const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
-  
-  if (e.key === 'Enter') {
-    // Tangani manual input 'Enter' di text field barcode
-    if (e.target.id === 'pos-barcode-input') {
-      const code = e.target.value.trim();
-      if (code) {
-        onPosScan(code);
-        e.target.value = '';
-      }
-      hwBarcodeBuffer = '';
-      return;
-    }
-
-    // Jika ini adalah Enter dari hardware scanner (global)
-    if (!isInput && hwBarcodeBuffer.length > 2) {
-      const scannedCode = hwBarcodeBuffer;
-      hwBarcodeBuffer = '';
-      
-      // Memicu scan otomatis jika sedang di menu POS
-      if (currentView === 'pos') {
-        onPosScan(scannedCode);
-      } else {
-        showAlert('Barcode ditangkap: ' + scannedCode + ' (Otomatis masuk ke keranjang hanya di menu Kasir)', 'success');
-      }
-    }
-    return;
-  }
-
-  // Jika bukan Enter, tangkap karakternya jika bukan input box
-  if (!isInput && e.key.length === 1) {
-    hwBarcodeBuffer += e.key;
-    
-    // Clear buffer jika jeda antar ketikan lebih dari 40ms 
-    // (manusia mengetik lambat, hardware scanner sangat cepat)
-    clearTimeout(hwBarcodeTimeout);
-    hwBarcodeTimeout = setTimeout(() => {
-      hwBarcodeBuffer = '';
-    }, 40);
-  }
-});
-
-/* -------- Add Product 3 Options -------- */
 function openAddProductOptions() {
   const modalId = 'modal-add-product-options';
   let modal = document.getElementById(modalId);
@@ -2950,15 +2763,15 @@ function openAddProductOptions() {
         
         <div style="display:flex; flex-direction:column; gap:1rem;">
           <button type="button" class="btn btn-primary" id="btn-opt-scan" style="padding:1rem; font-size:1.1rem; justify-content:center;">
-            📷 Scan Barcode
+            Scan Barcode
           </button>
           
           <button type="button" class="btn btn-secondary" id="btn-opt-ai" style="padding:1rem; font-size:1.1rem; justify-content:center; background:linear-gradient(135deg,#eff6ff,#dbeafe); border:1px solid #93c5fd; color:#1e40af;">
-            ✨ AI Assistant
+            Input Cepat Teks
           </button>
           
           <button type="button" class="btn btn-secondary" id="btn-opt-manual" style="padding:1rem; font-size:1.1rem; justify-content:center;">
-            ⌨️ Input Manual
+            Input Manual
           </button>
         </div>
         
@@ -3007,7 +2820,7 @@ function openAiProductModal() {
     modal.className = 'modal-overlay';
     modal.innerHTML = `
       <div class="modal-content" style="max-width:500px; padding:2rem;">
-        <h3 style="margin-top:0; color:#1e40af;">✨ AI Assistant Registrasi</h3>
+        <h3 style="margin-top:0; color:#1e40af;">Input Cepat Teks Registrasi</h3>
         <p style="color:var(--text-light); margin-bottom:1rem;">
           Ketikkan detail barang dengan gaya bahasa bebas. Contoh: <br/>
           <em>"Kopi kapal api sachet isi 10, modal 12rb, jual 1500, stok ada 50"</em>
@@ -3017,7 +2830,7 @@ function openAiProductModal() {
         
         <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
           <button type="button" class="btn btn-secondary" id="btn-ai-prod-cancel">Batal</button>
-          <button type="button" class="btn btn-primary" id="btn-ai-prod-process">Proses dengan AI</button>
+          <button type="button" class="btn btn-primary" id="btn-ai-prod-process">Ekstrak & Isi Form</button>
         </div>
       </div>
     `;
@@ -3104,7 +2917,7 @@ if (modalScanUpload) {
     try {
       const code = await scanFile(file);
       if (code) {
-        alert(`✅ Barcode terdeteksi dari foto: ${code}`);
+        alert(`Barcode terdeteksi dari foto: ${code}`);
         addToCartByBarcode(code);
         closeWebBarcodeScanner();
       }
@@ -3126,7 +2939,7 @@ function loadMutasiPanel() {
         Fitur mutasi memindahkan stok dari toko Anda ke cabang lain secara real-time. (Tampilan Web)
       </p>
       <div style="padding: 2rem; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius)">
-        <span style="font-size:3rem">🔄</span>
+        
         <h4 style="margin:1rem 0">Sinkronisasi SiKasir Mobile</h4>
         <p style="color:var(--text); max-width:400px; margin:auto">
           Fitur ini telah dirilis dan tersinkronisasi di <strong>SiKasir versi Aplikasi Android</strong>. Silakan gunakan versi Android untuk melakukan mutasi barang fisik antar toko!
@@ -3147,7 +2960,7 @@ function loadKasbonPanel() {
         Manajemen hutang pelanggan yang terintegrasi di seluruh jaringan toko/cabang Anda. (Tampilan Web)
       </p>
       <div style="padding: 2rem; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius)">
-        <span style="font-size:3rem">💳</span>
+        
         <h4 style="margin:1rem 0">Terintegrasi di Mobile</h4>
         <p style="color:var(--text); max-width:400px; margin:auto">
           Sistem mencatat Kasbon secara otomatis di Cloud SiKasir. Fitur penagihan, limit, dan rekap detail tersedia secara optimal di <strong>SiKasir versi Aplikasi Android</strong>.
@@ -3167,7 +2980,7 @@ async function loadExpensesPanel() {
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
       <div>
-        <h3 style="margin:0; font-size:1.3rem;">💸 Bayar Nota &amp; Kas Keluar Hari Ini</h3>
+        <h3 style="margin:0; font-size:1.3rem;">Bayar Nota &amp; Kas Keluar Hari Ini</h3>
         <p style="margin:0.25rem 0 0; color:var(--text-muted); font-size:0.88rem;">
           Catat pembayaran nota supplier (misal: Toko A) atau pengeluaran operasional. Otomatis memotong omset &amp; kas hari ini.
         </p>
@@ -3175,9 +2988,9 @@ async function loadExpensesPanel() {
       <div style="display:flex; align-items:center; gap:0.5rem;">
         <label style="font-weight:700; font-size:0.85rem;">Filter:</label>
         <select id="exp-period" class="pos-search-input" style="padding:0.4rem 0.8rem; width:auto; border-radius:8px;">
-          <option value="daily">📅 Hari Ini</option>
-          <option value="weekly">📅 Minggu Ini</option>
-          <option value="monthly">📅 Bulan Ini</option>
+          <option value="daily">Hari Ini</option>
+          <option value="weekly">Minggu Ini</option>
+          <option value="monthly">Bulan Ini</option>
         </select>
       </div>
     </div>
@@ -3185,14 +2998,14 @@ async function loadExpensesPanel() {
     <!-- Ringkasan Pengeluaran -->
     <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:1.5rem;">
       <div class="kpi-card" style="border-color:rgba(239,68,68,0.3);">
-        <div class="kpi-icon-wrap" style="background:rgba(239,68,68,0.15); color:#ef4444;">💸</div>
+        <div class="kpi-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
         <div>
           <div class="kpi-label">Total Kas Keluar</div>
           <div class="kpi-val" id="exp-total-val" style="color:#f87171;">Rp 0</div>
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.15); color:#3b82f6;">📝</div>
+        <div class="kpi-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
         <div>
           <div class="kpi-label">Jumlah Nota Dicatat</div>
           <div class="kpi-val" id="exp-count-val" style="color:#60a5fa;">0 nota</div>
@@ -3203,7 +3016,7 @@ async function loadExpensesPanel() {
     <div style="display:grid; grid-template-columns:1fr; gap:1.5rem;">
       <!-- Form Catat Nota Baru -->
       <div class="panel">
-        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">📝 Form Catat Pembayaran Nota / Kas Keluar</h4>
+        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">Form Catat Pembayaran Nota / Kas Keluar</h4>
         <form id="form-add-expense">
           <div class="grid-2">
             <div class="field">
@@ -3213,10 +3026,10 @@ async function loadExpensesPanel() {
             <div class="field">
               <label>Kategori Pengeluaran</label>
               <select id="exp-category">
-                <option value="Supplier">📦 Bayar Nota Supplier (Toko A, B, dll)</option>
-                <option value="Operasional">🛠️ Operasional (Plastik, ATK, Listrik, Air)</option>
-                <option value="Gaji & Makan">🍲 Uang Makan / Gaji Kasir</option>
-                <option value="Lainnya">📌 Lain-lain</option>
+                <option value="Supplier">Bayar Nota Supplier (Toko A, B, dll)</option>
+                <option value="Operasional">Operasional (Plastik, ATK, Listrik, Air)</option>
+                <option value="Gaji & Makan">Uang Makan / Gaji Kasir</option>
+                <option value="Lainnya">Lain-lain</option>
               </select>
             </div>
           </div>
@@ -3231,14 +3044,14 @@ async function loadExpensesPanel() {
             </div>
           </div>
           <button type="submit" class="btn btn-danger" style="padding:0.75rem 1.5rem;">
-            💾 Simpan &amp; Potong Omset Kas Hari Ini
+            Simpan &amp; Potong Omset Kas Hari Ini
           </button>
         </form>
       </div>
 
       <!-- Tabel Riwayat Nota Hari Ini -->
       <div class="panel">
-        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">📋 Riwayat Nota &amp; Kas Keluar</h4>
+        <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">Riwayat Nota &amp; Kas Keluar</h4>
         <div id="exp-table-wrap"></div>
       </div>
     </div>
@@ -3435,7 +3248,7 @@ async function pollDineInOrders() {
         lastKnownOrderCodes.add(o.order_code);
         window.showMinimalNotification({
           type: 'warning',
-          title: `🔔 PESANAN MEJA ${o.table_number}!`,
+          title: `Pesanan Meja ${o.table_number}!`,
           message: `${o.customer_name} memesan ${o.items?.length || 0} menu (Total: ${money(o.total_amount)})`
         });
       }
@@ -3458,7 +3271,7 @@ async function loadDineInPanel() {
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
       <div>
         <div style="display:flex; align-items:center; gap:8px;">
-          <h2 style="margin:0; font-size:1.4rem; font-weight:900;">🍽️ Cek Meja & Pesanan Dine-In</h2>
+          <h2 style="margin:0; font-size:1.4rem; font-weight:900;">Cek Meja & Pesanan Dine-In</h2>
           <span style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.4); font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:9999px;">
             SIVILIZE DINE LITE 2-WAY SYNC
           </span>
@@ -3470,7 +3283,7 @@ async function loadDineInPanel() {
 
       <div style="display:flex; align-items:center; gap:8px;">
         <button type="button" class="btn btn-secondary" id="btn-refresh-dinein" style="font-size:0.84rem; padding:0.5rem 0.9rem;">
-          🔄 Segarkan Data Meja
+          Segarkan Data Meja
         </button>
       </div>
     </div>
@@ -3495,11 +3308,11 @@ async function loadDineInPanel() {
     ${activeDineInOrder ? `
       <div style="background:rgba(245, 158, 11, 0.15); border:1.5px solid #f59e0b; border-radius:12px; padding:0.85rem 1.15rem; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <div style="color:#fbbf24; font-weight:900; font-size:0.95rem;">⚡ SEDANG MELAYANI: MEJA ${activeDineInOrder.table_number}</div>
+          <div style="color:#fbbf24; font-weight:900; font-size:0.95rem;">MELAYANI: MEJA ${activeDineInOrder.table_number}</div>
           <div style="font-size:0.82rem; color:var(--text-bright);">Order Code: ${activeDineInOrder.order_code} · Pelanggan: ${activeDineInOrder.customer_name} · Total: ${money(activeDineInOrder.total_amount)}</div>
         </div>
         <button type="button" class="btn btn-primary" id="btn-goto-pos-paying" style="font-size:0.85rem; font-weight:800; padding:0.5rem 1rem;">
-          🛒 Buka Kasir POS untuk Bayar
+          Buka Kasir untuk Pembayaran
         </button>
       </div>
     ` : ''}
@@ -3573,7 +3386,7 @@ function renderDineInTables(orders = cachedTableOrders) {
           </div>
 
           <div style="font-size:0.84rem; color:var(--text-bright); font-weight:700;">
-            👤 ${order.customer_name || 'Pelanggan'}
+            ${order.customer_name || 'Pelanggan'}
           </div>
 
           <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.3; min-height:32px;">
@@ -3582,7 +3395,7 @@ function renderDineInTables(orders = cachedTableOrders) {
 
           ${order.order_note ? `
             <div style="font-size:0.72rem; color:#fbbf24; background:rgba(245,158,11,0.1); padding:2px 6px; border-radius:4px;">
-              📝 ${order.order_note}
+              ${order.order_note}
             </div>
           ` : ''}
 
@@ -3593,10 +3406,10 @@ function renderDineInTables(orders = cachedTableOrders) {
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;">
             <button type="button" class="btn btn-primary btn-load-table-cart" data-table="${tableNum}" style="padding:0.45rem; font-size:0.78rem; font-weight:800;">
-              💳 Bayar
+              Bayar
             </button>
             <button type="button" class="btn btn-secondary btn-view-table-detail" data-table="${tableNum}" style="padding:0.45rem; font-size:0.78rem;">
-              👁️ Detail
+              Detail
             </button>
           </div>
         </div>
@@ -3833,7 +3646,7 @@ async function renderKDS() {
             🔄 Segarkan Layar
           </button>
           <button type="button" class="btn btn-primary" id="btn-kds-back-pos" style="font-weight:800;">
-            🛒 Buka Kasir
+            Buka Kasir
           </button>
         </div>
       </div>
@@ -3868,9 +3681,9 @@ async function loadKdsOrders() {
     if (!orders.length) {
       grid.innerHTML = `
         <div style="grid-column:1/-1; background:var(--bg-card); border:1.5px dashed var(--border); border-radius:16px; padding:3.5rem 1.5rem; text-align:center;">
-          <div style="font-size:3.5rem; margin-bottom:12px;">👨‍🍳 ✨</div>
-          <h3 style="margin:0 0 8px 0; color:var(--text-bright); font-size:1.3rem;">Dapur Bersih &amp; Terkendali!</h3>
-          <p style="margin:0; font-size:0.88rem; color:var(--text-muted);">Belum ada pesanan aktif dari meja pelanggan. Pesanan baru akan otomatis masuk ke layar ini secara langsung!</p>
+          <div style="margin-bottom:12px;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color:var(--text-muted);"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg></div>
+          <h3 style="margin:0 0 8px 0; color:var(--text-bright); font-size:1.3rem;">Tidak Ada Antrean Dapur</h3>
+          <p style="margin:0; font-size:0.88rem; color:var(--text-muted);">Belum ada pesanan aktif dari meja pelanggan. Pesanan baru akan otomatis muncul di sini.</p>
         </div>
       `;
       return;
@@ -3893,7 +3706,7 @@ async function loadKdsOrders() {
               </div>
               <div style="text-align:right;">
                 <span style="font-size:0.72rem; padding:3px 8px; border-radius:9999px; font-weight:800; background:${isReady ? '#10b981' : isCooking ? '#f59e0b' : '#3b82f6'}; color:white;">
-                  ${isReady ? '✅ SIAP SAJI' : isCooking ? '🍳 SEDANG DIMASAK' : '⏳ ANTRI'}
+                  ${isReady ? 'SIAP SAJI' : isCooking ? 'SEDANG DIMASAK' : 'MENUNGGU'}
                 </span>
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">⏱️ ${timeAgo}</div>
               </div>
@@ -3901,7 +3714,7 @@ async function loadKdsOrders() {
 
             ${o.order_note ? `
               <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:6px 10px; margin-bottom:0.75rem; font-size:0.78rem; color:#fca5a5; font-weight:700;">
-                📢 Catatan Tamu: ${o.order_note}
+                Catatan: ${o.order_note}
               </div>
             ` : ''}
 
@@ -3922,10 +3735,10 @@ async function loadKdsOrders() {
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; border-top:1px solid rgba(255,255,255,0.08); padding-top:0.75rem;">
             <button type="button" class="btn btn-secondary btn-kds-cook" data-code="${o.order_code}" style="font-weight:800; font-size:0.8rem; background:${isCooking ? '#f59e0b' : ''}; color:${isCooking ? '#000' : ''};">
-              🍳 Sedang Masak
+              Sedang Masak
             </button>
             <button type="button" class="btn btn-primary btn-kds-ready" data-code="${o.order_code}" data-table="${o.table_number}" style="font-weight:800; font-size:0.8rem; background:${isReady ? '#10b981' : ''};">
-              ✅ Siap Saji
+              Siap Saji
             </button>
           </div>
         </div>
@@ -3949,7 +3762,7 @@ async function loadKdsOrders() {
         kdsCookStatuses[code] = 'ready';
         window.showMinimalNotification({
           type: 'success',
-          title: `🔔 MEJA ${table} SIAP SAJI!`,
+          title: `Meja ${table} SIAP SAJI!`,
           message: `Pesanan (${code}) matang! Pelayan silakan antar ke meja.`
         });
         loadKdsOrders();
