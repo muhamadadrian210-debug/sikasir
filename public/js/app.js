@@ -164,7 +164,7 @@ window.showMinimalNotification = function({ type = 'success', title, message, du
       font-weight: 900;
       font-size: 0.9rem;
       flex-shrink: 0;
-    ">${theme.icon}</div>
+    ">${type === 'success' ? '✓' : type === 'info' ? 'i' : '!'}</div>
     <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
       <span style="font-size: 0.72rem; font-weight: 800; color: ${theme.primary}; letter-spacing: 0.6px; text-transform: uppercase;">${title}</span>
       <span style="font-size: 0.86rem; font-weight: 600; color: #f8fafc;">${message}</span>
@@ -637,10 +637,10 @@ function showAlert(msg, kind = 'error') {
 
   // Trigger Animated Floating Premium Toast
   const colorMap = {
-    success: { bg: 'linear-gradient(135deg, #064e3b, #065f46)', border: '#10b981', glow: '#34d399', , title: 'BERHASIL' },
-    warn: { bg: 'linear-gradient(135deg, #78350f, #92400e)', border: '#f59e0b', glow: '#fbbf24', , title: 'PERINGATAN' },
-    error: { bg: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '#ef4444', glow: '#f87171', , title: 'PERHATIAN' },
-    info: { bg: 'linear-gradient(135deg, #0c4a6e, #0369a1)', border: '#38bdf8', glow: '#7dd3fc', , title: 'INFORMASI' }
+    success: { bg: 'linear-gradient(135deg, #064e3b, #065f46)', border: '#10b981', glow: '#34d399', icon: '✓', title: 'BERHASIL' },
+    warn: { bg: 'linear-gradient(135deg, #78350f, #92400e)', border: '#f59e0b', glow: '#fbbf24', icon: '!', title: 'PERINGATAN' },
+    error: { bg: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '#ef4444', glow: '#f87171', icon: '!', title: 'PERHATIAN' },
+    info: { bg: 'linear-gradient(135deg, #0c4a6e, #0369a1)', border: '#38bdf8', glow: '#7dd3fc', icon: 'i', title: 'INFORMASI' }
   };
   const theme = colorMap[kind] || colorMap.error;
 
