@@ -434,7 +434,7 @@ const firewallLayers = [
     description: 'Menjaga parameter otorisasi JWT, algokil, dan pembajakan sesi IP.',
     branches: ['Authorization Header Requirement', 'JWT Structure Parsing Guard', 'Session JWT Expiry Verification', 'Secret Signature Verification', 'Algorithm Confusion Intercept', 'Token Replay Protection', 'IP Session Lock Lock', 'User-Agent Session Lock', 'Role Modification Attack Intercept'],
     check: (req) => {
-      if (req.body && req.body.role && req.body.role === 'admin' && req.originalUrl.includes('/users')) {
+      if (!getTenantIdFromRequest(req) && req.body && req.body.role && req.body.role === 'admin' && req.originalUrl.includes('/users')) {
         return { branch: 'Role Modification Attack Intercept', honeypot: 'Decoy Admin Setup Screen' };
       }
       

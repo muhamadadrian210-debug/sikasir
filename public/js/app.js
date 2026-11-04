@@ -790,14 +790,19 @@ function buildSidebar() {
       showView(btn.dataset.view);
       document.getElementById('sidebar').classList.remove('open');
       document.getElementById('sidebar-overlay').classList.remove('visible');
+      if (btn.dataset.view === 'pos') renderPOS();
       if (btn.dataset.view === 'dinein') loadDineInPanel();
       if (btn.dataset.view === 'kds') renderKDS();
       if (btn.dataset.view === 'history') loadHistoryTable();
+      if (btn.dataset.view === 'products') loadProductsTable();
+      if (btn.dataset.view === 'stock') loadStockTable();
       if (btn.dataset.view === 'scan') renderScanPanel();
       if (btn.dataset.view === 'incoming') loadIncomingPanel();
       if (btn.dataset.view === 'mutasi') loadMutasiPanel();
       if (btn.dataset.view === 'kasbon-global') loadKasbonPanel();
       if (btn.dataset.view === 'expenses') loadExpensesPanel();
+      if (btn.dataset.view === 'reports') loadReports();
+      if (btn.dataset.view === 'users') loadUsersTable();
       if (btn.dataset.view === 'audit') loadAuditTable();
       if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
     });
@@ -2389,33 +2394,60 @@ async function loadStockTable() {
 async function loadUsersTable() {
   const el = document.getElementById('view-users');
   el.innerHTML = `
-    <div class="panel">
-      <h4 style="margin-top:0">Tambah akun</h4>
-      <div class="grid-2">
-        <div class="field"><label>Username</label><input id="nu-user"/></div>
-        <div class="field"><label>Password</label><input type="password" id="nu-pass"/></div>
+    <div class="panel" style="margin-bottom:1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:1rem;">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem; color:var(--text-bright);">Tambah Akun Staf Baru (Kasir &amp; Backoffice)</h3>
+          <p style="margin:4px 0 0 0; font-size:0.82rem; color:var(--text-muted);">Buat akun khusus untuk setiap kasir dan staf backoffice tanpa batas kuota (unlimited).</p>
+        </div>
+        <span class="badge badge-kasir">Unlimited Akun</span>
+      </div>
+      <div class="grid-3">
         <div class="field">
-          <label>Role</label>
+          <label>Username Staf</label>
+          <input id="nu-user" placeholder="Contoh: adrian_kasir" />
+        </div>
+        <div class="field">
+          <label>Password Login</label>
+          <input type="password" id="nu-pass" placeholder="Minimal 4 karakter" />
+        </div>
+        <div class="field">
+          <label>Role / Hak Akses</label>
           <select id="nu-role">
-            <option value="kasir">Staf Kasir (POS Register)</option>
-            <option value="backoffice">Staf Backoffice (Inventori & Laporan)</option>
-            <option value="admin">Owner / Super Admin</option>
+            <option value="kasir">Staf Kasir (Khusus Transaksi POS)</option>
+            <option value="backoffice">Staf Backoffice (Stok, Produk &amp; Laporan)</option>
+            <option value="admin">Owner / Administrator Penuh</option>
           </select>
         </div>
       </div>
-      <div style="display:flex; align-items:center; gap:12px; margin-top:0.75rem;"><button type="button" class="btn btn-primary" id="nu-save">Tambah Akun</button><span style="font-size:0.8rem; color:var(--text-muted);">Pembuatan akun kasir &amp; backoffice tidak terbatas (unlimited).</span></div>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:0.5rem;">
+        <button type="button" class="btn btn-primary" id="nu-save">+ Tambah Akun Staf</button>
+        <span id="nu-feedback" style="font-size:0.82rem; color:var(--primary); font-weight:600;"></span>
+      </div>
     </div>
-    <div id="users-wrap"></div>`;
+    <div class="panel">
+      <h4 style="margin-top:0; margin-bottom:0.85rem;">Daftar Akun Aktif di Toko Ini</h4>
+      <div id="users-wrap">Memuat daftar akun...</div>
+    </div>`;
 
   document.getElementById('nu-save').onclick = async () => {
     const username = document.getElementById('nu-user').value.trim();
     const password = document.getElementById('nu-pass').value;
     const role = document.getElementById('nu-role').value;
+    if (!username || !password) {
+      showAlert('Username dan password wajib diisi.', 'warn');
+      return;
+    }
     try {
       await api('/users', { method: 'POST', body: { username, password, role } });
       document.getElementById('nu-user').value = '';
       document.getElementById('nu-pass').value = '';
       document.getElementById('nu-role').value = 'kasir';
+      window.showMinimalNotification({
+        type: 'success',
+        title: 'AKUN STAF DIBUAT',
+        message: `Akun "${username}" (${role.toUpperCase()}) berhasil ditambahkan`
+      });
       loadUsersTable();
     } catch (e) {
       alert(e.message);
