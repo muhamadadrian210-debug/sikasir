@@ -1,8 +1,28 @@
-const CACHE_SHELL = 'sikasir-shell-v15';
-const CACHE_DATA = 'sikasir-data-v15';
+const CACHE_SHELL = 'sikasir-shell-v16';
+const CACHE_DATA = 'sikasir-data-v16';
 const ACTIVE_CACHES = [CACHE_SHELL, CACHE_DATA];
 
-const SHELL = ['/', '/index.html', '/app.html', '/css/app.css', '/js/app.js', '/js/api.js', '/js/scanner.js', '/manifest.json', '/icons/logo.svg'];
+const SHELL = [
+  '/',
+  '/index.html',
+  '/app.html',
+  '/mode.html',
+  '/setup.html',
+  '/cds.html',
+  '/css/app.css',
+  '/js/app.js',
+  '/js/api.js',
+  '/js/mode.js',
+  '/js/login.js',
+  '/js/scanner.js',
+  '/js/pwa-install.js',
+  '/manifest.json',
+  '/icons/logo.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/screenshot-mobile.png',
+  '/og-image.png'
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -46,6 +66,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Cache-first for icons, images, and fonts so the app opens instantly like a native APK
+  if (url.pathname.startsWith('/icons/') || url.pathname.endsWith('.png') || url.pathname.endsWith('.svg') || url.hostname.includes('fonts.')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_SHELL).then((cache) => cache.put(request, copy));
+          }
+          return res;
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-first with cache fallback for pages and scripts
   event.respondWith(
     fetch(request)
       .then((res) => {
@@ -54,7 +92,7 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_SHELL).then((cache) => cache.put(request, copy));
         return res;
       })
-      .catch(() => caches.match(request))
+      .catch(() => caches.match(request).then((r) => r || caches.match('/app.html') || caches.match('/')))
   );
 });
 

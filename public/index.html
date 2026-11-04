@@ -20,8 +20,14 @@
     <meta name="twitter:description" content="Transaksi kasir tunai, QRIS meja kasir, dan piutang pelanggan. Cetak struk thermal 58mm/80mm serta rincian omzet harian per staf kasir dan backoffice." />
     <meta name="twitter:image" content="https://sikasir-alpha.vercel.app/og-image.png" />
     <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SiKasir" />
+    <meta name="application-name" content="SiKasir" />
     <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
-    <link rel="apple-touch-icon" href="/icons/logo.svg" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="/css/app.css?v=2.0.0" />
@@ -148,7 +154,7 @@
             <div class="field">
               <label for="reg-store-type">Jenis Usaha / Retail</label>
               <select id="reg-store-type" name="store_type" required>
-                <option value="">— Pilih jenis usaha —</option>
+                <option value="">Pilih jenis usaha</option>
                 <optgroup label="Retail &amp; Toko Kelontong">
                   <option value="Minimarket">Minimarket</option>
                   <option value="Toko Kelontong">Toko Kelontong</option>
@@ -246,11 +252,14 @@
             </button>
           </form>
 
-          <div style="margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid var(--border); text-align: center;">
-            <a class="btn-apk-download" href="https://github.com/muhamadadrian210-debug/sikasir/releases/download/v3.8.0/SiKasir-v3.8.0.apk" target="_blank" rel="noopener noreferrer">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              Unduh Aplikasi Android (APK)
-            </a>
+          <div style="margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn btn-primary btn-block pwa-install-trigger" id="btn-pwa-login" data-pwa-install style="background: #059669; border-color: #047857; color: #FFFFFF; font-weight: 700; padding: 0.7rem; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Pasang Aplikasi SiKasir Standalone (APK)
+            </button>
+            <div style="font-size: 0.78rem; color: var(--text-muted); text-align: center;">
+              Instalasi instan tanpa browser, bekerja offline, dan siap cetak struk thermal
+            </div>
           </div>
         </div>
       </div>
@@ -272,6 +281,7 @@
     </div>
 
     <script src="/js/samsung-redirect.js"></script>
+    <script src="/js/pwa-install.js" defer></script>
     <script type="module" src="/js/login.js"></script>
   </body>
 </html>

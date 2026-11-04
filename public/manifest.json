@@ -1,14 +1,16 @@
 {
-  "name": "SiKasir — Kasir UMKM",
+  "name": "SiKasir POS · Aplikasi Kasir Toko & F&B",
   "short_name": "SiKasir",
-  "description": "Aplikasi kasir supermarket & UMKM untuk penjualan, stok, laporan, dan multi-toko",
-  "start_url": "/",
+  "description": "Aplikasi Kasir POS Standalone, Pencatatan Transaksi Penjualan, QRIS Meja Toko, Manajemen Stok Inventori, dan Pembukuan Kasir.",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#F8FAFC",
-  "theme_color": "#0369A1",
+  "theme_color": "#0F172A",
   "orientation": "any",
-  "categories": ["business", "productivity"],
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/icons/logo.svg",
@@ -20,7 +22,19 @@
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
@@ -29,12 +43,35 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tampilan Kasir POS dan Struk Transaksi"
+    },
+    {
+      "src": "/icons/screenshot-mobile.png",
+      "sizes": "540x960",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tampilan Kasir SiKasir di Smartphone"
+    }
+  ],
   "shortcuts": [
     {
-      "name": "Kasir",
+      "name": "Buka Kasir POS",
+      "short_name": "Kasir",
       "url": "/app.html",
-      "description": "Buka halaman kasir"
+      "description": "Buka modul transaksi kasir"
+    },
+    {
+      "name": "Pilih Mode Kerja",
+      "short_name": "Mode",
+      "url": "/mode.html",
+      "description": "Pilih mode Kasir Toko, Retail, atau Cafe"
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }
