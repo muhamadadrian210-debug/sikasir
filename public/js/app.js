@@ -1,4 +1,7 @@
 
+import { api, getToken, getUser, setToken, setUser } from './api.js';
+import { startScanner, stopScanner, scanFile } from './scanner.js';
+
 let selectedCategory = 'ALL';
 let cart = [];
 let heldBills = [];
@@ -54,9 +57,6 @@ function updateThemeIcon(theme) {
     }
   }
 }
-
-import { api, getToken, getUser, setToken, setUser } from './api.js';
-import { startScanner, stopScanner, scanFile } from './scanner.js';
 
 // Safe DOM manipulators to prevent "Cannot set properties of null"
 function setElText(id, text) {

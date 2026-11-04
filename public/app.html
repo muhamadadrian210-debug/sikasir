@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="/icons/logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="/css/app.css?v=2.0.0" />
+    <link rel="stylesheet" href="/css/app.css?v=2.2.0" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -201,6 +201,34 @@
     </div>
 
     <script src="/js/samsung-redirect.js"></script>
-    <script type="module" src="/js/app.js?v=2.0.0"></script>
+    <script type="module" src="/js/app.js?v=2.2.0"></script>
+    <script>
+      setTimeout(() => {
+        const nav = document.getElementById('sidebar-nav');
+        if (nav && nav.children.length === 0) {
+          if ('caches' in window) {
+            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+          }
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+              for (const reg of regs) reg.unregister();
+            });
+          }
+          const pos = document.getElementById('view-pos');
+          if (pos && (!pos.innerHTML || pos.innerHTML.trim() === '')) {
+            pos.innerHTML = `
+              <div style="padding: 3rem 1.5rem; text-align: center; max-width: 480px; margin: 3rem auto; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-md);">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚡</div>
+                <h3 style="margin-top:0; color: var(--text-bright);">Pembaruan Sistem SiKasir</h3>
+                <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">Browser Anda mendeteksi cache versi lama. Silakan klik tombol di bawah untuk membersihkan cache dan memuat tampilan kasir terbaru.</p>
+                <button type="button" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-weight: 700; margin-top: 0.75rem; width: 100%; font-size: 0.95rem;" onclick="location.reload(true)">
+                  Segarkan Aplikasi Sekarang
+                </button>
+              </div>
+            `;
+          }
+        }
+      }, 1000);
+    </script>
   </body>
 </html>
