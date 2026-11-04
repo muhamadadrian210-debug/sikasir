@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#090d16" />
-    <title>SiKasir — Modern Cloud & Native POS System</title>
+    <meta name="theme-color" content="#f8fafc" />
+    <title>SiKasir — Point of Sale & Retail Management</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
     <link rel="apple-touch-icon" href="/icons/logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="/css/app.css?v=1.0.6" />
+    <link rel="stylesheet" href="/css/app.css?v=2.0.0" />
   </head>
   <body>
     <div class="login-page">
@@ -18,42 +18,50 @@
         <!-- Left Side: Hero Showcase -->
         <div class="landing-hero">
           <div class="hero-pill-badge">
-            <span style="font-size: 1rem;">✨</span> SiKasir POS Pro v1.0.6
+            <span>Point of Sale System</span>
           </div>
           <h1 class="hero-title">
-            Kelola Transaksi Toko <span>Lebih Cepat, Rapi &amp; Pintar</span>
+            Kelola Transaksi Toko <span>Cepat, Akurat &amp; Efisien</span>
           </h1>
           <p class="hero-subtitle">
-            Aplikasi kasir pintar serba bisa untuk Minimarket, Warung Sembako, Cafe, Apotek, hingga Toko Fashion dengan sinkronisasi multi-cabang realtime.
+            Aplikasi kasir terintegrasi untuk Minimarket, Toko Retail, Cafe, Apotek, hingga Usaha Kuliner dengan pencatatan stok dan laporan laba rugi otomatis.
           </p>
 
           <div class="hero-features-grid">
             <div class="hero-feat-card">
-              <div class="hero-feat-icon">⚡</div>
+              <div class="hero-feat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+              </div>
               <div>
                 <div class="hero-feat-title">Scan Barcode Cepat</div>
-                <div class="hero-feat-desc">Kamera HP/Web &amp; Scanner USB hardware responsif</div>
+                <div class="hero-feat-desc">Kamera HP, webcam, dan hardware scanner barcode USB</div>
               </div>
             </div>
             <div class="hero-feat-card">
-              <div class="hero-feat-icon">🏢</div>
+              <div class="hero-feat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+              </div>
               <div>
                 <div class="hero-feat-title">Multi-Cabang &amp; Mutasi</div>
-                <div class="hero-feat-desc">Transfer stok antar cabang dalam 1 akun perusahaan</div>
+                <div class="hero-feat-desc">Manajemen inventori dan mutasi stok antar gerai</div>
               </div>
             </div>
             <div class="hero-feat-card">
-              <div class="hero-feat-icon">📈</div>
+              <div class="hero-feat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
               <div>
                 <div class="hero-feat-title">Laba Rugi Otomatis</div>
-                <div class="hero-feat-desc">Hitung omset, modal, dan profit harian seketika</div>
+                <div class="hero-feat-desc">Rekap omset harian, modal barang, dan margin keuntungan</div>
               </div>
             </div>
             <div class="hero-feat-card">
-              <div class="hero-feat-icon">📶</div>
+              <div class="hero-feat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
               <div>
                 <div class="hero-feat-title">Mode Offline PWA</div>
-                <div class="hero-feat-desc">Tetap bisa transaksi kasir walau koneksi terputus</div>
+                <div class="hero-feat-desc">Kasir tetap dapat mencatat transaksi saat internet terputus</div>
               </div>
             </div>
           </div>
@@ -62,45 +70,38 @@
         <!-- Right Side: Auth Card -->
         <div class="login-card">
           <div class="login-brand">
-            <img src="/icons/logo.png" alt="SiKasir Logo" width="44" height="44" style="border-radius: 10px;" />
+            <img src="/icons/logo.svg" alt="SiKasir" width="36" height="36" style="border-radius: 8px;" />
             <div>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <h1 style="margin: 0;">SiKasir</h1>
-                <span style="font-size: 0.68rem; font-weight: 800; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid #10B981; padding: 2px 6px; border-radius: 6px; letter-spacing: 0.5px;">v3.8.0 Pro Enterprise</span>
-              </div>
-              <p style="margin: 0; font-size: 0.84rem; color: var(--text-muted);">
-                Smart POS & Retail Cloud Enterprise
+              <h1 style="margin: 0; font-size: 1.35rem;">SiKasir</h1>
+              <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">
+                Point of Sale & Retail Management
               </p>
             </div>
           </div>
-
-          <a class="btn-apk-download btn-block" href="https://github.com/muhamadadrian210-debug/sikasir/releases/download/v3.8.0/SiKasir-v3.8.0.apk" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; text-decoration: none;">
-            <span>🚀</span> UNDUH APLIKASI ANDROID (APK RESMI v3.8.0 FULL)
-          </a>
 
           <div id="login-alert" class="alert alert-error hidden"></div>
 
           <div class="auth-tabs" role="tablist">
             <button type="button" class="auth-tab active" id="tab-login" data-panel="login" aria-selected="true">
-              🔑 Masuk Akun
+              Masuk Akun
             </button>
             <button type="button" class="auth-tab" id="tab-register" data-panel="register" aria-selected="false">
-              🏪 Daftar Toko
+              Daftar Toko
             </button>
             <button type="button" class="auth-tab" id="tab-activate" data-panel="activate" aria-selected="false">
-              ⚡ Aktivasi Kode
+              Aktivasi Lisensi
             </button>
           </div>
 
           <!-- Login Form -->
           <form id="login-form" class="auth-panel" data-panel="login">
             <div class="field">
-              <label for="company-id-login">Company ID (Opsional Multi-Cabang)</label>
+              <label for="company-id-login">Company ID / Kode Toko (Opsional)</label>
               <input id="company-id-login" name="company_id" placeholder="Kosongkan jika toko tunggal" />
             </div>
             <div class="field">
               <label for="username">Username</label>
-              <input id="username" name="username" autocomplete="username" required placeholder="Username akun Anda" />
+              <input id="username" name="username" autocomplete="username" required placeholder="Masukkan username" />
             </div>
             <div class="field">
               <label for="password">Password</label>
@@ -111,64 +112,64 @@
                   type="password"
                   autocomplete="current-password"
                   required
-                  placeholder="Password akun"
+                  placeholder="Masukkan password"
                 />
                 <button type="button" class="btn-pw-toggle" data-pw-target="password">
                   Lihat
                 </button>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem;">
-              MASUK KE DASHBOARD
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem;">
+              Masuk ke Kasir
             </button>
           </form>
 
           <!-- Register Form -->
           <form id="register-form" class="auth-panel hidden" data-panel="register">
-            <p class="auth-hint">Buat toko baru dan otomatis menjadi Admin Utama.</p>
+            <p class="auth-hint">Buat toko baru untuk memulai usaha Anda dengan SiKasir.</p>
             <div class="field">
-              <label for="reg-store-name">Nama Toko / Kios</label>
-              <input id="reg-store-name" name="store_name" required placeholder="Contoh: Minimarket Berkah" />
+              <label for="reg-store-name">Nama Toko / Usaha</label>
+              <input id="reg-store-name" name="store_name" required placeholder="Contoh: Toko Berkah Jaya" />
             </div>
             <div class="field">
-              <label for="reg-store-type">Jenis Toko / Bisnis</label>
+              <label for="reg-store-type">Jenis Usaha / Retail</label>
               <select id="reg-store-type" name="store_type" required>
-                <option value="">— Pilih jenis bisnis —</option>
+                <option value="">— Pilih jenis usaha —</option>
                 <optgroup label="Retail &amp; Toko Kelontong">
-                  <option value="Minimarket">🛒 Minimarket</option>
-                  <option value="Toko Kelontong">🏪 Toko Kelontong</option>
-                  <option value="Warung Sembako">🌾 Warung Sembako</option>
-                  <option value="Toko Pakaian / Fashion">👗 Toko Pakaian / Fashion</option>
-                  <option value="Toko Elektronik">📱 Toko Elektronik / HP</option>
-                  <option value="Toko Peralatan Rumah Tangga">🍳 Peralatan Rumah Tangga</option>
-                  <option value="Toko Alat Tulis / ATK">✏️ Toko Alat Tulis / ATK</option>
-                  <option value="Toko Kosmetik / Kecantikan">💄 Kosmetik &amp; Kecantikan</option>
-                  <option value="Pet Shop">🐾 Pet Shop</option>
+                  <option value="Minimarket">Minimarket</option>
+                  <option value="Toko Kelontong">Toko Kelontong</option>
+                  <option value="Warung Sembako">Warung Sembako</option>
+                  <option value="Toko Pakaian / Fashion">Toko Pakaian / Fashion</option>
+                  <option value="Toko Elektronik">Toko Elektronik / HP</option>
+                  <option value="Toko Peralatan Rumah Tangga">Peralatan Rumah Tangga</option>
+                  <option value="Toko Alat Tulis / ATK">Toko Alat Tulis / ATK</option>
+                  <option value="Toko Kosmetik / Kecantikan">Kosmetik &amp; Kecantikan</option>
+                  <option value="Pet Shop">Pet Shop</option>
                 </optgroup>
                 <optgroup label="Kuliner (F&amp;B)">
-                  <option value="Cafe / Kedai Kopi">☕ Cafe / Kedai Kopi</option>
-                  <option value="Restoran">🍽️ Restoran</option>
-                  <option value="Warung Makan / Tegal">🍲 Warung Makan / Tegal</option>
-                  <option value="Toko Kue / Bakery">🍞 Toko Kue / Bakery</option>
+                  <option value="Cafe / Kedai Kopi">Cafe / Kedai Kopi</option>
+                  <option value="Restoran">Restoran</option>
+                  <option value="Warung Makan / Tegal">Warung Makan / Tegal</option>
+                  <option value="Toko Kue / Bakery">Toko Kue / Bakery</option>
                 </optgroup>
                 <optgroup label="Kesehatan &amp; Jasa">
-                  <option value="Apotek / Toko Obat">💊 Apotek / Toko Obat</option>
-                  <option value="Klinik Kesehatan">🩺 Klinik Kesehatan</option>
-                  <option value="Barbershop / Pangkas Rambut">✂️ Barbershop / Pangkas Rambut</option>
-                  <option value="Salon Kecantikan">💅 Salon Kecantikan</option>
-                  <option value="Laundry">🧺 Laundry Kiloan / Satuan</option>
-                  <option value="Bengkel Motor / Mobil">🔧 Bengkel Motor / Mobil</option>
+                  <option value="Apotek / Toko Obat">Apotek / Toko Obat</option>
+                  <option value="Klinik Kesehatan">Klinik Kesehatan</option>
+                  <option value="Barbershop / Pangkas Rambut">Barbershop / Pangkas Rambut</option>
+                  <option value="Salon Kecantikan">Salon Kecantikan</option>
+                  <option value="Laundry">Laundry Kiloan / Satuan</option>
+                  <option value="Bengkel Motor / Mobil">Bengkel Motor / Mobil</option>
                 </optgroup>
                 <optgroup label="Material &amp; Agen">
-                  <option value="Toko Bangunan / Material">🧱 Toko Bangunan / Material</option>
-                  <option value="Agen Gas &amp; Galon">💧 Agen Gas &amp; Galon</option>
-                  <option value="Lainnya">📦 Lainnya</option>
+                  <option value="Toko Bangunan / Material">Toko Bangunan / Material</option>
+                  <option value="Agen Gas &amp; Galon">Agen Gas &amp; Galon</option>
+                  <option value="Lainnya">Lainnya</option>
                 </optgroup>
               </select>
             </div>
             <div class="field">
               <label for="reg-company-id">Company ID (Opsional)</label>
-              <input id="reg-company-id" name="company_id" placeholder="Hanya untuk holding / multi-cabang" />
+              <input id="reg-company-id" name="company_id" placeholder="Hanya untuk holding multi-cabang" />
             </div>
             <div class="field">
               <label for="reg-username">Username Admin</label>
@@ -184,7 +185,7 @@
               </div>
             </div>
             <div class="field">
-              <label for="reg-password-confirm">Konfirmasi Password</label>
+              <label for="reg-password-confirm">Ulangi Password</label>
               <div class="password-field">
                 <input id="reg-password-confirm" name="password_confirm" type="password" required placeholder="Ulangi password" />
                 <button type="button" class="btn-pw-toggle" data-pw-target="reg-password-confirm">
@@ -192,57 +193,66 @@
                 </button>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem;">
-              DAFTAR &amp; MASUK TOKO
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem;">
+              Daftar &amp; Buka Toko
             </button>
           </form>
 
           <!-- Activation Form -->
           <form id="activate-form" class="auth-panel hidden" data-panel="activate">
-            <p class="auth-hint">Masukkan kode aktivasi dari paket sewa website untuk aktivasi instan SiKasir &amp; Dine Lite.</p>
+            <p class="auth-hint">Masukkan kode lisensi untuk mengaktifkan akun toko SiKasir Anda.</p>
             <div class="field">
               <label for="act-code">Kode Aktivasi Lisensi</label>
-              <input id="act-code" name="code" required placeholder="Contoh: SIV-FNB-30D" style="text-transform: uppercase; font-family: monospace; font-weight: 700; letter-spacing: 1px;" />
+              <input id="act-code" name="code" required placeholder="Contoh: SIV-POS-30D" style="text-transform: uppercase; font-family: monospace; font-weight: 700; letter-spacing: 1px;" />
             </div>
             <div class="field">
               <label for="act-store-name">Nama Toko / Usaha (Opsional)</label>
               <input id="act-store-name" name="store_name" placeholder="Kosongkan jika ingin otomatis dari lisensi" />
             </div>
             <div class="field">
-              <label for="act-store-type">Jenis Toko / Bisnis</label>
+              <label for="act-store-type">Jenis Usaha</label>
               <select id="act-store-type" name="store_type" required>
-                <optgroup label="Kuliner (F&amp;B) - Termasuk Fitur Meja">
-                  <option value="Cafe / Kedai Kopi" selected>☕ Cafe / Kedai Kopi</option>
-                  <option value="Restoran">🍽️ Restoran</option>
-                  <option value="Warung Makan / Tegal">🍲 Warung Makan / Tegal</option>
-                  <option value="Toko Kue / Bakery">🍞 Toko Kue / Bakery</option>
+                <optgroup label="Kuliner (F&amp;B)">
+                  <option value="Cafe / Kedai Kopi" selected>Cafe / Kedai Kopi</option>
+                  <option value="Restoran">Restoran</option>
+                  <option value="Warung Makan / Tegal">Warung Makan / Tegal</option>
+                  <option value="Toko Kue / Bakery">Toko Kue / Bakery</option>
                 </optgroup>
-                <optgroup label="Retail &amp; Non-F&amp;B (Tanpa Fitur Meja)">
-                  <option value="Minimarket">🛒 Minimarket</option>
-                  <option value="Apotek / Toko Obat">💊 Apotek / Toko Obat</option>
-                  <option value="Toko Pakaian / Fashion">👗 Toko Pakaian / Fashion</option>
-                  <option value="Bengkel Motor / Mobil">🔧 Bengkel Motor / Mobil</option>
-                  <option value="Lainnya">📦 Retail Lainnya</option>
+                <optgroup label="Retail &amp; Non-F&amp;B">
+                  <option value="Minimarket">Minimarket</option>
+                  <option value="Apotek / Toko Obat">Apotek / Toko Obat</option>
+                  <option value="Toko Pakaian / Fashion">Toko Pakaian / Fashion</option>
+                  <option value="Bengkel Motor / Mobil">Bengkel Motor / Mobil</option>
+                  <option value="Lainnya">Retail Lainnya</option>
                 </optgroup>
               </select>
             </div>
-            <button type="submit" id="btn-activate-submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem; background: linear-gradient(135deg, #2563eb, #7c3aed); border: none; font-weight: 700;">
-              ⚡ AKTIFKAN SEKARANG
+            <button type="submit" id="btn-activate-submit" class="btn btn-primary btn-block" style="padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem;">
+              Aktifkan Lisensi
             </button>
           </form>
+
+          <div style="margin-top: 1.25rem; pt-3; border-top: 1px solid var(--border); text-align: center;">
+            <a class="btn-apk-download" href="https://github.com/muhamadadrian210-debug/sikasir/releases/download/v3.8.0/SiKasir-v3.8.0.apk" target="_blank" rel="noopener noreferrer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              Unduh Aplikasi Android (APK)
+            </a>
+          </div>
         </div>
       </div>
     </div>
-    <footer class="app-footer-watermark">Copyright © 2026 Muhamad Adrian. All rights reserved. Owned and Published by Sivilize Corp.</footer>
+    <footer class="app-footer-watermark">SiKasir POS · Modern Retail POS System</footer>
 
-    <!-- Celebration Modal Aktivasi Lisensi -->
-    <div id="modal-activation-success" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
-      <div style="background: #0f172a; color: #fff; border: 2px solid #3b82f6; border-radius: 20px; padding: 32px 24px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.4);">
-        <div style="font-size: 3.8rem; margin-bottom: 12px; line-height: 1;">🎉</div>
-        <h3 style="margin: 0 0 12px 0; font-size: 1.45rem; font-weight: 800; color: #60a5fa; letter-spacing: -0.5px;">Aktivasi Lisensi Berhasil!</h3>
-        <p id="act-success-message" style="margin: 0 0 24px 0; font-size: 1.05rem; line-height: 1.5; color: #f8fafc; font-weight: 600; padding: 14px; background: rgba(59, 130, 246, 0.15); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.35); text-transform: none;"></p>
-        <button type="button" id="btn-proceed-dashboard" class="btn btn-primary btn-block" style="padding: 0.95rem; font-size: 1.05rem; font-weight: 800; background: #2563eb; border: none; border-radius: 10px; cursor: pointer;">
-          🚀 Buka Aplikasi Kasir Sekarang
+    <!-- Modal Aktivasi Lisensi -->
+    <div id="modal-activation-success" class="hidden" style="position: fixed; inset: 0; background: rgba(15,23,42,0.45); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
+      <div style="background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 24px; max-width: 420px; width: 100%; text-align: center; box-shadow: var(--shadow-lg);">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem; font-weight: 700; color: var(--text-bright);">Aktivasi Lisensi Berhasil</h3>
+        <p id="act-success-message" style="margin: 0 0 20px 0; font-size: 0.9rem; line-height: 1.5; color: var(--text-muted); padding: 12px; background: var(--bg-base); border-radius: var(--radius-sm); border: 1px solid var(--border);"></p>
+        <button type="button" id="btn-proceed-dashboard" class="btn btn-primary btn-block" style="padding: 0.75rem; font-size: 0.95rem;">
+          Buka Aplikasi Kasir
         </button>
       </div>
     </div>

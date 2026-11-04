@@ -1,3 +1,55 @@
+
+let selectedCategory = 'ALL';
+
+const NAV_ICONS = {
+  pos: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>',
+  dinein: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',
+  kds: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+  history: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  incoming: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>',
+  products: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+  stock: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>',
+  mutasi: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>',
+  scan: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>',
+  expenses: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  reports: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  'kasbon-global': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+  users: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  audit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  cybersecurity: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+};
+
+function initTheme() {
+  const saved = localStorage.getItem('sikasir_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) {
+    btn.onclick = () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('sikasir_theme', next);
+      updateThemeIcon(next);
+    };
+  }
+}
+
+function updateThemeIcon(theme) {
+  const sun = document.getElementById('theme-icon-sun');
+  const moon = document.getElementById('theme-icon-moon');
+  if (sun && moon) {
+    if (theme === 'dark') {
+      sun.classList.add('hidden');
+      moon.classList.remove('hidden');
+    } else {
+      sun.classList.remove('hidden');
+      moon.classList.add('hidden');
+    }
+  }
+}
+
 import { api, getToken, getUser, setToken, setUser } from './api.js';
 import { startScanner, stopScanner, scanFile } from './scanner.js';
 
@@ -697,9 +749,9 @@ function showView(id) {
 function buildSidebar() {
   const nav = document.getElementById('sidebar-nav');
   const modeLabels = {
-    kasir: 'MODE: STAF KASIR',
-    admin: 'MODE: ADMIN TOKO',
-    both: 'MODE: KASIR + ADMIN',
+    kasir: 'Mode Staf Kasir',
+    admin: 'Mode Admin Toko',
+    both: 'Mode Kasir + Admin',
   };
   setElText('sidebar-mode-label', modeLabels[storedMode] || '');
 
@@ -707,38 +759,38 @@ function buildSidebar() {
     {
       title: 'Operasional',
       items: [
-        { id: 'pos', label: 'Kasir POS', icon: '🛒' },
+        { id: 'pos', label: 'Kasir POS' },
         ...(isFnB ? [
-          { id: 'dinein', label: 'Cek Meja (Dine-In)', icon: '🍽️' },
-          { id: 'kds', label: 'Layar Dapur (KDS)', icon: '👨‍🍳' }
+          { id: 'dinein', label: 'Cek Meja (Dine-In)' },
+          { id: 'kds', label: 'Layar Dapur (KDS)' }
         ] : []),
-        { id: 'history', label: 'Riwayat Transaksi', icon: '🕐' },
-        { id: 'incoming', label: StoreConfig.getMenuLabel('incoming', 'Barang Masuk'), icon: '📥' },
+        { id: 'history', label: 'Riwayat Transaksi' },
+        { id: 'incoming', label: StoreConfig.getMenuLabel('incoming', 'Barang Masuk') },
       ]
     },
     {
       title: 'Inventori & Stok',
       items: [
-        { id: 'products', label: StoreConfig.getMenuLabel('products', 'Produk & Katalog'), icon: '📦' },
-        { id: 'stock', label: StoreConfig.getMenuLabel('stock', 'Stok & Opname'), icon: '🗃️' },
-        { id: 'mutasi', label: 'Mutasi Cabang', icon: '🔄' },
-        { id: 'scan', label: 'Scan & Daftarkan', icon: '📷' },
+        { id: 'products', label: StoreConfig.getMenuLabel('products', 'Produk & Katalog') },
+        { id: 'stock', label: StoreConfig.getMenuLabel('stock', 'Stok & Opname') },
+        { id: 'mutasi', label: 'Mutasi Cabang' },
+        { id: 'scan', label: 'Scan & Daftarkan' },
       ]
     },
     {
       title: 'Keuangan & Kas',
       items: [
-        { id: 'expenses', label: 'Bayar Nota / Kas Keluar', icon: '💸' },
-        { id: 'reports', label: 'Laporan & Untung', icon: '📈' },
-        { id: 'kasbon-global', label: 'Kasbon Pelanggan', icon: '💳' },
+        { id: 'expenses', label: 'Kas Keluar / Beban' },
+        { id: 'reports', label: 'Laporan & Laba' },
+        { id: 'kasbon-global', label: 'Kasbon Pelanggan' },
       ]
     },
     {
       title: 'Sistem & Akses',
       items: [
-        { id: 'users', label: 'Staf Kasir', icon: '👥' },
-        { id: 'audit', label: 'Log Audit', icon: '📝' },
-        { id: 'cybersecurity', label: 'Keamanan Toko', icon: '🛡️' },
+        { id: 'users', label: 'Staf & Pengguna' },
+        { id: 'audit', label: 'Log Aktivitas' },
+        { id: 'cybersecurity', label: 'Keamanan Toko' },
       ]
     }
   ];
@@ -755,9 +807,11 @@ function buildSidebar() {
     if (visibleItems.length > 0) {
       html += `<div class="nav-group-title">${g.title}</div>`;
       visibleItems.forEach(it => {
+        const iconSvg = NAV_ICONS[it.id] || '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>';
         html += `
           <button type="button" data-view="${it.id}" data-title="${it.label}">
-            <span class="nav-icon">${it.icon}</span>${it.label}
+            <span class="nav-icon">${iconSvg}</span>
+            <span>${it.label}</span>
           </button>
         `;
       });
@@ -773,10 +827,6 @@ function buildSidebar() {
       document.getElementById('sidebar-overlay').classList.remove('visible');
       if (btn.dataset.view === 'dinein') loadDineInPanel();
       if (btn.dataset.view === 'kds') renderKDS();
-      if (btn.dataset.view === 'reports') loadReports();
-      if (btn.dataset.view === 'products') loadProductsTable();
-      if (btn.dataset.view === 'stock') loadStockTable();
-      if (btn.dataset.view === 'users') loadUsersTable();
       if (btn.dataset.view === 'history') loadHistoryTable();
       if (btn.dataset.view === 'scan') renderScanPanel();
       if (btn.dataset.view === 'incoming') loadIncomingPanel();
@@ -788,11 +838,12 @@ function buildSidebar() {
     });
   });
 
+  const userInitial = (user.username || 'K')[0].toUpperCase();
   document.getElementById('user-badge').innerHTML = `
-    <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.15);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;">${(user.username || 'K')[0].toUpperCase()}</div>
-    <div>
-      <div style="font-weight:700;font-size:0.88rem;color:var(--text-bright);">${user.username}</div>
-      <span class="badge ${isAdmin ? 'badge-admin' : 'badge-kasir'}" style="font-size:0.68rem;padding:0.1rem 0.45rem;">${isAdmin ? 'ADMIN' : 'KASIR'}</span>
+    <div class="user-avatar-circle">${userInitial}</div>
+    <div class="user-badge-text">
+      <div class="user-badge-name">${user.username}</div>
+      <div class="user-badge-role">${isAdmin ? 'Administrator' : 'Kasir'}</div>
     </div>`;
 }
 
@@ -803,15 +854,39 @@ let splitBillWays = 1;
 let applyPB1 = false;
 let currentPaymentMethod = 'CASH';
 
+function renderCategoryChips() {
+  const container = document.getElementById('pos-category-chips');
+  if (!container) return;
+  const cats = [{ id: 'ALL', name: 'Semua' }, ...(categories || [])];
+  container.innerHTML = cats.map(c => `
+    <button type="button" class="pos-cat-chip ${selectedCategory === String(c.id) ? 'active' : ''}" data-cat-id="${c.id}">
+      ${c.name}
+    </button>
+  `).join('');
+
+  container.querySelectorAll('.pos-cat-chip').forEach(btn => {
+    btn.onclick = () => {
+      selectedCategory = btn.dataset.catId;
+      container.querySelectorAll('.pos-cat-chip').forEach(b => b.classList.toggle('active', b === btn));
+      const searchVal = document.getElementById('pos-search-catalog')?.value || '';
+      renderPosCatalog(searchVal);
+    };
+  });
+}
+
 function renderPosCatalog(filterText = '') {
   const grid = document.getElementById('pos-catalog-grid');
   if (!grid) return;
   
   const q = String(filterText || '').toLowerCase().trim();
-  const list = (productsCache || []).filter(p => !q || p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q)));
+  const list = (productsCache || []).filter(p => {
+    const matchesQ = !q || p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q));
+    const matchesCat = selectedCategory === 'ALL' || String(p.category_id) === String(selectedCategory);
+    return matchesQ && matchesCat;
+  });
 
   if (!list.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text);">Tidak ada produk yang cocok.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2.5rem 1rem; color:var(--text-muted); font-size:0.86rem;">Tidak ada produk yang cocok.</div>';
     return;
   }
 
@@ -824,8 +899,8 @@ function renderPosCatalog(filterText = '') {
         <div class="pos-product-name">${p.name}</div>
         <div class="pos-product-meta">
           <div class="pos-product-price">${money(p.sale_price)}</div>
-          <div class="pos-product-stock" style="color: ${isSvc ? '#38bdf8' : p.stock > 5 ? 'var(--primary)' : p.stock > 0 ? 'var(--warning)' : 'var(--danger)'}">
-            ${isSvc ? '⚡ JASA' : p.stock > 0 ? p.stock + ' ' + unitLabel : 'Habis'}
+          <div class="pos-product-stock">
+            ${isSvc ? 'JASA' : p.stock > 0 ? p.stock + ' ' + unitLabel : 'Habis'}
           </div>
         </div>
       </div>
@@ -999,108 +1074,123 @@ function renderPOS() {
   const el = document.getElementById('view-pos');
   el.innerHTML = `
     <div class="pos-layout">
-      <!-- Left: Majoo Catalog Grid -->
+      <!-- Left: Catalog Panel -->
       <div class="pos-catalog-panel">
         <div class="pos-search-bar-wrap">
-          <input type="text" id="pos-search-catalog" class="pos-search-input" placeholder="🔍 Cari nama barang atau scan barcode..." />
-          <button type="button" class="btn btn-secondary" id="pos-btn-scan" style="white-space:nowrap;">📷 Scan Kamera</button>
+          <div class="pos-search-input-wrap">
+            <span class="pos-search-icon-inside">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <input type="text" id="pos-search-catalog" class="pos-search-input" placeholder="Cari nama produk atau scan barcode..." />
+          </div>
+          <button type="button" class="btn btn-secondary" id="pos-btn-scan" style="white-space:nowrap; gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Scan Kamera
+          </button>
         </div>
+
+        <!-- Category Filter Pills Bar -->
+        <div id="pos-category-chips" class="pos-category-chips"></div>
+
         <div id="pos-catalog-grid" class="pos-grid">
-          <div style="grid-column: 1/-1; text-align:center; padding: 2rem; color: var(--text);">Memuat produk...</div>
+          <div style="grid-column: 1/-1; text-align:center; padding: 2rem; color: var(--text-muted);">Memuat produk...</div>
         </div>
       </div>
 
-      <!-- Right: Cart & Checkout Panel with Split Pay, Hold Bill, PB1, Kasbon -->
+      <!-- Right: Cart & Checkout Panel -->
       <div class="pos-cart-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.65rem;">
-          <h3 style="margin:0; font-size:1.1rem; color:var(--heading);">🛒 Keranjang Kasir</h3>
-          <div style="display:flex; gap:0.4rem;">
-            <button type="button" class="btn btn-secondary" id="pos-hold-bill" style="padding:0.25rem 0.55rem; font-size:0.75rem;" title="Tahan pesanan sementara">⏸️ Tahan (Hold)</button>
-            <button type="button" class="btn btn-secondary" id="pos-load-bill" style="padding:0.25rem 0.55rem; font-size:0.75rem;" title="Muat antrian yang ditahan">📂 Muat (${heldBills.length})</button>
-            <button type="button" class="btn btn-secondary" id="pos-clear" style="padding:0.25rem 0.55rem; font-size:0.75rem; color:var(--danger); border-color:rgba(239,68,68,0.3)">✕</button>
+        <div class="pos-cart-header">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            Keranjang Belanja
+          </h3>
+          <div style="display:flex; gap:0.35rem;">
+            <button type="button" class="btn btn-secondary" id="pos-hold-bill" style="padding:0.3rem 0.55rem; font-size:0.75rem;" title="Tahan pesanan sementara">Tahan</button>
+            <button type="button" class="btn btn-secondary" id="pos-load-bill" style="padding:0.3rem 0.55rem; font-size:0.75rem;" title="Muat antrian yang ditahan">Antrian (${heldBills.length})</button>
+            <button type="button" class="btn btn-secondary" id="pos-clear" style="padding:0.3rem 0.55rem; font-size:0.75rem; color:var(--danger);" title="Kosongkan keranjang">✕</button>
           </div>
         </div>
 
         <div id="pos-cart-list" class="pos-cart-items"></div>
 
         <!-- Tagihan & Rincian Pajak/Split -->
-        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:0.82rem; color:var(--text-muted);">
+        <div class="pos-summary-box">
+          <div class="pos-summary-row">
             <span>Subtotal Barang:</span>
             <span class="mono" id="pos-subtotal-val">${money(0)}</span>
           </div>
-          <div id="pos-tax-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:0.82rem; color:var(--text-muted);">
-            <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <input type="checkbox" id="pos-apply-pb1" ${applyPB1 ? 'checked' : ''} /> Pajak PB1 / PPN Resto (10%)
+          <div id="pos-tax-row" class="pos-summary-row">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+              <input type="checkbox" id="pos-apply-pb1" ${applyPB1 ? 'checked' : ''} /> Pajak PB1 / Resto (10%)
             </label>
             <span class="mono" id="pos-tax-val">${money(0)}</span>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:6px;">
-            <span style="font-size:0.92rem; font-weight:700; color:var(--text-bright);">Total Tagihan</span>
-            <span class="mono" id="pos-total" style="font-size:1.35rem; font-weight:900; color:var(--primary);">${money(0)}</span>
+          <div class="pos-total-row">
+            <span class="pos-total-label">Total Tagihan</span>
+            <span class="mono pos-total-amount" id="pos-total">${money(0)}</span>
           </div>
-          <div id="pos-split-info" class="hidden" style="margin-top:6px; padding:4px 8px; border-radius:6px; background:rgba(16,185,129,0.1); font-size:0.82rem; text-align:center;"></div>
+          <div id="pos-split-info" class="hidden" style="margin-top:6px; padding:4px 8px; border-radius:4px; background:var(--primary-subtle); color:var(--primary); font-size:0.8rem; text-align:center;"></div>
         </div>
 
         <!-- Split Bill & Metode Bayar Options -->
-        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:0.85rem; margin-bottom:0.85rem;">
-          <!-- Split Bill Stepper -->
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-            <span style="font-size:0.84rem; font-weight:700; color:var(--text-main);">👥 Split Bill (Bagi Bon):</span>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <button type="button" class="pos-qty-btn" id="pos-split-minus" style="width:26px; height:26px;">−</button>
-              <span id="pos-split-val" style="font-weight:800; font-size:0.9rem; min-width:55px; text-align:center;">1 Orang</span>
-              <button type="button" class="pos-qty-btn" id="pos-split-plus" style="width:26px; height:26px;">+</button>
+        <div style="margin-bottom:0.85rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <span style="font-size:0.8rem; font-weight:600; color:var(--text-bright);">Bagi Tagihan (Split Bill):</span>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <button type="button" class="pos-qty-btn" id="pos-split-minus">−</button>
+              <span id="pos-split-val" style="font-weight:700; font-size:0.82rem; min-width:48px; text-align:center;">1 Orang</span>
+              <button type="button" class="pos-qty-btn" id="pos-split-plus">+</button>
             </div>
           </div>
 
-          <!-- Metode Pembayaran Radio Tabs -->
-          <div style="display:flex; gap:4px; background:var(--bg-input); padding:3px; border-radius:10px; border:1px solid var(--border);">
-            <button type="button" class="auth-tab ${currentPaymentMethod === 'CASH' ? 'active' : ''}" id="pos-pm-cash" style="padding:0.4rem; font-size:0.8rem;">💵 Tunai</button>
-            <button type="button" class="auth-tab ${currentPaymentMethod === 'QRIS' ? 'active' : ''}" id="pos-pm-qris" style="padding:0.4rem; font-size:0.8rem;">📱 QRIS</button>
-            <button type="button" class="auth-tab ${currentPaymentMethod === 'KASBON' ? 'active' : ''}" id="pos-pm-kasbon" style="padding:0.4rem; font-size:0.8rem;">💳 Kasbon</button>
+          <!-- Metode Pembayaran Segmented -->
+          <div class="pos-pm-segmented">
+            <button type="button" class="pos-pm-btn ${currentPaymentMethod === 'CASH' ? 'active' : ''}" id="pos-pm-cash">Tunai</button>
+            <button type="button" class="pos-pm-btn ${currentPaymentMethod === 'QRIS' ? 'active' : ''}" id="pos-pm-qris">QRIS</button>
+            <button type="button" class="pos-pm-btn ${currentPaymentMethod === 'KASBON' ? 'active' : ''}" id="pos-pm-kasbon">Kasbon</button>
           </div>
 
           <!-- Kasbon Inputs (Conditional) -->
-          <div id="pos-kasbon-inputs" class="${currentPaymentMethod === 'KASBON' ? '' : 'hidden'}" style="margin-top:0.75rem;">
-            <input type="text" id="pos-kasbon-name" class="pos-search-input" placeholder="Nama Pelanggan Kasbon *" style="margin-bottom:0.4rem; font-size:0.85rem;" />
-            <input type="text" id="pos-kasbon-phone" class="pos-search-input" placeholder="No HP / WhatsApp Pelanggan" style="font-size:0.85rem;" />
+          <div id="pos-kasbon-inputs" class="${currentPaymentMethod === 'KASBON' ? '' : 'hidden'}" style="margin-top:0.5rem;">
+            <input type="text" id="pos-kasbon-name" class="pos-search-input" placeholder="Nama Pelanggan Kasbon *" style="margin-bottom:0.4rem; font-size:0.82rem;" />
+            <input type="text" id="pos-kasbon-phone" class="pos-search-input" placeholder="No. WA Pelanggan" style="font-size:0.82rem;" />
           </div>
         </div>
 
-        <!-- Cash Payment Inputs (when Cash selected) -->
+        <!-- Cash Payment Inputs -->
         <div id="pos-cash-container" class="${currentPaymentMethod === 'CASH' ? '' : 'hidden'}">
           <div class="field" style="margin-bottom:0.4rem;">
-            <label style="font-size:0.82rem; color:var(--text-muted);">Uang Diterima (Rp)</label>
-            <input type="number" id="pos-paid" min="0" step="500" placeholder="0" class="pos-search-input" style="font-weight:800; font-size:1.1rem;" />
+            <label style="font-size:0.8rem; color:var(--text-muted);">Uang Diterima (Rp)</label>
+            <input type="number" id="pos-paid" min="0" step="500" placeholder="0" class="pos-search-input" style="font-weight:700; font-size:1.05rem;" />
           </div>
 
-          <!-- Quick Cash Buttons -->
           <div class="pos-quick-cash">
             <button type="button" class="pos-quick-cash-btn" data-preset="exact">Uang Pas</button>
-            <button type="button" class="pos-quick-cash-btn" data-preset="10000">10rb</button>
-            <button type="button" class="pos-quick-cash-btn" data-preset="20000">20rb</button>
-            <button type="button" class="pos-quick-cash-btn" data-preset="50000">50rb</button>
-            <button type="button" class="pos-quick-cash-btn" data-preset="100000">100rb</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="10000">10.000</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="20000">20.000</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="50000">50.000</button>
+            <button type="button" class="pos-quick-cash-btn" data-preset="100000">100.000</button>
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; margin-bottom:0.65rem;">
-            <span style="font-size:0.88rem; color:var(--text-muted);">Kembalian:</span>
-            <strong class="mono" id="pos-change" style="font-size:1.15rem; color:var(--text-bright);">${money(0)}</strong>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; margin-bottom:0.65rem;">
+            <span style="font-size:0.84rem; color:var(--text-muted);">Kembalian:</span>
+            <strong class="mono" id="pos-change" style="font-size:1.1rem; color:var(--text-bright);">${money(0)}</strong>
           </div>
         </div>
 
         ${getIndustryMetaHtml()}
 
-        <button type="button" class="btn btn-primary btn-block" id="pos-checkout" style="padding:0.85rem; font-size:1.02rem; font-weight:800;">
-          PROSES BAYAR
+        <button type="button" class="btn btn-primary btn-block" id="pos-checkout" style="padding:0.75rem; font-size:0.95rem; font-weight:700;">
+          Bayar Sekarang (F9)
         </button>
-        <button type="button" class="btn btn-secondary btn-block mt-1" id="pos-print-last" disabled style="font-size:0.82rem; padding:0.6rem;">
-          🖨️ Cetak Struk Terakhir (PDF)
+        <button type="button" class="btn btn-secondary btn-block mt-1" id="pos-print-last" disabled style="font-size:0.8rem; padding:0.5rem;">
+          Cetak Struk Terakhir (PDF)
         </button>
-        <p id="pos-offline-note" class="mt-1" style="font-size:.75rem; color:var(--text-subtle); text-align:center; margin-bottom:0;"></p>
+        <p id="pos-offline-note" class="mt-1" style="font-size:.72rem; color:var(--text-subtle); text-align:center; margin-bottom:0;"></p>
       </div>
     </div>`;
+
+  renderCategoryChips();
 
   const paidEl = document.getElementById('pos-paid');
   const updateChange = () => {
@@ -2496,6 +2586,7 @@ document.getElementById('btn-logout').onclick = () => {
 };
 
 async function init() {
+  initTheme();
   buildSidebar();
   
   // Tampilkan nama toko di topbar
