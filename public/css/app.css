@@ -1751,3 +1751,240 @@ table.data tbody tr:hover {
   color: var(--danger);
   border: 1px solid rgba(225,29,72,0.3);
 }
+
+/* =========================================================
+   AEGIS CYBER DEFENSE & SKILL MODULES MATRIX
+   ========================================================= */
+.cyber-skills-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.cyber-skill-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+.cyber-skill-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.cyber-skill-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.65rem;
+}
+.cyber-skill-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cyber-skill-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 0.75rem;
+}
+.cyber-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cyber-skill-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.cyber-audit-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+.cyber-audit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+.cyber-audit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.75rem;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* =========================================================
+   COMPREHENSIVE RESPONSIVE ERGONOMICS: MOBILE, TAB, DESKTOP
+   ========================================================= */
+
+/* --- TABLET STYLING (768px to 1023px) --- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pos-layout {
+    grid-template-columns: 1.35fr 1fr !important;
+    gap: 1rem;
+  }
+  .pos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    max-height: 480px;
+  }
+  .cyber-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .topbar {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* --- MOBILE FIRST (max-width: 767px) --- */
+@media (max-width: 767px) {
+  :root {
+    --sidebar-w: 280px;
+  }
+  .topbar {
+    padding: 0.5rem 0.85rem;
+    height: 56px;
+  }
+  .topbar h2 {
+    font-size: 1rem;
+  }
+  #topbar-store-name {
+    max-width: 110px;
+    font-size: 0.76rem;
+    padding: 2px 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .content {
+    padding: 0.85rem 0.75rem 5rem 0.75rem;
+  }
+  .pos-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+  .pos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    max-height: 380px;
+  }
+  .pos-product-card {
+    padding: 0.65rem;
+    min-height: 90px;
+  }
+  .pos-product-name {
+    font-size: 0.8rem;
+    margin-bottom: 0.35rem;
+  }
+  .pos-catalog-panel,
+  .pos-cart-panel,
+  .panel,
+  .cyber-section {
+    padding: 0.95rem;
+    border-radius: var(--radius-sm);
+  }
+  .pos-quick-cash {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+  }
+  .pos-quick-cash-btn {
+    min-height: 42px;
+    font-size: 0.8rem;
+  }
+  .btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cyber-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem;
+  }
+  .cyber-stat-card {
+    padding: 0.85rem;
+  }
+  .cyber-stat-val {
+    font-size: 1.25rem;
+  }
+  .cyber-page-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cyber-page-head > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .cyber-test-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.45rem;
+  }
+  .cyber-test-actions .btn {
+    font-size: 0.76rem;
+    padding: 0.5rem 0.4rem;
+    text-align: center;
+    white-space: normal;
+  }
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .modal {
+    max-width: calc(100vw - 20px) !important;
+    margin: 10px !important;
+    padding: 1.15rem !important;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+  table.data {
+    min-width: 520px;
+  }
+
+  /* Mobile Sticky Quick Cart Floating Bar */
+  .pos-mobile-cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 85;
+    background: var(--bg-surface);
+    border-top: 1.5px solid var(--border-strong);
+    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px)) 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    animation: slideUpIn 0.25s ease;
+  }
+}
+
+@keyframes slideUpIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
