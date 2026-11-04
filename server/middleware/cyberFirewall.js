@@ -183,38 +183,11 @@ async function logIncident(ip, tenantId, layer, branchName, honeypotName, method
 }
 
 /**
- * Recursive Loop Tarpit responder (Buffer-Bloat Memory Exhaustion)
+ * Recursive Loop Tarpit responder (Dibuat aman agar tidak membekukan koneksi browser)
  */
 function triggerLoopTrap(req, res, ip, tenantId, layer, branchName, honeypotName) {
   logIncident(ip, tenantId, layer, branchName, honeypotName, req.method, req.originalUrl, req.headers['user-agent'], { query: req.query, body: req.body }, 'LOOP_TRAPPED');
-  
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Transfer-Encoding', 'chunked');
-  
-  res.write('<!DOCTYPE html><html><head><title>System Diagnostics Portal</title>');
-  res.write('<style>body{background:#020617;color:#38bdf8;font-family:monospace;padding:30px;line-height:1.6;} span{color:#10b981;} strong{color:#ef4444;}</style></head>');
-  res.write('<body><h2>🛡️ SiKasir Advanced Frustration Tarpit Sandbox</h2>');
-  res.write(`<p>Attacker Signature Identified: <strong>${ip}</strong></p>`);
-  res.write('<p>Status: <strong class="looping">LOCKED IN RECURSIVE BUFFER-BLOAT TARPIT</strong></p>');
-  res.write('<p>Feeding continuous memory bloat blocks to exhaust attacker client parsing buffers...</p><hr>');
-
-  let counter = 0;
-  const interval = setInterval(() => {
-    counter++;
-    const noise = crypto.randomBytes(25000).toString('hex'); // 50KB characters
-    res.write(`<!-- LAYER_${layer.level}_TRAP: Cycle ${counter}. Buffer bloat payload block size: 50KB -->\n`);
-    res.write(`<!-- Noise block payload: ${noise} -->\n`);
-    res.write(`[BLOCKED_${counter}] Appending virtual dump layer segment to scanner buffers... [OK]<br>\n`);
-
-    if (counter > 2400) {
-      clearInterval(interval);
-      res.end('<h3>Diagnostics Session Terminated. Please restart browser.</h3></body></html>');
-    }
-  }, 500);
-
-  req.on('close', () => {
-    clearInterval(interval);
-  });
+  return res.status(403).json({ error: 'Akses ditolak oleh proteksi keamanan.' });
 }
 
 /**
@@ -536,9 +509,13 @@ const firewallLayers = [
 ];
 
 /**
- * Express middleware entrypoint (marked ASYNC for Redis integration)
+ * Express middleware entrypoint (Dinonaktifkan sementara agar operasional toko 100% lancar tanpa tarpit/hambatan)
  */
 async function cyberFirewallMiddleware(req, res, next) {
+  return next();
+}
+
+async function _disabled_cyberFirewallMiddleware(req, res, next) {
   const ip = clientIp(req);
 
   // Skip options/preflight checks

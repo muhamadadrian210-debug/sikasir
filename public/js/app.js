@@ -264,11 +264,12 @@ if (!getToken()) {
   window.location.href = '/';
 }
 
-const user = getUser();
+const user = getUser() || { username: 'Kasir', role: 'admin', tenant_name: 'SiKasir Store' };
 const isAdmin = user?.role === 'admin';
-const tenantName = user?.tenant_name || '';
+const tenantName = user?.tenant_name || 'SiKasir Store';
 
 function getStoreType(name) {
+  if (!name || typeof name !== 'string') return 'Lainnya';
   const m = name.match(/\(([^)]+)\)/);
   return m ? m[1].trim() : 'Lainnya';
 }
@@ -802,13 +803,17 @@ function buildSidebar() {
     });
   });
 
-  const userInitial = (user.username || 'K')[0].toUpperCase();
-  document.getElementById('user-badge').innerHTML = `
-    <div class="user-avatar-circle">${userInitial}</div>
-    <div class="user-badge-text">
-      <div class="user-badge-name">${user.username}</div>
-      <div class="user-badge-role">${isAdmin ? 'Administrator' : 'Kasir'}</div>
-    </div>`;
+  const userName = user?.username || 'Kasir';
+  const userInitial = (userName[0] || 'K').toUpperCase();
+  const userBadgeEl = document.getElementById('user-badge');
+  if (userBadgeEl) {
+    userBadgeEl.innerHTML = `
+      <div class="user-avatar-circle">${userInitial}</div>
+      <div class="user-badge-text">
+        <div class="user-badge-name">${escapeHtml(userName)}</div>
+        <div class="user-badge-role">${isAdmin ? 'Administrator' : 'Kasir'}</div>
+      </div>`;
+  }
 }
 
 /* -------- POS (MAJOO-STYLE INTERACTIVE CATALOG & CHECKOUT) -------- */
