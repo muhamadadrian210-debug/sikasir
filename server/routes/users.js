@@ -6,6 +6,16 @@ const { tenantId } = require('../middleware/tenant');
 const { auditAdmin } = require('../lib/audit');
 
 const router = express.Router();
+
+// Pastikan kolom role pada tabel users mendukung role 'backoffice', 'admin', dan 'kasir'
+(async () => {
+  try {
+    await pool.query("ALTER TABLE users MODIFY COLUMN role VARCHAR(32) NOT NULL DEFAULT 'kasir'");
+  } catch (err) {
+    // Abaikan jika sudah diubah
+  }
+})();
+
 router.use(authMiddleware);
 router.use(requireTenant);
 router.use(requireRole('admin'));
@@ -29,7 +39,11 @@ router.post('/', async (req, res) => {
     const tid = tenantId(req);
     const { username, password, role } = req.body || {};
     const u = String(username || '').trim();
-    const r = role === 'admin' ? 'admin' : 'kasir';
+    let r = 'kasir';
+    if (role === 'admin') r = 'admin';
+    else if (role === 'backoffice') r = 'backoffice';
+    else r = 'kasir';
+
     if (!u || !password) return res.status(400).json({ error: 'Username dan password wajib' });
     const hash = await bcrypt.hash(String(password), 10);
     const [ins] = await pool.execute(
@@ -53,7 +67,11 @@ router.put('/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const { username, password, role } = req.body || {};
     const u = String(username || '').trim();
-    const r = role === 'admin' ? 'admin' : 'kasir';
+    let r = 'kasir';
+    if (role === 'admin') r = 'admin';
+    else if (role === 'backoffice') r = 'backoffice';
+    else r = 'kasir';
+
     if (!u) return res.status(400).json({ error: 'Username wajib' });
 
     if (password && String(password).length > 0) {
@@ -70,7 +88,7 @@ router.put('/:id', async (req, res) => {
       );
       if (!rows.affectedRows) return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     }
-    await auditAdmin(req, 'user.update', { id });
+    await auditAdmin(req, 'user.update', { id, role: r });
     res.json({ ok: true });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') {

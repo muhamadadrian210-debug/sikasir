@@ -79,7 +79,10 @@ loginForm.addEventListener('submit', async (e) => {
     setToken(data.token);
     setUser(data.user);
     if (company_id) localStorage.setItem('sikasir_company_id', company_id);
-    const defaultMode = data.user.role === 'admin' ? 'both' : 'kasir';
+    if (data.user.tenant_name) localStorage.setItem('sikasir_store_name', data.user.tenant_name);
+    let defaultMode = 'kasir';
+    if (data.user.role === 'admin') defaultMode = 'both';
+    else if (data.user.role === 'backoffice') defaultMode = 'admin';
     localStorage.setItem('sikasir_app_mode', defaultMode);
     window.location.href = '/app.html';
   } catch (err) {

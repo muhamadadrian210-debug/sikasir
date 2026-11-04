@@ -1520,3 +1520,110 @@ table.data tbody tr:hover {
 .mt-1 {
   margin-top: 0.75rem;
 }
+
+/* Badge Backoffice */
+.badge-backoffice {
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+}
+[data-theme="dark"] .badge-backoffice {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Modal Struk & Thermal Preview */
+.thermal-receipt-container {
+  max-width: 380px;
+  margin: 0 auto;
+  background: #ffffff;
+  color: #000000;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  padding: 18px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  line-height: 1.45;
+}
+.thermal-receipt-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+.thermal-receipt-title {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+.thermal-receipt-meta {
+  font-size: 11px;
+  color: #333333;
+  margin: 2px 0;
+}
+.thermal-receipt-divider {
+  border-top: 1px dashed #555555;
+  margin: 8px 0;
+}
+.thermal-receipt-item {
+  margin-bottom: 6px;
+}
+.thermal-receipt-item-name {
+  font-weight: 700;
+  word-break: break-word;
+}
+.thermal-receipt-item-calc {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.thermal-receipt-summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 3px 0;
+}
+.thermal-receipt-total {
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+  border-top: 1px dashed #000;
+  border-bottom: 1px dashed #000;
+  padding: 5px 0;
+}
+.thermal-receipt-footer {
+  text-align: center;
+  font-size: 10px;
+  color: #555555;
+  margin-top: 12px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #thermal-print-area, #thermal-print-area * {
+    visibility: visible;
+  }
+  #thermal-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm;
+    margin: 0;
+    padding: 2mm;
+    background: #fff;
+    color: #000;
+    font-family: monospace;
+    font-size: 11px;
+  }
+}

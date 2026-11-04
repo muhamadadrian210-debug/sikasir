@@ -53,7 +53,7 @@ router.get('/barcode/:code', async (req, res) => {
   }
 });
 
-router.post('/', requireRole('admin'), async (req, res) => {
+router.post('/', requireRole('admin', 'backoffice'), async (req, res) => {
   try {
     const tid = tenantId(req);
     const { barcode, name, purchase_price, sale_price, stock, category_id, expiry_date, batch_number, size, color, warranty, brand, rack_location } = req.body || {};
@@ -83,7 +83,7 @@ router.post('/', requireRole('admin'), async (req, res) => {
   }
 });
 
-router.put('/:id', requireRole('admin'), async (req, res) => {
+router.put('/:id', requireRole('admin', 'backoffice'), async (req, res) => {
   try {
     const tid = tenantId(req);
     const id = parseInt(req.params.id, 10);
@@ -115,7 +115,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
   }
 });
 
-router.patch('/:id/stock', requireRole('admin'), async (req, res) => {
+router.patch('/:id/stock', requireRole('admin', 'backoffice'), async (req, res) => {
   try {
     const tid = tenantId(req);
     const id = parseInt(req.params.id, 10);
@@ -141,7 +141,7 @@ router.patch('/:id/stock', requireRole('admin'), async (req, res) => {
   }
 });
 
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', requireRole('admin', 'backoffice'), async (req, res) => {
   try {
     const tid = tenantId(req);
     const id = parseInt(req.params.id, 10);

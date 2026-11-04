@@ -12,6 +12,7 @@ if (!user) {
 }
 
 const isAdmin = user.role === 'admin';
+const isBackoffice = user.role === 'backoffice' || user.role === 'admin';
 const hint = document.getElementById('mode-user-hint');
 const grid = document.getElementById('mode-grid');
 
@@ -21,7 +22,10 @@ const ICONS = {
   both: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
 };
 
-hint.innerHTML = `Pengguna: <strong>${user.username}</strong> &bull; Peran: <span class="badge ${isAdmin ? 'badge-admin' : 'badge-kasir'}">${isAdmin ? 'Admin Toko' : 'Staf Kasir'}</span>`;
+const roleLabel = isAdmin ? 'Owner / Admin Toko' : (user.role === 'backoffice' ? 'Staf Backoffice' : 'Staf Kasir');
+const roleBadgeClass = isAdmin ? 'badge-admin' : (user.role === 'backoffice' ? 'badge-backoffice' : 'badge-kasir');
+
+hint.innerHTML = `Pengguna: <strong>${user.username}</strong> &bull; Peran: <span class="badge ${roleBadgeClass}">${roleLabel}</span>`;
 
 const options = [
   {
@@ -33,14 +37,14 @@ const options = [
   },
   {
     mode: 'admin',
-    title: 'Admin Toko (Backoffice)',
-    desc: 'Kelola stok, barang masuk, laporan laba rugi, mutasi cabang, staf & keamanan.',
+    title: 'Backoffice (Inventori & Laporan)',
+    desc: 'Kelola stok barang, barang masuk, laporan laba rugi harian, dan keuangan toko.',
     icon: ICONS.admin,
-    show: isAdmin,
+    show: isBackoffice,
   },
   {
     mode: 'both',
-    title: 'Mode Lengkap (Kasir + Admin)',
+    title: 'Mode Lengkap (Kasir + Backoffice)',
     desc: 'Akses penuh tanpa batas untuk melayani kasir sekaligus memantau inventori toko.',
     icon: ICONS.both,
     show: isAdmin,

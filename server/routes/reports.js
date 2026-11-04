@@ -6,7 +6,7 @@ const { tenantId } = require('../middleware/tenant');
 const router = express.Router();
 router.use(authMiddleware);
 router.use(requireTenant);
-router.use(requireRole('admin'));
+router.use(requireRole('admin', 'backoffice'));
 
 function periodWhere(period) {
   const now = new Date();
@@ -39,6 +39,96 @@ router.get('/sales-summary', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Gagal memuat ringkasan penjualan' });
+  }
+});
+
+/**
+ * Rincian Pemasukan Kasir Hari Ini (Item-by-Item Breakdown)
+ * Menampilkan rincian setiap menu/barang yang terjual per kasir lengkap dengan jam & total pas.
+ */
+router.get('/cashier-today-breakdown', async (req, res) => {
+  try {
+    const tid = tenantId(req);
+    const dateParam = req.query.date; // optional YYYY-MM-DD
+    
+    let whereDate = 'DATE(t.created_at) = CURDATE()';
+    const params = [tid];
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      whereDate = 'DATE(t.created_at) = ?';
+      params.push(dateParam);
+    }
+
+    const [rows] = await pool.execute(
+      `SELECT 
+        t.id AS transaction_id,
+        t.user_id,
+        u.username AS cashier_name,
+        u.role AS cashier_role,
+        t.total AS transaction_total,
+        t.paid,
+        t.change_amount,
+        t.created_at,
+        ti.id AS item_id,
+        ti.product_id,
+        ti.qty,
+        ti.unit_price,
+        ti.subtotal AS item_subtotal,
+        p.name AS product_name,
+        COALESCE(p.unit, 'pcs') AS unit
+      FROM transactions t
+      JOIN users u ON u.id = t.user_id
+      JOIN transaction_items ti ON ti.transaction_id = t.id
+      JOIN products p ON p.id = ti.product_id
+      WHERE t.tenant_id = ? AND ${whereDate}
+      ORDER BY u.username ASC, t.created_at ASC, ti.id ASC`,
+      params
+    );
+
+    // Grouping per kasir
+    const cashierGroups = {};
+    for (const r of rows) {
+      const uid = r.user_id;
+      if (!cashierGroups[uid]) {
+        cashierGroups[uid] = {
+          cashier_id: uid,
+          cashier_name: r.cashier_name,
+          cashier_role: r.cashier_role,
+          total_revenue: 0,
+          transaction_ids: new Set(),
+          items: []
+        };
+      }
+      cashierGroups[uid].transaction_ids.add(r.transaction_id);
+      cashierGroups[uid].items.push({
+        transaction_id: r.transaction_id,
+        time: r.created_at,
+        product_name: r.product_name,
+        qty: Number(r.qty),
+        unit: r.unit,
+        unit_price: Number(r.unit_price),
+        subtotal: Number(r.item_subtotal)
+      });
+    }
+
+    const result = Object.values(cashierGroups).map(c => {
+      const total_revenue = c.items.reduce((acc, it) => acc + it.subtotal, 0);
+      return {
+        cashier_id: c.cashier_id,
+        cashier_name: c.cashier_name,
+        cashier_role: c.cashier_role,
+        total_revenue,
+        total_transactions: c.transaction_ids.size,
+        items: c.items
+      };
+    });
+
+    res.json({
+      date: dateParam || new Date().toISOString().split('T')[0],
+      cashiers: result
+    });
+  } catch (e) {
+    console.error('[cashier-today-breakdown error]', e);
+    res.status(500).json({ error: 'Gagal memuat rincian kasir: ' + e.message });
   }
 });
 

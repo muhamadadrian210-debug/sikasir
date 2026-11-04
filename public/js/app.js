@@ -183,48 +183,60 @@ window.showMinimalNotification = function({ type = 'success', title, message, du
   setTimeout(dismiss, duration);
 };
 
-window.showPremiumSuccessModal = function({ title, subtitle, total, paid, change, onPrint }) {
+window.showPremiumSuccessModal = function({ title, subtitle, total, paid, change, onPrint, lastReceiptObj }) {
   const modal = document.createElement('div');
   modal.className = 'modal-backdrop open';
   modal.style.zIndex = '9999';
+  const storeName = typeof getStoreDisplayName === 'function' ? getStoreDisplayName() : 'SiKasir Store';
   modal.innerHTML = `
-    <div class="modal-card" style="max-width: 420px; text-align: center; border: 1.5px solid #10b981; animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+    <div class="modal-card" style="max-width: 440px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow-lg); animation: popInBounce 0.3s ease-out;">
       <div style="
-        width: 72px; height: 72px; margin: 0 auto 1rem;
-        background: linear-gradient(135deg, #10b981, #059669);
+        width: 60px; height: 60px; margin: 0 auto 0.75rem;
+        background: var(--primary-subtle);
+        border: 1px solid rgba(5,150,105,0.3);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        color: #ffffff; font-size: 2.2rem; font-weight: 900;
-        box-shadow: 0 0 24px rgba(16,185,129,0.5);
-        animation: rotateCheck 0.6s ease-out;
-      ">✓</div>
+        color: var(--primary);
+      ">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
 
-      <h2 style="color: #ffffff; font-size: 1.4rem; font-weight: 900; margin: 0 0 4px;">${title}</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 1.2rem;">${subtitle}</p>
+      <h2 style="color: var(--text-bright); font-size: 1.35rem; font-weight: 800; margin: 0 0 4px;">${title}</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 1rem;">${subtitle} &bull; ${escapeHtml(storeName)}</p>
 
-      <div style="background: #090d16; border: 1px solid rgba(16,185,129,0.3); border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;">
-        <div style="color: #34d399; font-size: 0.72rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px;">UANG KEMBALIAN</div>
-        <div style="color: #10b981; font-size: 1.85rem; font-weight: 900; font-family: monospace;">${money(change)}</div>
+      <div style="background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+        <div style="color: var(--text-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px;">Uang Kembalian</div>
+        <div class="mono" style="color: var(--primary); font-size: 1.85rem; font-weight: 900;">${money(change)}</div>
         <div style="border-top: 1px dashed var(--border); margin: 8px 0; padding-top: 6px; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
-          <span>Total: <strong>${money(total)}</strong></span>
-          <span>Bayar: <strong>${money(paid)}</strong></span>
+          <span>Total Tagihan: <strong>${money(total)}</strong></span>
+          <span>Diterima: <strong>${money(paid)}</strong></span>
         </div>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="btn-modal-print-receipt" class="btn btn-primary btn-block" style="padding: 0.85rem; font-weight: 800;">
-          🖨️ Cetak Struk Bon (PDF / 58mm)
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <button id="btn-modal-print-thermal" class="btn btn-primary" style="padding: 0.75rem 0.5rem; font-weight: 700; font-size: 0.84rem; gap: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          Cetak Thermal
         </button>
-        <button id="btn-modal-close-checkout" class="btn btn-secondary btn-block" style="padding: 0.75rem;">
-          Transaksi Baru
+        <button id="btn-modal-print-pdf" class="btn btn-secondary" style="padding: 0.75rem 0.5rem; font-weight: 700; font-size: 0.84rem; gap: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh PDF
         </button>
       </div>
+      <button id="btn-modal-close-checkout" class="btn btn-secondary btn-block" style="padding: 0.7rem; font-size: 0.85rem;">
+        Transaksi Baru
+      </button>
     </div>
   `;
   document.body.appendChild(modal);
 
-  document.getElementById('btn-modal-print-receipt').onclick = () => {
-    onPrint?.();
+  const rObj = lastReceiptObj || lastReceipt;
+  document.getElementById('btn-modal-print-thermal').onclick = () => {
+    if (rObj && typeof printReceiptThermal === 'function') printReceiptThermal(rObj);
+  };
+  document.getElementById('btn-modal-print-pdf').onclick = () => {
+    if (rObj && typeof printReceiptPdf === 'function') printReceiptPdf(rObj);
+    else onPrint?.();
   };
   document.getElementById('btn-modal-close-checkout').onclick = () => {
     modal.remove();
@@ -1083,10 +1095,18 @@ function renderPOS() {
             </span>
             <input type="text" id="pos-search-catalog" class="pos-search-input" placeholder="Cari nama produk atau scan barcode..." />
           </div>
-          <button type="button" class="btn btn-secondary" id="pos-btn-scan" style="white-space:nowrap; gap:6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Scan Kamera
-          </button>
+          ${isFnB
+            ? `<button type="button" class="btn btn-secondary" id="pos-btn-dinein-action" style="white-space:nowrap; gap:6px;" title="Pilih Meja Pelanggan">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2v20M6 2v20M2 7h20M2 17h20"/></svg>
+                Pilih Meja (Dine-In)
+              </button>
+              <button type="button" class="btn btn-secondary" id="pos-btn-scan-mini" title="Scan Barcode Kemasan" style="padding: 0.5rem 0.65rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+              </button>`
+            : `<button type="button" class="btn btn-secondary" id="pos-btn-scan" style="white-space:nowrap; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Scan Kamera
+              </button>`}
         </div>
 
         <!-- Category Filter Pills Bar -->
@@ -1204,7 +1224,15 @@ function renderPOS() {
     openWebBarcodeScanner(onCode);
   }
 
-  document.getElementById('pos-btn-scan').onclick = () => openScanModal(onPosScan);
+  if (document.getElementById('pos-btn-dinein-action')) {
+    document.getElementById('pos-btn-dinein-action').onclick = () => showView('dinein');
+  }
+  if (document.getElementById('pos-btn-scan-mini')) {
+    document.getElementById('pos-btn-scan-mini').onclick = () => openScanModal(onPosScan);
+  }
+  if (document.getElementById('pos-btn-scan')) {
+    document.getElementById('pos-btn-scan').onclick = () => openScanModal(onPosScan);
+  }
   document.getElementById('pos-clear').onclick = () => {
     if (cart.length > 0) {
       window.showMinimalNotification({
@@ -1219,7 +1247,14 @@ function renderPOS() {
     document.getElementById('pos-print-last').disabled = true;
   };
   document.getElementById('pos-checkout').onclick = checkout;
-  document.getElementById('pos-print-last').onclick = () => lastReceipt && printReceiptPdf(lastReceipt);
+  document.getElementById('pos-print-last').onclick = () => {
+    if (!lastReceipt) return;
+    if (confirm('Cetak struk ke printer thermal sekarang?\n(Pilih Batal jika ingin unduh versi PDF)')) {
+      printReceiptThermal(lastReceipt);
+    } else {
+      printReceiptPdf(lastReceipt);
+    }
+  };
 
   // Search catalog listener
   const searchInput = document.getElementById('pos-search-catalog');
@@ -1395,7 +1430,8 @@ async function checkout() {
       total: res.total,
       paid: res.paid,
       change: res.change,
-      onPrint: () => lastReceipt && printReceiptPdf(lastReceipt)
+      onPrint: () => lastReceipt && printReceiptPdf(lastReceipt),
+      lastReceiptObj: lastReceipt
     });
     fetchProductsCached().catch(() => {});
   } catch (e) {
@@ -1408,71 +1444,159 @@ async function checkout() {
   }
 }
 
+
+function getStoreDisplayName() {
+  const raw = getUser()?.tenant_name || localStorage.getItem('sikasir_store_name') || 'SiKasir Store';
+  return raw.replace(/\s*\([^)]*\)\s*$/, '').trim() || 'SiKasir Store';
+}
+
+function generateThermalHtml(rec) {
+  const storeName = getStoreDisplayName();
+  const dateStr = new Date(rec.time || Date.now()).toLocaleString('id-ID');
+  const itemsHtml = (rec.items || []).map(i => `
+    <div class="thermal-receipt-item">
+      <div class="thermal-receipt-item-name">${escapeHtml(i.name)}</div>
+      <div class="thermal-receipt-item-calc">
+        <span>${i.qty} x ${money(i.sale_price)}</span>
+        <span>${money(i.qty * i.sale_price)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  let metaHtml = '';
+  if (rec.metadata) {
+    if (rec.metadata.table_number || rec.metadata.table) {
+      metaHtml += `<div class="thermal-receipt-meta">Nomor Meja: <strong>${escapeHtml(String(rec.metadata.table_number || rec.metadata.table))}</strong></div>`;
+    }
+    if (rec.metadata.nopol) {
+      metaHtml += `<div class="thermal-receipt-meta">Plat: ${escapeHtml(rec.metadata.nopol)} | Mekanik: ${escapeHtml(rec.metadata.mekanik || '-')}</div>`;
+    }
+    if (rec.metadata.kapster) {
+      metaHtml += `<div class="thermal-receipt-meta">Stylist/Kapster: ${escapeHtml(rec.metadata.kapster)}</div>`;
+    }
+  }
+
+  return `
+    <div class="thermal-receipt-container">
+      <div class="thermal-receipt-header">
+        <div class="thermal-receipt-title">${escapeHtml(storeName)}</div>
+        <div class="thermal-receipt-meta">Struk Pembelian Resmi</div>
+        <div class="thermal-receipt-meta">No: #${rec.id} &bull; ${dateStr}</div>
+        <div class="thermal-receipt-meta">Kasir: ${escapeHtml(rec.kasir || (typeof user !== 'undefined' ? user.username : 'Kasir'))}</div>
+      </div>
+      <div class="thermal-receipt-divider"></div>
+      ${metaHtml ? metaHtml + '<div class="thermal-receipt-divider"></div>' : ''}
+      <div class="thermal-receipt-items">
+        ${itemsHtml}
+      </div>
+      <div class="thermal-receipt-divider"></div>
+      <div class="thermal-receipt-summary-row">
+        <span>Subtotal</span>
+        <span>${money(rec.total)}</span>
+      </div>
+      <div class="thermal-receipt-total">
+        <span>TOTAL</span>
+        <span>${money(rec.total)}</span>
+      </div>
+      <div class="thermal-receipt-summary-row">
+        <span>Bayar</span>
+        <span>${money(rec.paid)}</span>
+      </div>
+      <div class="thermal-receipt-summary-row">
+        <span>Kembalian</span>
+        <span>${money(rec.change)}</span>
+      </div>
+      <div class="thermal-receipt-divider"></div>
+      <div class="thermal-receipt-footer">
+        <div>Terima kasih atas kunjungan Anda!</div>
+        <div style="margin-top:3px; font-size:9px; color:#666;">Product by Sivilize Corp</div>
+      </div>
+    </div>
+  `;
+}
+
+function printReceiptThermal(rec) {
+  let printArea = document.getElementById('thermal-print-area');
+  if (!printArea) {
+    printArea = document.createElement('div');
+    printArea.id = 'thermal-print-area';
+    document.body.appendChild(printArea);
+  }
+  printArea.innerHTML = generateThermalHtml(rec);
+  window.print();
+}
+
 function printReceiptPdf(rec) {
   const jsPDFLib = window.jspdf?.jsPDF || window.jsPDF;
   if (!jsPDFLib) {
     alert('Library PDF belum dimuat. Coba refresh halaman.');
     return;
   }
+  const storeName = getStoreDisplayName();
   const doc = new jsPDFLib({ unit: 'mm', format: [72, 200] });
   let y = 8;
   doc.setFontSize(11);
-  doc.text('SiKasir', 36, y, { align: 'center' });
-  y += 6;
+  doc.setFont('helvetica', 'bold');
+  doc.text(storeName.toUpperCase(), 36, y, { align: 'center' });
+  y += 5;
   doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
   doc.text(`Trx #${rec.id}`, 36, y, { align: 'center' });
   y += 4;
-  doc.text(new Date(rec.time).toLocaleString('id-ID'), 36, y, { align: 'center' });
-  y += 6;
-  doc.text(`Kasir: ${rec.kasir}`, 4, y);
+  doc.text(new Date(rec.time || Date.now()).toLocaleString('id-ID'), 36, y, { align: 'center' });
   y += 5;
-  rec.items.forEach((i) => {
-    doc.text(`${i.name.substring(0, 22)}`, 4, y);
+  doc.text(`Kasir: ${rec.kasir || (typeof user !== 'undefined' ? user.username : 'Kasir')}`, 4, y);
+  y += 3;
+  doc.text('------------------------------------------------', 36, y, { align: 'center' });
+  y += 4;
+
+  (rec.items || []).forEach((i) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${i.name.substring(0, 24)}`, 4, y);
     y += 4;
-    doc.text(`${i.qty} x ${money(i.sale_price)} = ${money(i.qty * i.sale_price)}`, 4, y);
-    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${i.qty} x ${money(i.sale_price)}`, 4, y);
+    doc.text(`${money(i.qty * i.sale_price)}`, 68, y, { align: 'right' });
+    y += 4.5;
   });
-  y += 2;
-  doc.text(`Total: ${money(rec.total)}`, 4, y);
+
+  y += 1;
+  doc.text('------------------------------------------------', 36, y, { align: 'center' });
+  y += 4;
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL', 4, y);
+  doc.text(money(rec.total), 68, y, { align: 'right' });
+  y += 4.5;
+  doc.setFont('helvetica', 'normal');
+  doc.text('Bayar', 4, y);
+  doc.text(money(rec.paid), 68, y, { align: 'right' });
+  y += 4;
+  doc.text('Kembali', 4, y);
+  doc.text(money(rec.change), 68, y, { align: 'right' });
   y += 5;
-  doc.text(`Bayar: ${money(rec.paid)}`, 4, y);
-  y += 5;
-  doc.text(`Kembali: ${money(rec.change)}`, 4, y);
-  y += 6;
 
   if (rec.metadata) {
     doc.setFontSize(7);
+    if (rec.metadata.table_number || rec.metadata.table) {
+      doc.text(`Meja: ${rec.metadata.table_number || rec.metadata.table}`, 4, y);
+      y += 4;
+    }
     if (rec.metadata.nopol) {
       doc.text(`Plat: ${rec.metadata.nopol} | Mekanik: ${rec.metadata.mekanik || '-'}`, 4, y);
-      y += 4;
-      if (rec.metadata.km) {
-        doc.text(`KM Kendaraan: ${rec.metadata.km}`, 4, y);
-        y += 4;
-      }
-    }
-    if (rec.metadata.rack_no) {
-      doc.text(`Rak Cucian: ${rec.metadata.rack_no} | Est: ${rec.metadata.estimate || '-'}`, 4, y);
-      y += 4;
-    }
-    if (rec.metadata.kapster) {
-      doc.text(`Kapster/Stylist: ${rec.metadata.kapster}`, 4, y);
-      y += 4;
-    }
-    if (rec.metadata.recipe_no) {
-      doc.text(`No. Resep: ${rec.metadata.recipe_no} | dr: ${rec.metadata.doctor_name || '-'}`, 4, y);
-      y += 4;
-    }
-    if (rec.metadata.tabung_status) {
-      doc.text(`Status: ${rec.metadata.tabung_status}`, 4, y);
       y += 4;
     }
   }
 
+  y += 2;
+  doc.setFontSize(7);
+  doc.text('Terima kasih atas kunjungan Anda!', 36, y, { align: 'center' });
   y += 4;
   doc.setFontSize(6);
   doc.setTextColor(120);
   doc.text('Product by Sivilize Corp', 36, Math.min(y + 4, 192), { align: 'center' });
-  doc.save(`struk-${rec.id}.pdf`);
+  
+  const cleanStoreFileName = storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30) || 'sikasir';
+  doc.save(`struk-${cleanStoreFileName}-${rec.id}.pdf`);
 }
 
 /* -------- Scan modal -------- */
@@ -1871,6 +1995,23 @@ async function loadReports() {
       </div>
     </div>
 
+    
+    <!-- Pemasukan Kasir Hari Ini (Item-by-Item) -->
+    <div class="panel" style="margin-bottom:1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
+        <div>
+          <h4 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-bright);">Rincian Pemasukan Kasir Hari Ini</h4>
+          <p style="margin:2px 0 0; font-size:0.82rem; color:var(--text-muted);">
+            Rincian setiap menu &amp; barang yang terjual oleh masing-masing kasir hari ini
+          </p>
+        </div>
+        <span class="badge badge-kasir" id="rep-cashier-today-date">Hari Ini</span>
+      </div>
+      <div id="rep-cashier-breakdown-list">
+        <p style="text-align:center; padding:1.5rem; color:var(--text-muted);">Memuat rincian kasir...</p>
+      </div>
+    </div>
+
     <!-- Profit per product table -->
     <div class="panel">
       <h4 style="margin-top:0; font-size:1.1rem; margin-bottom:1rem;">🏆 Rincian Laba per Produk</h4>
@@ -1972,6 +2113,80 @@ async function loadReports() {
         </tr>`).join('')}
         </tbody></table></div>`
       : '<p style="color:var(--primary); padding:0.5rem 0;">✓ Semua stok barang dalam batas aman.</p>';
+
+    
+    // Fetch Cashier Today Breakdown
+    try {
+      const cashierData = await api('/reports/cashier-today-breakdown');
+      const cashiers = cashierData?.cashiers || [];
+      const listEl = document.getElementById('rep-cashier-breakdown-list');
+      if (listEl) {
+        if (!cashiers.length) {
+          listEl.innerHTML = '<p style="text-align:center; padding:1.5rem; color:var(--text-muted);">Belum ada transaksi kasir hari ini.</p>';
+        } else {
+          listEl.innerHTML = cashiers.map(c => `
+            <div style="background:var(--bg-base); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.2rem; margin-bottom:1.25rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.75rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.05rem; font-weight:800; color:var(--text-bright);">Kasir: ${escapeHtml(c.cashier_name)}</span>
+                    <span class="badge ${c.cashier_role === 'admin' ? 'badge-admin' : (c.cashier_role === 'backoffice' ? 'badge-backoffice' : 'badge-kasir')}">
+                      ${c.cashier_role === 'admin' ? 'Owner' : (c.cashier_role === 'backoffice' ? 'Backoffice' : 'Kasir')}
+                    </span>
+                  </div>
+                  <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+                    ${c.total_transactions} transaksi berhasil dicatat hari ini
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Total Pemasukan Kasir</div>
+                  <div class="mono" style="font-size:1.3rem; font-weight:900; color:var(--primary);">
+                    ${money(c.total_revenue)}
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th style="width:80px;">Jam</th>
+                      <th style="width:100px;">No. Invoice</th>
+                      <th>Nama Menu / Produk</th>
+                      <th style="width:120px;">Qty Terjual</th>
+                      <th style="width:130px;">Harga Satuan</th>
+                      <th style="width:140px; text-align:right;">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${c.items.map(it => `
+                      <tr>
+                        <td class="mono" style="font-size:0.82rem; color:var(--text-muted);">
+                          ${new Date(it.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td class="mono" style="font-weight:700;">#${it.transaction_id}</td>
+                        <td style="font-weight:700; color:var(--text-bright);">${escapeHtml(it.product_name)}</td>
+                        <td><span class="badge" style="background:var(--bg-surface); border:1px solid var(--border); color:var(--text-bright);">${it.qty} ${escapeHtml(it.unit || 'pcs')}</span></td>
+                        <td class="mono">${money(it.unit_price)}</td>
+                        <td class="mono" style="font-weight:800; color:var(--primary); text-align:right;">${money(it.subtotal)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                  <tfoot>
+                    <tr style="background:var(--bg-surface); font-weight:800; border-top:1.5px solid var(--border);">
+                      <td colspan="5" style="text-align:right;">Total Omset Pas (${escapeHtml(c.cashier_name)}):</td>
+                      <td class="mono" style="color:var(--primary); font-size:1.1rem; text-align:right;">${money(c.total_revenue)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    } catch (cErr) {
+      console.warn('Gagal memuat rincian kasir harian:', cErr);
+    }
 
     window.__lastReport = { sales, margin, low, period };
   };
@@ -2081,12 +2296,13 @@ async function loadUsersTable() {
         <div class="field">
           <label>Role</label>
           <select id="nu-role">
-            <option value="kasir">Kasir</option>
-            <option value="admin">Admin</option>
+            <option value="kasir">Staf Kasir (POS Register)</option>
+            <option value="backoffice">Staf Backoffice (Inventori & Laporan)</option>
+            <option value="admin">Owner / Super Admin</option>
           </select>
         </div>
       </div>
-      <button type="button" class="btn btn-primary" id="nu-save">Tambah</button>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:0.75rem;"><button type="button" class="btn btn-primary" id="nu-save">Tambah Akun</button><span style="font-size:0.8rem; color:var(--text-muted);">Pembuatan akun kasir &amp; backoffice tidak terbatas (unlimited).</span></div>
     </div>
     <div id="users-wrap"></div>`;
 
@@ -2115,7 +2331,11 @@ async function loadUsersTable() {
           (u) => `
         <tr>
           <td>${u.username}</td>
-          <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-kasir'}">${u.role}</span></td>
+          <td>
+  <span class="badge ${u.role === 'admin' ? 'badge-admin' : (u.role === 'backoffice' ? 'badge-backoffice' : 'badge-kasir')}">
+    ${u.role === 'admin' ? 'Owner / Admin' : (u.role === 'backoffice' ? 'Backoffice' : 'Staf Kasir')}
+  </span>
+</td>
           <td>
             ${u.id !== user.id ? `<button type="button" class="btn btn-secondary" data-edit-user="${u.id}">Edit</button>
             <button type="button" class="btn btn-danger" data-del-user="${u.id}">Hapus</button>` : '—'}
@@ -2144,9 +2364,9 @@ async function loadUsersTable() {
       if (password === null) return;
       const username = prompt('Username baru:', u.username);
       if (!username) return;
-      const roleInput = prompt('Role baru (admin/kasir):', u.role);
+      const roleInput = prompt('Role baru (admin / backoffice / kasir):', u.role);
       if (roleInput === null) return;
-      const role = roleInput.trim().toLowerCase() === 'admin' ? 'admin' : 'kasir';
+      let role = 'kasir'; const rLower = roleInput.trim().toLowerCase(); if (rLower === 'admin') role = 'admin'; else if (rLower === 'backoffice') role = 'backoffice';
       try {
         const body = { username, role };
         if (password) body.password = password;
@@ -3120,7 +3340,8 @@ window.addEventListener('sikasir:tx-success', (e) => {
   const btnPrint = document.getElementById('btn-success-print');
   if (btnPrint) {
     btnPrint.onclick = () => {
-      if (typeof printReceiptPdf === 'function') printReceiptPdf(rec);
+      if (typeof printReceiptThermal === 'function') printReceiptThermal(rec);
+      else if (typeof printReceiptPdf === 'function') printReceiptPdf(rec);
     };
   }
 

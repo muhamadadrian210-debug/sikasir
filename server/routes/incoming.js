@@ -7,7 +7,7 @@ const { auditAdmin } = require('../lib/audit');
 const router = express.Router();
 router.use(authMiddleware);
 router.use(requireTenant);
-router.use(requireRole('admin'));
+router.use(requireRole('admin', 'backoffice'));
 
 router.get('/summary/today', async (req, res) => {
   try {

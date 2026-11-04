@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', requireRole('admin'), async (req, res) => {
+router.post('/', requireRole('admin', 'backoffice'), async (req, res) => {
   try {
     const tid = tenantId(req);
     const name = String(req.body?.name || '').trim();
