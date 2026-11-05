@@ -100,9 +100,28 @@ app.use('/api/backup', backupRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/shifts', shiftsRoutes);
 
+/** Download File APK Android Resmi */
+app.get('/download/apk', (req, res) => {
+  const fs = require('fs');
+  const candidates = [
+    path.join(__dirname, '..', 'public', 'downloads', 'sikasir-pos.apk'),
+    path.join(__dirname, '..', 'SiKasir-v3.8.6.apk'),
+    path.join(__dirname, '..', 'SiKasir-POS-Mobile.apk'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      return res.download(c, 'SiKasir-POS-v3.9.0.apk');
+    }
+  }
+  if (process.env.APK_DOWNLOAD_URL) {
+    return res.redirect(process.env.APK_DOWNLOAD_URL);
+  }
+  res.status(404).send('File APK belum tersedia untuk diunduh saat ini.');
+});
+
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-/** Global error handler — tangkap error tak terduga agar tidak crash diam-diam */
+/** Global error handler: tangkap error tak terduga agar tidak crash diam-diam */
 app.use((err, req, res, next) => {
   console.error('[unhandled error]', err);
   res.status(500).json({ error: 'Terjadi kesalahan server' });
