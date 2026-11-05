@@ -8,10 +8,45 @@ const router = express.Router();
 router.use(authMiddleware);
 router.use(requireTenant);
 
+// Lightweight In-Memory TTL Cache per Tenant (30s)
+// Mencegah Aiven MySQL kebanjiran read saat puluhan kasir scrolling katalog
+const productCatalogCache = new Map();
+const CACHE_TTL_MS = 30000;
+
+function getCachedProducts(key) {
+  const item = productCatalogCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.time > CACHE_TTL_MS) {
+    productCatalogCache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+
+function setCachedProducts(key, data) {
+  productCatalogCache.set(key, { time: Date.now(), data });
+}
+
+function invalidateTenantCache(tid) {
+  for (const k of productCatalogCache.keys()) {
+    if (k.startsWith(`t_${tid}:`)) {
+      productCatalogCache.delete(k);
+    }
+  }
+}
+
 router.get('/', async (req, res) => {
   try {
     const tid = tenantId(req);
-    const q = req.query.q ? `%${String(req.query.q).trim()}%` : null;
+    const qRaw = req.query.q ? String(req.query.q).trim() : '';
+    const cacheKey = `t_${tid}:${qRaw}`;
+
+    const cached = getCachedProducts(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
+    const q = qRaw ? `%${qRaw}%` : null;
     let sql = `
       SELECT p.id, p.barcode, p.name, p.purchase_price, p.sale_price, p.stock,
              p.category_id, p.expiry_date, p.batch_number, p.size, p.color, p.warranty, p.brand, p.rack_location, c.name AS category_name
@@ -26,6 +61,7 @@ router.get('/', async (req, res) => {
     }
     sql += ' ORDER BY p.name';
     const [rows] = await pool.execute(sql, params);
+    setCachedProducts(cacheKey, rows);
     res.json(rows);
   } catch (e) {
     console.error(e);
@@ -73,6 +109,7 @@ router.post('/', requireRole('admin', 'backoffice'), async (req, res) => {
       [tid, bc, nm, pp, sp, st, catId || null, expiry_date || null, batch_number || null, size || null, color || null, warranty || null, brand || null, rack_location || null]
     );
     await auditAdmin(req, 'product.create', { id: r.insertId, barcode: bc });
+    invalidateTenantCache(tid);
     res.status(201).json({ id: r.insertId });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') {
@@ -104,6 +141,7 @@ router.put('/:id', requireRole('admin', 'backoffice'), async (req, res) => {
       [bc, nm, pp, sp, st, catId || null, expiry_date || null, batch_number || null, size || null, color || null, warranty || null, brand || null, rack_location || null, id, tid]
     );
     if (!r.affectedRows) return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    invalidateTenantCache(tid);
     await auditAdmin(req, 'product.update', { id });
     res.json({ ok: true });
   } catch (e) {
@@ -133,6 +171,7 @@ router.patch('/:id/stock', requireRole('admin', 'backoffice'), async (req, res) 
       if (!p.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
       return res.status(400).json({ error: 'Stok tidak mencukupi' });
     }
+    invalidateTenantCache(tid);
     await auditAdmin(req, 'product.stock_adjust', { id, delta });
     res.json({ ok: true });
   } catch (e) {
@@ -150,6 +189,7 @@ router.delete('/:id', requireRole('admin', 'backoffice'), async (req, res) => {
       [id, tid]
     );
     if (!r.affectedRows) return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    invalidateTenantCache(tid);
     await auditAdmin(req, 'product.delete', { id });
     res.json({ ok: true });
   } catch (e) {
@@ -158,4 +198,5 @@ router.delete('/:id', requireRole('admin', 'backoffice'), async (req, res) => {
   }
 });
 
+router.invalidateTenantCache = invalidateTenantCache;
 module.exports = router;

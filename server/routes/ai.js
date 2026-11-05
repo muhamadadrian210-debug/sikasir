@@ -7,6 +7,7 @@ const upload = multer({
 const { pool } = require('../config/db');
 const { authMiddleware, requireTenant } = require('../middleware/auth');
 const { tenantId } = require('../middleware/tenant');
+const productsRoutes = require('./products');
 const { GoogleGenAI } = require('@google/genai');
 
 const router = express.Router();
@@ -16,10 +17,39 @@ router.use((req, res, next) => {
   return authMiddleware(req, res, () => requireTenant(req, res, next));
 });
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+/**
+ * Multi-Key Round-Robin & Failover Manager for Google Gemini API.
+ * Mendukung multiple free-tier keys via GEMINI_API_KEYS=key1,key2,key3
+ * atau single key via GEMINI_API_KEY.
+ * Melipatgandakan batas 15 RPM / 1500 RPD gratisan hingga 75+ RPM untuk puluhan outlet!
+ */
+function getGeminiKeyList() {
+  const multi = process.env.GEMINI_API_KEYS;
+  if (multi && typeof multi === 'string') {
+    const list = multi.split(',').map(k => k.trim()).filter(Boolean);
+    if (list.length > 0) return list;
+  }
+  if (process.env.GEMINI_API_KEY) {
+    return [process.env.GEMINI_API_KEY.trim()];
+  }
+  return [];
+}
+
+let geminiKeyIndex = 0;
+function getNextGeminiClient() {
+  const keys = getGeminiKeyList();
+  if (!keys.length) return null;
+  const key = keys[geminiKeyIndex % keys.length];
+  geminiKeyIndex = (geminiKeyIndex + 1) % keys.length;
+  return new GoogleGenAI({ apiKey: key });
+}
+
+function hasGeminiKey() {
+  return getGeminiKeyList().length > 0;
+}
 
 const systemInstruction = `
-Kamu: SiKasir AI Business Copilot — Asisten Finansial & Kasir Cerdas Toko.
+Kamu: SiKasir AI Business Copilot: Asisten Finansial & Kasir Cerdas Toko.
 Tugas Utama:
 1. Rekap & Analisis Keuangan (Omset, Transaksi, Bayar Nota/Pengeluaran, Laba/Profit Bersih, Produk Terlaris).
 2. Pengecekan & Update Stok (Cek stok menipis, barang terlaris, dead stock, restock grosir).
@@ -37,10 +67,11 @@ router.post('/chat', async (req, res) => {
     const { prompt } = req.body;
     
     if (!prompt) return res.status(400).json({ error: 'Prompt kosong' });
-    if (!process.env.GEMINI_API_KEY) {
+    if (!hasGeminiKey()) {
       return res.status(500).json({ error: 'API Key Gemini belum diset di server.' });
     }
 
+    const ai = getNextGeminiClient();
     const lower = prompt.toLowerCase();
     let productContext = '';
 
@@ -163,6 +194,7 @@ router.post('/chat', async (req, res) => {
           config: { systemInstruction: systemInstruction }
         });
 
+        productsRoutes.invalidateTenantCache?.(tid);
         return res.json({ 
           reply: finalResponse.text,
           actionPerformed: 'update_stock',
@@ -195,6 +227,7 @@ router.post('/chat', async (req, res) => {
           config: { systemInstruction: systemInstruction }
         });
 
+        productsRoutes.invalidateTenantCache?.(tid);
         return res.json({
           reply: finalResponse.text,
           actionPerformed: 'add_new_product',
@@ -312,10 +345,11 @@ router.post('/parse-product', async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt kosong' });
-    if (!process.env.GEMINI_API_KEY) {
+    if (!hasGeminiKey()) {
       return res.status(500).json({ error: 'API Key Gemini belum diset.' });
     }
 
+    const ai = getNextGeminiClient();
     const instruction = `
 Kamu adalah asisten kasir cerdas. Tugasmu adalah mengekstrak informasi produk dari input pengguna ke dalam format JSON.
 Format JSON yang harus kamu kembalikan persis seperti ini (tanpa markdown atau karakter tambahan di luar JSON):
@@ -353,7 +387,11 @@ router.post('/analyze-product-image', upload.single('image'), async (req, res) =
     if (!req.file) {
       return res.status(400).json({ error: 'Tidak ada gambar yang diunggah' });
     }
+    if (!hasGeminiKey()) {
+      return res.status(500).json({ error: 'API Key Gemini belum diset.' });
+    }
 
+    const ai = getNextGeminiClient();
     const base64Data = req.file.buffer.toString('base64');
     const defaultBarcode = `BRG-${new Date().toISOString().replace(/[-:T.]/g, '').slice(0,14)}`;
 
@@ -443,10 +481,9 @@ router.post('/auto-repair', async (req, res) => {
 
     // 2. Generate AI Explanation
     let aiDiagnosis = '';
-    if (process.env.GEMINI_API_KEY) {
+    if (hasGeminiKey()) {
       try {
-        const { GoogleGenAI } = require('@google/genai');
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getNextGeminiClient();
         const prompt = `Sebagai AI System Recovery Specialist untuk aplikasi SiKasir POS:
 Komponen yang error: "${componentName || 'Layar Utama'}"
 Pesan error: "${errorMessage || 'Runtime error'}"

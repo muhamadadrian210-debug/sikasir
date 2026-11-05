@@ -14,10 +14,13 @@ const dbConfig = {
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
 
-  // Batas maksimal koneksi yang dipertahankan dalam Pool (Connection Pool).
-  // Dibatasi 10 koneksi untuk mencegah Connection Exhaustion pada Cloud DB (Aiven / RDS)
-  // maupun MySQL lokal (XAMPP/Laragon).
-  connectionLimit: 10,
+  // Serverless Micro-Pool Tuning:
+  // Dibatasi 2 koneksi per container serverless (default 2, dapat diubah via DB_CONNECTION_LIMIT).
+  // Menjaga agar puluhan instance Vercel yang berjalan bersamaan tidak melampaui
+  // kuota max_connections pada Aiven Cloud Free Tier (maksimal ~20-25 koneksi total).
+  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 2,
+  maxIdle: 2,
+  idleTimeout: 30000,
   
   // 0 berarti antrean pool tidak dibatasi
   queueLimit: 0,

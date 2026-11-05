@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
 const { authMiddleware, requireRole, requireTenant } = require('../middleware/auth');
 const { tenantId } = require('../middleware/tenant');
+const productsRoutes = require('./products');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -103,6 +104,7 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
     }
 
     await conn.commit();
+    productsRoutes.invalidateTenantCache?.(tid);
     res.status(201).json({
       transaction_id: txId,
       subtotal,
