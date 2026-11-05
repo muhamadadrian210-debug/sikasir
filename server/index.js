@@ -50,7 +50,7 @@ app.use(sanitizeBody);
 /** CSRF harus di luar rate limit & tetap sebelum csrfProtection untuk mutasi lain */
 app.get('/api/csrf-token', issueCsrf);
 
-/** Health check — berguna untuk debugging koneksi */
+/** Health check: berguna untuk debugging koneksi */
 app.get('/api/health', async (req, res) => {
   try {
     const { pool } = require('./config/db');
@@ -71,16 +71,16 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-/** Customer Display System (CDS) — akses terbuka lokal per tenant */
+/** Customer Display System (CDS): akses terbuka lokal per tenant */
 app.use('/api/cds', cdsRoutes);
 
-/** Dine-In & QR Table Integration — Ekosistem Sivilize Dine Lite (2-way sync) */
+/** Dine-In & QR Table Integration: Ekosistem Sivilize Dine Lite (2-way sync) */
 app.use('/api/dine-in', dineInRoutes);
 
-/** License Activation — Aktivasi Kode Sewa Website Sivilize Ecosystem */
+/** License Activation: Aktivasi Kode Sewa Website Sivilize Ecosystem */
 app.use('/api/license', licenseRoutes);
 
-/** Setup admin pertama — tidak butuh auth */
+/** Setup admin pertama: tidak butuh auth */
 app.use('/api/setup', setupRoutes);
 
 app.use('/api', apiLimiter);
