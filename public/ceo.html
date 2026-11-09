@@ -99,8 +99,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 8px 14px;
-      font-size: 0.84rem;
+      padding: 7px 13px;
+      font-size: 0.82rem;
       font-weight: 600;
       border-radius: var(--radius);
       border: 1px solid transparent;
@@ -109,53 +109,20 @@
       transition: background 0.15s, border-color 0.15s;
     }
 
-    .btn-block {
-      width: 100%;
-    }
+    .btn-block { width: 100%; }
+    .btn-primary { background: var(--primary); color: #FFFFFF; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border-dark); }
+    .btn-secondary:hover { background: #F1F5F9; }
+    .btn-success { background: var(--success); color: #FFFFFF; }
+    .btn-success:hover { background: #15803D; }
+    .btn-warning { background: var(--warning); color: #FFFFFF; }
+    .btn-warning:hover { background: #B45309; }
+    .btn-danger { background: var(--danger); color: #FFFFFF; }
+    .btn-danger:hover { background: #B91C1C; }
+    .btn-sm { padding: 4px 9px; font-size: 0.76rem; }
 
-    .btn-primary {
-      background: var(--primary);
-      color: #FFFFFF;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text);
-      border-color: var(--border-dark);
-    }
-
-    .btn-secondary:hover {
-      background: #F1F5F9;
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: #FFFFFF;
-    }
-
-    .btn-success:hover {
-      background: #15803D;
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #FFFFFF;
-    }
-
-    .btn-danger:hover {
-      background: #B91C1C;
-    }
-
-    .btn-sm {
-      padding: 4px 10px;
-      font-size: 0.78rem;
-    }
-
-    /* Main Container */
+    /* Dashboard Layout */
     #dashboard-view {
       display: none;
       min-height: 100vh;
@@ -165,37 +132,32 @@
     header.topbar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 50;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .brand-title {
-      font-size: 0.98rem;
-      font-weight: 700;
-      letter-spacing: -0.2px;
-    }
-
-    .brand-sub {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
+    .brand-title { font-size: 0.98rem; font-weight: 700; letter-spacing: -0.2px; }
+    .brand-sub { font-size: 0.76rem; color: var(--text-muted); }
 
     .tabs-nav {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       background: #F1F5F9;
       padding: 3px;
       border-radius: var(--radius);
+      flex-wrap: wrap;
     }
 
     .tab-btn {
-      padding: 6px 12px;
-      font-size: 0.8rem;
+      padding: 5px 11px;
+      font-size: 0.79rem;
       font-weight: 600;
       border: none;
       background: transparent;
@@ -214,7 +176,7 @@
       display: inline-block;
       margin-left: 4px;
       padding: 1px 6px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       border-radius: 10px;
       background: #EF4444;
@@ -222,18 +184,51 @@
     }
 
     main.content {
-      max-width: 1100px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 24px 20px;
+      padding: 20px 18px;
       width: 100%;
     }
 
-    .tab-pane {
-      display: none;
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Financial & Metrics Top Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
     }
 
-    .tab-pane.active {
-      display: block;
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+
+    .metric-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-val {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text);
+      font-family: var(--font-mono);
+      letter-spacing: -0.5px;
+    }
+
+    .metric-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
     .panel {
@@ -250,178 +245,71 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .panel-title {
-      font-size: 0.92rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .panel-body {
-      padding: 18px;
-    }
+    .panel-title { font-size: 0.92rem; font-weight: 700; color: var(--text); }
+    .panel-body { padding: 18px; }
 
     /* Minimal Table */
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    table.data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.84rem;
-      text-align: left;
-    }
-
-    table.data-table th {
-      padding: 10px 14px;
-      background: #F8FAFC;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-muted);
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    table.data-table td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    table.data-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .mono {
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-    }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table.data-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; text-align: left; }
+    table.data-table th { padding: 10px 14px; background: #F8FAFC; border-bottom: 1px solid var(--border); color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    table.data-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    table.data-table tr:last-child td { border-bottom: none; }
+    .mono { font-family: var(--font-mono); font-size: 0.82rem; }
 
     /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 2px 7px;
-      font-size: 0.74rem;
-      font-weight: 600;
-      border-radius: 4px;
-    }
-
+    .badge { display: inline-block; padding: 2px 7px; font-size: 0.74rem; font-weight: 600; border-radius: 4px; }
     .badge-success { background: var(--success-bg); color: #15803D; }
     .badge-warning { background: var(--warning-bg); color: #B45309; }
     .badge-danger  { background: var(--danger-bg);  color: #B91C1C; }
     .badge-neutral { background: #F1F5F9; color: #475569; }
 
     /* Forms */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 14px;
-    }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+    .form-control { width: 100%; padding: 8px 11px; font-size: 0.85rem; border: 1px solid var(--border-dark); border-radius: var(--radius); outline: none; background: var(--surface); }
+    .form-control:focus { border-color: var(--primary); }
 
-    .form-group label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 5px;
-    }
-
-    .form-control {
-      width: 100%;
-      padding: 8px 11px;
-      font-size: 0.85rem;
-      border: 1px solid var(--border-dark);
+    /* Running Text (Marquee Ticker) */
+    .marquee-preview-wrap {
+      background: #0F172A;
+      color: #F8FAFC;
       border-radius: var(--radius);
-      outline: none;
-      background: var(--surface);
+      padding: 9px 14px;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      margin-top: 14px;
     }
 
-    .form-control:focus {
-      border-color: var(--primary);
+    .marquee-track {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: tickerRun 22s linear infinite;
+    }
+
+    .marquee-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes tickerRun {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
     }
 
     /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      padding: 16px;
-    }
-
-    .modal-box {
-      background: var(--surface);
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 580px;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-
-    .modal-head {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-body {
-      padding: 18px;
-      overflow-y: auto;
-      font-size: 0.86rem;
-    }
-
-    .modal-foot {
-      padding: 12px 18px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      background: #F8FAFC;
-    }
-
-    /* Preview Canvas Area */
-    .img-preview-box {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #000;
-      text-align: center;
-      position: relative;
-      margin-bottom: 12px;
-      max-height: 380px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .img-preview-box canvas {
-      max-width: 100%;
-      max-height: 380px;
-      display: block;
-      object-fit: contain;
-    }
-
-    .meta-box {
-      background: #F8FAFC;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 12px;
-      font-family: var(--font-mono);
-      font-size: 0.74rem;
-      color: #334155;
-      line-height: 1.6;
-    }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+    .modal-box { background: var(--surface); border-radius: var(--radius); width: 100%; max-width: 580px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .modal-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 18px; overflow-y: auto; font-size: 0.86rem; }
+    .modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: #F8FAFC; }
+    .img-preview-box { border: 1px solid var(--border); border-radius: var(--radius); background: #000; text-align: center; margin-bottom: 12px; max-height: 380px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .img-preview-box canvas { max-width: 100%; max-height: 380px; display: block; object-fit: contain; }
+    .meta-box { background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-family: var(--font-mono); font-size: 0.74rem; color: #334155; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -436,8 +324,8 @@
           type="password" 
           id="pin-field" 
           class="pin-input" 
-          placeholder="•••••••" 
-          maxlength="10" 
+          placeholder="••••••" 
+          maxlength="8" 
           autocomplete="off" 
           autofocus 
           required 
@@ -456,14 +344,16 @@
     <header class="topbar">
       <div>
         <div class="brand-title">SiKasir CEO</div>
-        <div class="brand-sub">Founder Dashboard &amp; License Manager</div>
+        <div class="brand-sub">Executive SaaS Operations &amp; Cashflow Control</div>
       </div>
 
       <nav class="tabs-nav">
-        <button type="button" class="tab-btn active" data-tab="tab-proofs">
+        <button type="button" class="tab-btn active" data-tab="tab-overview">Ringkasan &amp; Finansial</button>
+        <button type="button" class="tab-btn" data-tab="tab-proofs">
           Verifikasi Pembayaran <span class="tab-badge" id="pending-proofs-badge" style="display:none;">0</span>
         </button>
         <button type="button" class="tab-btn" data-tab="tab-tenants">Daftar Toko</button>
+        <button type="button" class="tab-btn" data-tab="tab-broadcast">Broadcast Pengumuman</button>
         <button type="button" class="tab-btn" data-tab="tab-generator">Buat Lisensi</button>
         <button type="button" class="tab-btn" data-tab="tab-codes">Riwayat Lisensi</button>
       </nav>
@@ -476,8 +366,70 @@
 
     <main class="content">
 
-      <!-- TAB 1: VERIFIKASI PEMBAYARAN (BUKTI TRANSFER) -->
-      <section id="tab-proofs" class="tab-pane active">
+      <!-- TAB 1: RINGKASAN & FINANSIAL (MRR, OMZET ADRIAN, TRAFIK, DATABASE) -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total Omzet Sewa Masuk</div>
+            <div class="metric-val" id="metric-total-rev" style="color: #16A34A;">Rp 0</div>
+            <div class="metric-sub" id="metric-orders-count">0 pembayaran disetujui</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">MRR (Monthly Recurring Revenue)</div>
+            <div class="metric-val" id="metric-mrr" style="color: #0284C7;">Rp 0</div>
+            <div class="metric-sub" id="metric-mrr-sub">Proyeksi sewa bulanan dari toko aktif</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Trafik Transaksi Kasir Hari Ini</div>
+            <div class="metric-val" id="metric-tx-today">0 Transaksi</div>
+            <div class="metric-sub" id="metric-gmv-today">Total perputaran kasir: Rp 0</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Kapasitas Database MySQL</div>
+            <div class="metric-val" id="metric-db-size">0 MB</div>
+            <div class="metric-sub" id="metric-db-status">Status: Optimal (Kuota 5.000 MB)</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Status Toko Mitra</span>
+            </div>
+            <div class="panel-body">
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--text-muted);">Toko Aktif Beroperasi</span>
+                <strong id="stat-active-tenants" class="mono" style="color: #16A34A;">0 Toko</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--text-muted);">Toko Dibekukan Sementara</span>
+                <strong id="stat-frozen-tenants" class="mono" style="color: #D97706;">0 Toko</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span style="color: var(--text-muted);">Masa Sewa Segera Berakhir (H-7)</span>
+                <strong id="stat-near-tenants" class="mono" style="color: #EF4444;">0 Toko</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Toko Teraktif Hari Ini</span>
+            </div>
+            <div class="panel-body">
+              <div style="font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 4px;" id="stat-top-store">
+                Memuat data...
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Aktivitas dipantau secara langsung dari seluruh transaksi Point of Sale di ekosistem SiKasir.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: VERIFIKASI PEMBAYARAN (BUKTI TRANSFER) -->
+      <section id="tab-proofs" class="tab-pane">
         <div class="panel">
           <div class="panel-head">
             <span class="panel-title">Antrean Bukti Transfer Toko</span>
@@ -506,11 +458,11 @@
         </div>
       </section>
 
-      <!-- TAB 2: DAFTAR TOKO -->
+      <!-- TAB 3: DAFTAR TOKO (DENGAN FITUR BEKUKAN / FREEZE) -->
       <section id="tab-tenants" class="tab-pane">
         <div class="panel">
           <div class="panel-head">
-            <span class="panel-title">Daftar Toko Terdaftar</span>
+            <span class="panel-title">Daftar Toko Terdaftar &amp; Manajemen Status</span>
             <input type="text" id="tenant-search" class="form-control" placeholder="Cari toko..." style="max-width: 200px; padding: 4px 8px; font-size: 0.8rem;" />
           </div>
           <div class="table-wrap">
@@ -522,9 +474,9 @@
                   <th>Mulai</th>
                   <th>Berakhir</th>
                   <th>Sisa Hari</th>
-                  <th>Status</th>
+                  <th>Status Operasional</th>
                   <th>Lisensi Aktif</th>
-                  <th style="text-align: right;">Aksi</th>
+                  <th style="text-align: right;">Aksi Kontrol</th>
                 </tr>
               </thead>
               <tbody id="tenants-tbody">
@@ -535,7 +487,51 @@
         </div>
       </section>
 
-      <!-- TAB 3: BUAT KODE LISENSI -->
+      <!-- TAB 4: BROADCAST PENGUMUMAN (TEKS BERJALAN / MARQUEE) -->
+      <section id="tab-broadcast" class="tab-pane">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Broadcast Pengumuman Berjalan Toko (Marquee Ticker)</span>
+            <span id="broadcast-live-badge" class="badge badge-neutral">Status: Nonaktif</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px;">
+              Pesan yang lu buat di sini akan otomatis tayang di bagian atas layar kasir POS seluruh toko dan bergerak halus ke samping.
+            </p>
+
+            <form id="form-broadcast">
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label>Isi Pesan Pengumuman Toko</label>
+                <input 
+                  type="text" 
+                  id="broadcast-msg-input" 
+                  class="form-control" 
+                  placeholder="Contoh: Pengumuman: Promo Akhir Tahun SiKasir perpanjang 1 tahun diskon 30%! Hubungi 081338219957." 
+                  required 
+                />
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary" id="btn-broadcast-submit">Kirim &amp; Tayangkan Pengumuman</button>
+                <button type="button" class="btn btn-danger" id="btn-broadcast-stop">Matikan Pengumuman</button>
+              </div>
+            </form>
+
+            <div style="margin-top: 22px;">
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                Pratinjau Teks Bergerak di Layar Kasir:
+              </div>
+              <div class="marquee-preview-wrap">
+                <div class="marquee-track" id="marquee-preview-text">
+                  Belum ada pesan broadcast yang aktif saat ini.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: BUAT KODE LISENSI -->
       <section id="tab-generator" class="tab-pane">
         <div class="panel">
           <div class="panel-head">
@@ -582,7 +578,7 @@
         </div>
       </section>
 
-      <!-- TAB 4: RIWAYAT KODE -->
+      <!-- TAB 6: RIWAYAT KODE -->
       <section id="tab-codes" class="tab-pane">
         <div class="panel">
           <div class="panel-head">
@@ -761,10 +757,47 @@
     });
 
     async function loadAllData() {
-      await Promise.all([loadProofs(), loadTenants(), loadCodes()]);
+      await Promise.all([loadOverview(), loadProofs(), loadTenants(), loadBroadcast(), loadCodes()]);
     }
 
-    // 1. Load Proofs
+    function formatMoney(num) {
+      return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+    }
+
+    // 1. Load Overview (Finansial & Trafik)
+    async function loadOverview() {
+      try {
+        const res = await fetch('/api/ceo/overview', {
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        if (!res.ok) return;
+        const d = await res.json();
+
+        // Financials
+        document.getElementById('metric-total-rev').textContent = formatMoney(d.financials.total_revenue);
+        document.getElementById('metric-orders-count').textContent = `${d.financials.approved_orders} pembayaran langganan disetujui`;
+        document.getElementById('metric-mrr').textContent = formatMoney(d.financials.mrr);
+        document.getElementById('metric-mrr-sub').textContent = `Dari ${d.tenants.active} toko aktif beroperasi`;
+
+        // Traffic
+        document.getElementById('metric-tx-today').textContent = `${d.national_traffic.tx_today} Transaksi`;
+        document.getElementById('metric-gmv-today').textContent = `Total perputaran kasir: ${formatMoney(d.national_traffic.gmv_today)}`;
+        document.getElementById('stat-top-store').textContent = d.national_traffic.top_store;
+
+        // DB Health
+        document.getElementById('metric-db-size').textContent = `${d.system_health.database_size_mb} MB`;
+        document.getElementById('metric-db-status').textContent = `Terpakai ${d.system_health.database_used_pct}% dari kuota 5.000 MB`;
+
+        // Tenants status
+        document.getElementById('stat-active-tenants').textContent = `${d.tenants.active} Toko`;
+        document.getElementById('stat-frozen-tenants').textContent = `${d.tenants.frozen} Toko`;
+        document.getElementById('stat-near-tenants').textContent = `${d.tenants.near_expiry} Toko`;
+      } catch (err) {
+        console.warn('[Overview load skipped]', err.message);
+      }
+    }
+
+    // 2. Load Proofs
     async function loadProofs() {
       const tbody = document.getElementById('proofs-tbody');
       try {
@@ -796,7 +829,7 @@
           if (p.status === 'REJECTED') statusBadge = '<span class="badge badge-danger">DITOLAK</span>';
 
           let aiBadge = '<span class="badge badge-neutral">Review Manual</span>';
-          if (p.ai_status === 'AI_MATCHED') aiBadge = '<span class="badge badge-success">Rekening &amp; Nama Cocok</span>';
+          if (p.ai_status === 'AI_MATCHED') aiBadge = '<span class="badge badge-success">Rekening Cocok</span>';
           if (p.ai_status === 'SUSPICIOUS') aiBadge = '<span class="badge badge-danger">Mencurigakan</span>';
 
           const uploadDate = p.created_at ? new Date(p.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-';
@@ -824,7 +857,7 @@
       }
     }
 
-    // Modal Proof Viewer with Sharpening
+    // Modal Proof Viewer
     window.openProofModal = (proofId) => {
       const p = proofsList.find(x => x.id === proofId);
       if (!p) return;
@@ -833,7 +866,6 @@
       document.getElementById('proof-modal-title').textContent = `Bukti Transfer #${p.id}`;
       document.getElementById('proof-store-label').textContent = `Toko: ${p.store_name} · Paket: ${p.package_duration_days} Hari`;
 
-      // Render Metadata
       let metaObj = {};
       try {
         metaObj = typeof p.raw_metadata === 'string' ? JSON.parse(p.raw_metadata) : (p.raw_metadata || {});
@@ -850,10 +882,8 @@
         <div><strong>Waktu Server:</strong> ${p.created_at}</div>
         <div><strong>IP Pengunggah:</strong> ${escapeHtml(metaObj.client_ip || '-')}</div>
         <div><strong>SHA-256 Seal:</strong> <span style="font-size:0.68rem; word-break:break-all;">${metaObj.sha256_checksum || '-'}</span></div>
-        <div><strong>Hasil AI:</strong> ${escapeHtml(JSON.stringify(p.ai_verification || {}))}</div>
       `;
 
-      // Action buttons in modal
       const btnApprove = document.getElementById('btn-modal-approve');
       const btnReject = document.getElementById('btn-modal-reject');
       if (p.status === 'APPROVED') {
@@ -862,17 +892,10 @@
       } else {
         btnApprove.style.display = '';
         btnReject.style.display = '';
-        btnApprove.onclick = () => {
-          quickApproveProof(p.id);
-          closeProofModal();
-        };
-        btnReject.onclick = () => {
-          quickRejectProof(p.id);
-          closeProofModal();
-        };
+        btnApprove.onclick = () => { quickApproveProof(p.id); closeProofModal(); };
+        btnReject.onclick = () => { quickRejectProof(p.id); closeProofModal(); };
       }
 
-      // Draw Image to Canvas
       originalImageEl = new Image();
       originalImageEl.onload = () => {
         proofCanvas.width = originalImageEl.naturalWidth || 600;
@@ -892,7 +915,6 @@
     document.getElementById('btn-close-proof-modal').onclick = closeProofModal;
     document.getElementById('btn-modal-cancel').onclick = closeProofModal;
 
-    // Filter Buttons: Normal vs Sharpening
     document.getElementById('btn-filter-normal').onclick = () => {
       if (!originalImageEl) return;
       const ctx = proofCanvas.getContext('2d');
@@ -905,8 +927,6 @@
       ctx.drawImage(originalImageEl, 0, 0);
       const imgData = ctx.getImageData(0, 0, proofCanvas.width, proofCanvas.height);
       const d = imgData.data;
-
-      // Adaptive text sharpening & binarization for blurry low-light receipts
       for (let i = 0; i < d.length; i += 4) {
         const r = d[i], g = d[i+1], b = d[i+2];
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -940,10 +960,7 @@
       try {
         const res = await fetch(`/api/ceo/proofs/${proofId}/reject`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ceoToken}`,
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ceoToken}` },
           body: JSON.stringify({ reason }),
         });
         const d = await res.json();
@@ -955,7 +972,7 @@
       }
     };
 
-    // 2. Load Tenants
+    // 3. Load Tenants with Freeze & Unfreeze
     async function loadTenants() {
       const tbody = document.getElementById('tenants-tbody');
       try {
@@ -979,8 +996,13 @@
 
       tbody.innerHTML = list.map(t => {
         let badge = '<span class="badge badge-success">Aktif</span>';
-        if (t.is_expired) badge = '<span class="badge badge-danger">Kadaluarsa</span>';
-        else if (t.is_near_expiry) badge = '<span class="badge badge-warning">Segera Habis</span>';
+        if (t.status === 'frozen') {
+          badge = '<span class="badge badge-warning">DIBEKUKAN</span>';
+        } else if (t.is_expired) {
+          badge = '<span class="badge badge-danger">Kadaluarsa</span>';
+        } else if (t.is_near_expiry) {
+          badge = '<span class="badge badge-warning">Segera Habis</span>';
+        }
 
         const startDate = t.subscription_start ? new Date(t.subscription_start).toLocaleDateString('id-ID') : '-';
         const endDate = t.subscription_until ? new Date(t.subscription_until).toLocaleDateString('id-ID') : '-';
@@ -996,7 +1018,12 @@
             <td>${badge}</td>
             <td class="mono" style="font-size:0.75rem;">${escapeHtml(t.license_code || '-')}</td>
             <td style="text-align:right; white-space:nowrap;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="openExtendModal(${t.id}, '${escapeHtml(t.name)}')">Perpanjang</button>
+              ${t.status === 'frozen' ? `
+                <button type="button" class="btn btn-success btn-sm" onclick="toggleFreezeTenant(${t.id}, false, '${escapeHtml(t.name)}')">Buka Bekukan</button>
+              ` : `
+                <button type="button" class="btn btn-warning btn-sm" onclick="toggleFreezeTenant(${t.id}, true, '${escapeHtml(t.name)}')">Bekukan</button>
+              `}
+              <button type="button" class="btn btn-secondary btn-sm" style="margin-left:4px;" onclick="openExtendModal(${t.id}, '${escapeHtml(t.name)}')">Perpanjang</button>
               ${!isPapaGanteng ? `
                 <button type="button" class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="deleteTenant(${t.id}, '${escapeHtml(t.name)}')">Hapus</button>
               ` : ''}
@@ -1005,6 +1032,25 @@
         `;
       }).join('');
     }
+
+    window.toggleFreezeTenant = async (id, shouldFreeze, name) => {
+      const actionText = shouldFreeze ? 'bekukan sementara' : 'buka pembekuan';
+      if (!confirm(`Apakah Anda yakin ingin ${actionText} toko "${name}"?`)) return;
+
+      const endpoint = shouldFreeze ? `/api/ceo/tenants/${id}/freeze` : `/api/ceo/tenants/${id}/unfreeze`;
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal mengubah status');
+        alert(d.message);
+        loadAllData();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
 
     document.getElementById('tenant-search').oninput = (e) => {
       const q = e.target.value.toLowerCase().trim();
@@ -1030,17 +1076,14 @@
       try {
         const res = await fetch(`/api/ceo/tenants/${activeTenantToExtend}/extend`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ceoToken}`,
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ceoToken}` },
           body: JSON.stringify({ days }),
         });
         const d = await res.json();
         if (!res.ok) throw new Error(d.error || 'Gagal memperpanjang');
         alert(d.message || 'Masa aktif diperpanjang');
         closeExtendModal();
-        loadTenants();
+        loadAllData();
       } catch (err) {
         alert(err.message);
       }
@@ -1056,13 +1099,82 @@
         const d = await res.json();
         if (!res.ok) throw new Error(d.error || 'Gagal menghapus');
         alert(d.message || 'Toko dihapus');
-        loadTenants();
+        loadAllData();
       } catch (err) {
         alert(err.message);
       }
     };
 
-    // 3. Generator Kode Lisensi
+    // 4. Broadcast Pengumuman (Marquee Running Text)
+    async function loadBroadcast() {
+      try {
+        const res = await fetch('/api/ceo/broadcast', {
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        if (!res.ok) return;
+        const d = await res.json();
+        const b = d.broadcast;
+        const liveBadge = document.getElementById('broadcast-live-badge');
+        const previewEl = document.getElementById('marquee-preview-text');
+        const inputEl = document.getElementById('broadcast-msg-input');
+
+        if (b && b.is_active && b.message) {
+          liveBadge.className = 'badge badge-success';
+          liveBadge.textContent = 'Status: Sedang Aktif di Semua Kasir';
+          previewEl.textContent = b.message;
+          inputEl.value = b.message;
+        } else {
+          liveBadge.className = 'badge badge-neutral';
+          liveBadge.textContent = 'Status: Nonaktif';
+          previewEl.textContent = 'Belum ada pesan broadcast yang aktif saat ini.';
+        }
+      } catch {}
+    }
+
+    document.getElementById('form-broadcast').onsubmit = async (e) => {
+      e.preventDefault();
+      const message = document.getElementById('broadcast-msg-input').value.trim();
+      if (!message) return;
+
+      const btn = document.getElementById('btn-broadcast-submit');
+      btn.disabled = true;
+      btn.textContent = 'Menayangkan...';
+
+      try {
+        const res = await fetch('/api/ceo/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ceoToken}` },
+          body: JSON.stringify({ message }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal menyiarkan');
+        alert(d.message || 'Broadcast berhasil ditayangkan');
+        loadBroadcast();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim & Tayangkan Pengumuman';
+      }
+    };
+
+    document.getElementById('btn-broadcast-stop').onclick = async () => {
+      if (!confirm('Matikan broadcast pengumuman dari seluruh layar kasir toko?')) return;
+      try {
+        const res = await fetch('/api/ceo/broadcast', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal mematikan broadcast');
+        alert(d.message || 'Broadcast dimatikan');
+        loadBroadcast();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    // 5. Generator Kode Lisensi
     document.getElementById('gen-duration').onchange = (e) => {
       document.getElementById('custom-days-group').style.display = e.target.value === 'custom' ? 'block' : 'none';
     };
@@ -1084,10 +1196,7 @@
       try {
         const res = await fetch('/api/ceo/license-codes/generate', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ceoToken}`,
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ceoToken}` },
           body: JSON.stringify({ duration_days: durationDays, count, notes }),
         });
         const d = await res.json();
@@ -1118,7 +1227,7 @@
       });
     };
 
-    // 4. Load Codes
+    // 6. Load Codes
     async function loadCodes() {
       const tbody = document.getElementById('codes-tbody');
       try {

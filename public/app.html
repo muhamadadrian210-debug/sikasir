@@ -30,7 +30,35 @@
     <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="/css/app.css?v=3.9.4" />
+    <link rel="stylesheet" href="/css/app.css?v=3.9.5" />
+    <style>
+      .global-broadcast-ticker {
+        background: #0F172A;
+        color: #F8FAFC;
+        overflow: hidden;
+        white-space: nowrap;
+        padding: 7px 0;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 40;
+      }
+      .marquee-scroller {
+        display: inline-block;
+        white-space: nowrap;
+        padding-left: 100%;
+        animation: marqueeScroll 24s linear infinite;
+        will-change: transform;
+      }
+      .marquee-scroller:hover {
+        animation-play-state: paused;
+      }
+      @keyframes marqueeScroll {
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(-100%, 0, 0); }
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -109,6 +137,13 @@
             <div id="topbar-store-name"></div>
           </div>
         </header>
+
+        <!-- Broadcast Ticker Berjalan ke Samping (Marquee) -->
+        <div id="global-broadcast-banner" class="global-broadcast-ticker" style="display:none;">
+          <div class="marquee-scroller" id="marquee-text-container">
+            <span id="marquee-text-content">Pesan Broadcast</span>
+          </div>
+        </div>
 
         <main class="content">
           <div id="global-alert"></div>
@@ -236,6 +271,6 @@
 
     <script src="/js/samsung-redirect.js"></script>
     <script src="/js/pwa-install.js" defer></script>
-    <script type="module" src="/js/app.js?v=3.9.4"></script>
+    <script type="module" src="/js/app.js?v=3.9.5"></script>
   </body>
 </html>

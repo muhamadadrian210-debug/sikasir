@@ -90,20 +90,33 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.4',
-    versionCode: 394,
+    version: '3.9.5',
+    versionCode: 395,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.4 Pro Update',
-    notes: 'Fitur baru: Hapus / Batalkan Transaksi (Void) & Koreksi Kasir jika salah input, Pengembalian Stok Otomatis, dan Notifikasi Pembaruan Aplikasi.',
+    title: 'SiKasir v3.9.5 Enterprise CEO & Executive Release',
+    notes: 'Pembaruan CEO Panel: Rekap Finansial SaaS MRR, Killswitch Bekukan Toko, Running Text Marquee Nasional, dan Meter Kapasitas Database.',
     features: [
-      'Pilihan Hapus / Batalkan Transaksi (Void) jika kasir salah input',
-      'Fitur Koreksi Transaksi (Muat ulang item ke Keranjang Kasir POS)',
-      'Pengembalian Stok Otomatis ke rak inventori saat transaksi dibatalkan',
-      'Proteksi Otorisasi Akun Owner / PIN Supervisor untuk Kasir',
-      'Notifikasi Pembaruan Aplikasi Otomatis'
+      'Dashboard CEO: Rekap Finansial MRR & Total Uang Masuk',
+      'Killswitch Toko: Bekukan & Aktifkan toko tanpa menghapus data inventori',
+      'Pengumuman Nasional: Broadcast pesan berjalan (Marquee) di seluruh kasir',
+      'Pantauan Trafik Transaksi Nasional & Meter Kapasitas Database MySQL'
     ],
     apk_url: '/download/apk'
   });
+});
+
+/** Broadcast Pengumuman Berjalan Toko (Marquee Ticker) */
+app.get('/api/broadcast/active', async (req, res) => {
+  try {
+    const { pool } = require('./config/db');
+    const [rows] = await pool.execute('SELECT message, is_active FROM global_announcements WHERE is_active = 1 ORDER BY id DESC LIMIT 1');
+    if (rows.length > 0) {
+      return res.json({ active: true, message: rows[0].message });
+    }
+    res.json({ active: false, message: '' });
+  } catch {
+    res.json({ active: false, message: '' });
+  }
 });
 
 app.use('/api', apiLimiter);

@@ -49,8 +49,9 @@ router.get('/status', authMiddleware, requireTenant, async (req, res) => {
       days_remaining: days,
       is_expired: isExpired,
       is_near_expiry: isNearExpiry,
+      is_frozen: t.status === 'frozen',
       license_code: t.license_code || 'SIV-TRIAL-30D',
-      status: isExpired ? 'expired' : t.status,
+      status: t.status === 'frozen' ? 'frozen' : (isExpired ? 'expired' : t.status),
       support_phone: supportPhone,
       support_whatsapp_url: waUrl,
     });

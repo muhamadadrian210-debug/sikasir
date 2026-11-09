@@ -462,5 +462,214 @@ router.post('/proofs/:id/reject', ceoAuthMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/ceo/overview
+ * Metrik Finansial SaaS Adrian, Live Traffic Nasional, dan Kapasitas Database
+ */
+router.get('/overview', ceoAuthMiddleware, async (req, res) => {
+  try {
+    // 1. Rekap Finansial SaaS Adrian
+    const [revRows] = await pool.execute(`
+      SELECT 
+        COUNT(*) AS approved_count,
+        COALESCE(SUM(CASE 
+          WHEN transfer_amount > 0 THEN transfer_amount 
+          ELSE (package_duration_days / 30) * 50000 
+        END), 0) AS total_revenue
+      FROM payment_proofs 
+      WHERE status = 'APPROVED'
+    `);
+
+    const [tenantCounts] = await pool.execute(`
+      SELECT 
+        COUNT(*) AS total_tenants,
+        COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0) AS active_tenants,
+        COALESCE(SUM(CASE WHEN status = 'frozen' THEN 1 ELSE 0 END), 0) AS frozen_tenants,
+        COALESCE(SUM(CASE WHEN subscription_until IS NOT NULL AND DATEDIFF(subscription_until, NOW()) BETWEEN 0 AND 7 THEN 1 ELSE 0 END), 0) AS near_expiry_count
+      FROM tenants
+    `);
+
+    const totalRev = Number(revRows[0]?.total_revenue || 0);
+    const activeTenants = Number(tenantCounts[0]?.active_tenants || 0);
+    const mrr = activeTenants * 50000; // Asumsi tarif standar Rp 50.000 / toko / bulan
+
+    // 2. Live Traffic Transaksi Nasional Hari Ini
+    const [trafficRows] = await pool.execute(`
+      SELECT 
+        COUNT(*) AS tx_today_count,
+        COALESCE(SUM(total), 0) AS gmv_today
+      FROM transactions 
+      WHERE DATE(created_at) = CURDATE()
+    `);
+
+    // Toko paling aktif hari ini
+    const [topStoreRows] = await pool.execute(`
+      SELECT t.name AS store_name, COUNT(tx.id) AS tx_count
+      FROM transactions tx
+      JOIN tenants t ON t.id = tx.tenant_id
+      WHERE DATE(tx.created_at) = CURDATE()
+      GROUP BY tx.tenant_id, t.name
+      ORDER BY tx_count DESC
+      LIMIT 1
+    `);
+
+    // 3. Indikator Beban Database (MySQL Storage Meter)
+    let dbSizeBytes = 0;
+    try {
+      const [dbSizeRows] = await pool.execute(`
+        SELECT SUM(data_length + index_length) AS db_bytes 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE()
+      `);
+      dbSizeBytes = Number(dbSizeRows[0]?.db_bytes || 0);
+    } catch {}
+
+    const dbSizeMb = (dbSizeBytes / (1024 * 1024)).toFixed(2);
+    const dbQuotaMb = 5000; // 5 GB
+    const dbUsedPct = ((dbSizeBytes / (dbQuotaMb * 1024 * 1024)) * 100).toFixed(2);
+
+    res.json({
+      success: true,
+      financials: {
+        total_revenue: totalRev,
+        approved_orders: Number(revRows[0]?.approved_count || 0),
+        mrr,
+        projected_next_month: Number(tenantCounts[0]?.near_expiry_count || 0) * 50000,
+      },
+      tenants: {
+        total: Number(tenantCounts[0]?.total_tenants || 0),
+        active: activeTenants,
+        frozen: Number(tenantCounts[0]?.frozen_tenants || 0),
+        near_expiry: Number(tenantCounts[0]?.near_expiry_count || 0),
+      },
+      national_traffic: {
+        tx_today: Number(trafficRows[0]?.tx_today_count || 0),
+        gmv_today: Number(trafficRows[0]?.gmv_today || 0),
+        top_store: topStoreRows[0]?.store_name || 'Belum ada transaksi hari ini',
+      },
+      system_health: {
+        database_size_mb: dbSizeMb,
+        database_quota_mb: dbQuotaMb,
+        database_used_pct: dbUsedPct,
+        status: 'OPTIMAL',
+      },
+    });
+  } catch (err) {
+    console.error('[ceo-radar] Error overview:', err);
+    res.status(500).json({ error: 'Gagal mengambil ringkasan CEO: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/ceo/tenants/:id/freeze
+ * Membekukan toko sementara (Kill Switch tanpa hapus data)
+ */
+router.post('/tenants/:id/freeze', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const tenantId = parseInt(req.params.id, 10);
+    const [rows] = await pool.execute('SELECT id, name FROM tenants WHERE id = ? LIMIT 1', [tenantId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Toko tidak ditemukan' });
+    }
+
+    await pool.execute('UPDATE tenants SET status = \'frozen\' WHERE id = ?', [tenantId]);
+
+    res.json({
+      success: true,
+      message: `Toko "${rows[0].name}" berhasil dibekukan sementara. Seluruh data tetap utuh dan aman.`,
+    });
+  } catch (err) {
+    console.error('[ceo-radar] Error freeze tenant:', err);
+    res.status(500).json({ error: 'Gagal membekukan toko: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/ceo/tenants/:id/unfreeze
+ * Membuka pembekuan toko (Aktifkan kembali seketika)
+ */
+router.post('/tenants/:id/unfreeze', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const tenantId = parseInt(req.params.id, 10);
+    const [rows] = await pool.execute('SELECT id, name FROM tenants WHERE id = ? LIMIT 1', [tenantId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Toko tidak ditemukan' });
+    }
+
+    await pool.execute('UPDATE tenants SET status = \'active\' WHERE id = ?', [tenantId]);
+
+    res.json({
+      success: true,
+      message: `Pembekuan toko "${rows[0].name}" telah dibuka. Toko kembali aktif.`,
+    });
+  } catch (err) {
+    console.error('[ceo-radar] Error unfreeze tenant:', err);
+    res.status(500).json({ error: 'Gagal membuka pembekuan toko: ' + err.message });
+  }
+});
+
+/**
+ * GET /api/ceo/broadcast
+ * Membaca status dan pesan broadcast pengumuman toko saat ini
+ */
+router.get('/broadcast', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM global_announcements ORDER BY id DESC LIMIT 1');
+    res.json({
+      success: true,
+      broadcast: rows.length > 0 ? rows[0] : null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mengambil broadcast: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/ceo/broadcast
+ * Menyimpan dan mengaktifkan broadcast pengumuman bergerak baru
+ */
+router.post('/broadcast', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const { message } = req.body || {};
+    const text = String(message || '').trim();
+    if (!text) {
+      return res.status(400).json({ error: 'Pesan broadcast tidak boleh kosong' });
+    }
+
+    // Nonaktifkan broadcast lama
+    await pool.execute('UPDATE global_announcements SET is_active = 0');
+
+    // Masukkan broadcast baru aktif
+    const [ins] = await pool.execute(
+      'INSERT INTO global_announcements (message, is_active) VALUES (?, 1)',
+      [text]
+    );
+
+    res.json({
+      success: true,
+      id: ins.insertId,
+      message: 'Broadcast pengumuman berhasil diaktifkan ke seluruh layar kasir POS toko.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal menyimpan broadcast: ' + err.message });
+  }
+});
+
+/**
+ * DELETE /api/ceo/broadcast
+ * Menonaktifkan broadcast pengumuman
+ */
+router.delete('/broadcast', ceoAuthMiddleware, async (req, res) => {
+  try {
+    await pool.execute('UPDATE global_announcements SET is_active = 0');
+    res.json({
+      success: true,
+      message: 'Broadcast pengumuman berhasil dimatikan.',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mematikan broadcast: ' + err.message });
+  }
+});
+
 module.exports = router;
 

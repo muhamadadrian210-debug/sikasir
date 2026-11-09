@@ -3484,6 +3484,13 @@ async function init() {
 
   // Cek dan tampilkan pemberitahuan pembaruan aplikasi otomatis
   checkAppUpdateNotification();
+
+  // Cek masa aktif lisensi dan status penangguhan toko (Killswitch CEO)
+  checkLicenseExpiryBanner();
+
+  // Muat running text broadcast pengumuman CEO (Marquee)
+  loadGlobalBroadcast();
+  setInterval(loadGlobalBroadcast, 60000);
 }
 
 /* -------- In-App Update Notifier & Zero-Loss System -------- */
@@ -3495,7 +3502,7 @@ async function checkAppUpdateNotification() {
     if (!res.ok) return;
     const info = await res.json();
     latestAppVersionInfo = info;
-    const currentVersion = '3.9.1';
+    const currentVersion = '3.9.5';
     const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
     const justUpdated = sessionStorage.getItem('sikasir_just_updated');
 
@@ -5088,6 +5095,28 @@ async function checkLicenseExpiryBanner() {
     const alertEl = document.getElementById('global-alert');
     if (!alertEl) return;
 
+    if (res.is_frozen || res.status === 'frozen') {
+      alertEl.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.16); border: 1.5px solid #EF4444; color: #EF4444; padding: 14px 20px; border-radius: var(--radius); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 3px; letter-spacing: 0.02em;">LAYANAN TOKO DITANGGUHKAN SEMENTARA OLEH CEO</div>
+            <div style="font-size: 0.85rem; color: #FCA5A5;">Aktivitas kasir ditangguhkan sementara. Seluruh riwayat transaksi dan data produk Anda tetap aman. Silakan hubungi CEO untuk reaktivasi.</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="https://wa.me/6281338219957?text=${encodeURIComponent('Halo CEO SiKasir, toko ' + (res.store_name || '') + ' memohon aktivasi kembali layanan.')}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary" style="background:#EF4444; color:#FFFFFF; text-decoration:none; font-weight:700;">
+              Hubungi CEO (081338219957)
+            </a>
+          </div>
+        </div>
+      `;
+      const btnCheckout = document.getElementById('pos-checkout-btn') || document.getElementById('btn-checkout');
+      if (btnCheckout) {
+        btnCheckout.disabled = true;
+        btnCheckout.title = 'Toko sedang ditangguhkan oleh CEO';
+      }
+      return;
+    }
+
     if (res.is_expired) {
       alertEl.innerHTML = `
         <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid #EF4444; color: #EF4444; padding: 12px 18px; border-radius: var(--radius); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -5125,4 +5154,29 @@ async function checkLicenseExpiryBanner() {
       alertEl.innerHTML = '';
     }
   } catch {}
+}
+
+async function loadGlobalBroadcast() {
+  try {
+    const banner = document.getElementById('global-broadcast-banner');
+    const content = document.getElementById('marquee-text-content');
+    if (!banner || !content) return;
+
+    const res = await fetch('/api/broadcast/active', { cache: 'no-store' });
+    if (!res.ok) {
+      banner.style.display = 'none';
+      return;
+    }
+    const data = await res.json();
+    if (data && data.active && data.message && data.message.trim().length > 0) {
+      const msg = data.message.trim();
+      content.textContent = `${msg}     +++     ${msg}     +++     ${msg}`;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch {
+    const banner = document.getElementById('global-broadcast-banner');
+    if (banner) banner.style.display = 'none';
+  }
 }

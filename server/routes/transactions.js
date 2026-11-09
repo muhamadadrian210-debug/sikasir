@@ -13,6 +13,13 @@ router.post('/checkout', requireRole('admin', 'kasir'), async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const tid = tenantId(req);
+
+    // Freeze check: Blokir transaksi kasir jika toko dibekukan sementara oleh CEO
+    const [tStatus] = await conn.execute('SELECT status FROM tenants WHERE id = ? LIMIT 1', [tid]);
+    if (tStatus.length > 0 && tStatus[0].status === 'frozen') {
+      return res.status(403).json({ error: 'Layanan kasir ditangguhkan sementara oleh CEO. Silakan hubungi admin atau selesaikan administrasi sewa di menu Lisensi Key.' });
+    }
+
     const { items, paid, apply_pb1 = false, notes = '', metadata = null } = req.body || {};
     if (!Array.isArray(items) || !items.length) {
       return res.status(400).json({ error: 'Keranjang kosong' });
