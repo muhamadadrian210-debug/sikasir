@@ -37,3 +37,4 @@ migrate().catch((err) => {
   console.error('[migration error]', err);
   process.exit(1);
 });
+

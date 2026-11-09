@@ -840,11 +840,17 @@
       } catch {}
 
       document.getElementById('proof-meta-display').innerHTML = `
-        <div>File Asli: ${escapeHtml(metaObj.original_filename || 'receipt.webp')} (${Math.round((metaObj.original_size_bytes || 0)/1024)} KB)</div>
-        <div>Waktu HP: ${metaObj.device_last_modified || '-'}</div>
-        <div>Waktu Server: ${p.created_at}</div>
-        <div>IP Pengunggah: ${escapeHtml(metaObj.client_ip || '-')}</div>
-        <div>User Agent: ${escapeHtml(metaObj.user_agent || '-')}</div>
+        ${metaObj.metadata_tamper_flag === 'STRIPPED_OR_ANONYMIZED' ? `
+          <div style="background:#FEE2E2; color:#B91C1C; padding:6px 8px; border-radius:4px; margin-bottom:6px; font-weight:700;">
+            PERINGATAN: Metadata file asli dilucuti / dihapus. Potensi gambar hasil olahan AI atau editan software.
+          </div>
+        ` : ''}
+        <div><strong>File Asli:</strong> ${escapeHtml(metaObj.original_filename || 'receipt.webp')} (${Math.round((metaObj.original_size_bytes || 0)/1024)} KB)</div>
+        <div><strong>Waktu File HP:</strong> ${metaObj.device_last_modified || '-'}</div>
+        <div><strong>Waktu Server:</strong> ${p.created_at}</div>
+        <div><strong>IP Pengunggah:</strong> ${escapeHtml(metaObj.client_ip || '-')}</div>
+        <div><strong>SHA-256 Seal:</strong> <span style="font-size:0.68rem; word-break:break-all;">${metaObj.sha256_checksum || '-'}</span></div>
+        <div><strong>Hasil AI:</strong> ${escapeHtml(JSON.stringify(p.ai_verification || {}))}</div>
       `;
 
       // Action buttons in modal

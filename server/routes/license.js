@@ -372,17 +372,45 @@ router.post('/upload-proof', authMiddleware, requireTenant, async (req, res) => 
     const [tRows] = await pool.execute('SELECT name FROM tenants WHERE id = ? LIMIT 1', [tenantId]);
     const storeName = tRows.length > 0 ? tRows[0].name : 'Toko Mitra';
 
+    // 1. Kunci Kriptografi SHA-256 & Jejak Forensik Server yang Mustahil Dihapus
+    const crypto = require('crypto');
+    const imageSha256 = crypto.createHash('sha256').update(String(image_data)).digest('hex');
+    const clientRealIp = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+    const serverTimestamp = new Date().toISOString();
+
+    // 2. Deteksi Percobaan Penghapusan / Pelucutan Metadata
+    const isMetadataStripped = !raw_metadata || 
+      !raw_metadata.original_filename || 
+      !raw_metadata.device_last_modified ||
+      Number(raw_metadata.original_size_bytes || 0) < 3000;
+
     const enrichedMetadata = {
       ...(typeof raw_metadata === 'object' ? raw_metadata : {}),
-      server_received_at: new Date().toISOString(),
-      client_ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown',
+      server_received_at: serverTimestamp,
+      client_ip: clientRealIp,
       uploader_username: req.user.username,
       tenant_id: tenantId,
+      sha256_checksum: imageSha256,
+      metadata_tamper_flag: isMetadataStripped ? 'STRIPPED_OR_ANONYMIZED' : 'ORIGINAL_VERIFIED',
+      forensic_fingerprint: {
+        http_headers: {
+          host: req.headers['host'],
+          user_agent: req.headers['user-agent'],
+          sec_ch_ua: req.headers['sec-ch-ua'] || 'none',
+          accept_language: req.headers['accept-language'],
+        },
+        connection_ip: clientRealIp,
+        recorded_at_epoch: Date.now(),
+      },
+      immutable_seal: true,
     };
 
-    let aiStatus = 'MANUAL_REVIEW';
+    let aiStatus = isMetadataStripped ? 'SUSPICIOUS' : 'MANUAL_REVIEW';
     let aiVerification = {
-      note: 'Menunggu review visual CEO',
+      note: isMetadataStripped 
+        ? 'Peringatan: Metadata file asli tidak terdeteksi atau telah dilucuti sebelum upload.' 
+        : 'Menunggu review visual CEO',
+      metadata_stripped: isMetadataStripped,
     };
 
     // Vision AI Quick Inspection jika key tersedia
@@ -395,18 +423,23 @@ router.post('/upload-proof', authMiddleware, requireTenant, async (req, res) => 
         const mimeType = mimeMatch ? mimeMatch[1] : 'image/webp';
 
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Analisis struk bukti transfer bank ini secara teliti.
+        const prompt = `Analisis struk bukti transfer bank ini secara forensik dan teliti.
 Rekening tujuan yang benar: Bank BRI, No Rek: 7485 0101 2399 501 / 748501012399501, Atas Nama: Muhamad Adrian.
+Periksa secara mendalam:
+1. Apakah angka nominal, tanggal, atau nama merupakan editan Photoshop, Canva, atau hasil generate AI (font tidak sejajar, pixel blur di sekitar teks, perbedaan ketebalan font)?
+2. Apakah rekening tujuan cocok persis dengan BRI 7485 0101 2399 501 a.n Muhamad Adrian?
+
 Jawab HANYA dalam JSON valid tanpa tanda markdown:
 {
   "target_account_detected": "string",
-  "target_account_matched": true,
+  "target_account_matched": true/false,
   "target_name_detected": "string",
-  "target_name_matched": true,
+  "target_name_matched": true/false,
   "transfer_time_detected": "string",
   "transfer_amount_detected": 0,
-  "tampering_detected": false,
-  "verdict": "MATCHED"
+  "tampering_detected": true/false,
+  "tampering_reasons": "string alasan jika mencurigakan",
+  "verdict": "MATCHED" | "SUSPICIOUS" | "UNCLEAR"
 }`;
 
         const aiRes = await ai.models.generateContent({
@@ -424,11 +457,15 @@ Jawab HANYA dalam JSON valid tanpa tanda markdown:
 
         const rawText = aiRes.text.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(rawText);
-        aiVerification = parsed;
-        if (parsed.verdict === 'MATCHED' && parsed.target_account_matched && parsed.target_name_matched) {
-          aiStatus = 'AI_MATCHED';
-        } else if (parsed.tampering_detected || parsed.verdict === 'SUSPICIOUS') {
+        aiVerification = {
+          ...parsed,
+          metadata_stripped: isMetadataStripped,
+        };
+
+        if (parsed.tampering_detected || parsed.verdict === 'SUSPICIOUS' || isMetadataStripped) {
           aiStatus = 'SUSPICIOUS';
+        } else if (parsed.verdict === 'MATCHED' && parsed.target_account_matched && parsed.target_name_matched) {
+          aiStatus = 'AI_MATCHED';
         }
       }
     } catch (aiErr) {
