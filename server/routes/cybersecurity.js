@@ -22,6 +22,22 @@ router.get('/status', authMiddleware, requireTenant, requireRole('admin'), async
   const tenantId = req.user.tenant_id;
   const tidKey = tenantId ? String(tenantId) : 'global';
 
+  // Proteksi Hak Akses Paket (Radar Keamanan Siber eksklusif Paket 1 Tahun / ENTERPRISE)
+  try {
+    const [tRows] = await pool.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tenantId]);
+    const t = tRows[0];
+    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    if (plan !== 'ENTERPRISE') {
+      return res.status(403).json({
+        error: 'Fitur Radar Forensik Keamanan Siber eksklusif untuk Paket 1 Tahun (Enterprise). Silakan perpanjang lisensi toko Anda.',
+        upgrade_required: true,
+        required_plan: 'ENTERPRISE'
+      });
+    }
+  } catch (errCheck) {
+    console.warn('[cybersecurity] check plan error:', errCheck.message);
+  }
+
   const layersMetadata = firewallLayers.map(l => ({
     level: l.level,
     name: l.name,

@@ -20,6 +20,7 @@ router.get('/status', authMiddleware, requireTenant, async (req, res) => {
         subscription_start, 
         subscription_until, 
         license_code, 
+        plan_tier,
         status,
         DATEDIFF(subscription_until, NOW()) AS days_remaining
       FROM tenants 
@@ -36,6 +37,93 @@ router.get('/status', authMiddleware, requireTenant, async (req, res) => {
     const isExpired = days !== null && days < 0;
     const isNearExpiry = days !== null && days >= 0 && days <= 7;
 
+    // Hitung otomatis paket layanan & fitur sesuai durasi yang dibayar
+    let planTier = t.plan_tier;
+    if (!planTier || planTier === 'BASIC') {
+      const code = String(t.license_code || '').toUpperCase();
+      if (code.includes('365D') || code.includes('1Y') || code.includes('ENTERPRISE')) {
+        planTier = 'ENTERPRISE';
+      } else if (code.includes('180D') || code.includes('6M') || code.includes('PRO')) {
+        planTier = 'PRO';
+      } else {
+        planTier = 'BASIC';
+      }
+    }
+
+    const tierConfig = {
+      BASIC: {
+        code: 'BASIC',
+        name: 'Paket 1 Bulan (Operasional Standar)',
+        price: 300000,
+        features: {
+          pos: true,
+          dinein: true,
+          kds: true,
+          products: true,
+          stock: true,
+          incoming: true,
+          expenses: true,
+          reports: true,
+          history: true,
+          ai_assistant: false,
+          void_transaction: false,
+          kasbon: false,
+          users_manage: false,
+          mutasi_cabang: false,
+          cybersecurity: false,
+          export_excel: false,
+        }
+      },
+      PRO: {
+        code: 'PRO',
+        name: 'Paket 6 Bulan (Pro Business)',
+        price: 600000,
+        features: {
+          pos: true,
+          dinein: true,
+          kds: true,
+          products: true,
+          stock: true,
+          incoming: true,
+          expenses: true,
+          reports: true,
+          history: true,
+          ai_assistant: true,
+          void_transaction: true,
+          kasbon: true,
+          users_manage: true,
+          mutasi_cabang: false,
+          cybersecurity: false,
+          export_excel: false,
+        }
+      },
+      ENTERPRISE: {
+        code: 'ENTERPRISE',
+        name: 'Paket 1 Tahun (Enterprise Unlimited)',
+        price: 1200000,
+        features: {
+          pos: true,
+          dinein: true,
+          kds: true,
+          products: true,
+          stock: true,
+          incoming: true,
+          expenses: true,
+          reports: true,
+          history: true,
+          ai_assistant: true,
+          void_transaction: true,
+          kasbon: true,
+          users_manage: true,
+          mutasi_cabang: true,
+          cybersecurity: true,
+          export_excel: true,
+        }
+      }
+    };
+
+    const currentTier = tierConfig[planTier] || tierConfig.BASIC;
+
     const supportPhone = '081338219957';
     const waText = `Halo Admin SiKasir, saya ingin memperpanjang lisensi toko "${t.name}". Mohon informasi tagihan & kode lisensi terbaru.`;
     const waUrl = `https://wa.me/6281338219957?text=${encodeURIComponent(waText)}`;
@@ -51,6 +139,9 @@ router.get('/status', authMiddleware, requireTenant, async (req, res) => {
       is_near_expiry: isNearExpiry,
       is_frozen: t.status === 'frozen',
       license_code: t.license_code || 'SIV-TRIAL-30D',
+      plan_tier: planTier,
+      plan_name: currentTier.name,
+      features: currentTier.features,
       status: t.status === 'frozen' ? 'frozen' : (isExpired ? 'expired' : t.status),
       support_phone: supportPhone,
       support_whatsapp_url: waUrl,
@@ -117,7 +208,12 @@ router.post('/redeem', authMiddleware, requireTenant, async (req, res) => {
       }
     }
 
-    // Perpanjang masa aktif toko
+    // Tentukan paket layanan secara otomatis sesuai durasi hari
+    let planTier = 'BASIC';
+    if (durationDays >= 365) planTier = 'ENTERPRISE';
+    else if (durationDays >= 180) planTier = 'PRO';
+
+    // Perpanjang masa aktif toko & set plan_tier otomatis
     await pool.execute(`
       UPDATE tenants 
       SET 
@@ -127,9 +223,10 @@ router.post('/redeem', authMiddleware, requireTenant, async (req, res) => {
           ELSE DATE_ADD(subscription_until, INTERVAL ? DAY)
         END,
         license_code = ?,
+        plan_tier = ?,
         status = 'active'
       WHERE id = ?
-    `, [durationDays, durationDays, rawCode, tenantId]);
+    `, [durationDays, durationDays, rawCode, planTier, tenantId]);
 
     // Tandai kode sudah digunakan jika tercatat di license_codes
     if (licenseDbId) {
@@ -237,6 +334,10 @@ router.post('/activate', async (req, res) => {
       [`%${cleanStoreName}%`]
     );
 
+    let planTier = 'BASIC';
+    if (durationDays >= 365) planTier = 'ENTERPRISE';
+    else if (durationDays >= 180) planTier = 'PRO';
+
     if (existingTenants.length > 0) {
       tenantId = existingTenants[0].id;
       await pool.execute(`
@@ -248,14 +349,15 @@ router.post('/activate', async (req, res) => {
             ELSE DATE_ADD(subscription_until, INTERVAL ? DAY)
           END,
           license_code = ?,
+          plan_tier = ?,
           status = 'active'
         WHERE id = ?
-      `, [durationDays, durationDays, rawCode, tenantId]);
+      `, [durationDays, durationDays, rawCode, planTier, tenantId]);
     } else {
       const [newT] = await pool.execute(`
-        INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, status) 
-        VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY), ?, 'active')
-      `, [fullStoreName, slug, durationDays, rawCode]);
+        INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, plan_tier, status) 
+        VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY), ?, ?, 'active')
+      `, [fullStoreName, slug, durationDays, rawCode, planTier]);
       tenantId = newT.insertId;
     }
 

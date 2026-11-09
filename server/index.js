@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.8',
-    versionCode: 398,
+    version: '3.9.9',
+    versionCode: 399,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.8 Tarif Resmi & Limit Trial 1 Bulan',
-    notes: 'Pemberlakuan struktur tarif resmi (1 Bulan Rp 300rb, 6 Bulan Rp 600rb, 1 Tahun Rp 1.2jt) serta penegasan batas masa trial maksimal 1 bulan.',
+    title: 'SiKasir v3.9.9 Otomatisasi Hak Akses Fitur Lisensi',
+    notes: 'Setiap paket lisensi yang dipilih dan dibayar otomatis membuka fitur spesifik (Basic, Pro, Enterprise) tanpa perlu konfigurasi manual.',
     features: [
-      'Struktur harga transparan: 1 Bulan Rp 300.000, 6 Bulan Rp 600.000, 1 Tahun Rp 1.200.000',
-      'Penegasan batas masa trial maksimal 30 hari untuk toko mitra',
-      'Proteksi tampilan responsive tanpa kepotong di desktop, tablet, dan smartphone',
-      'Sinkronisasi nominal transfer langsung ke rekening resmi BRI founder'
+      'Otomatisasi hak akses fitur sesuai paket (1 Bulan Standard, 6 Bulan Pro, 1 Tahun Enterprise)',
+      'Asisten AI, koreksi void, dan kasbon aktif otomatis mulai Paket Pro',
+      'Mutasi cabang, radar forensik siber, dan ekspor laporan lengkap aktif di Paket Enterprise',
+      'Modal edukasi upgrade interaktif saat mengakses fitur eksklusif'
     ],
     apk_url: '/download/apk'
   });

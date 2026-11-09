@@ -209,6 +209,19 @@ router.delete('/:id', requireRole('admin', 'kasir'), async (req, res) => {
       return res.status(400).json({ error: 'ID transaksi tidak valid' });
     }
 
+    // Proteksi Hak Akses Paket (Void Transaksi aktif mulai Paket 6 Bulan / PRO)
+    const [tRows] = await conn.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tid]);
+    const t = tRows[0];
+    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    if (plan === 'BASIC') {
+      conn.release();
+      return res.status(403).json({
+        error: 'Fitur Koreksi Void & Pengembalian Stok aktif mulai Paket 6 Bulan (Pro). Silakan perpanjang lisensi toko Anda.',
+        upgrade_required: true,
+        required_plan: 'PRO'
+      });
+    }
+
     const { reason = 'Kasir salah input', supervisor_pin = '' } = req.body || {};
 
     let authorized = false;

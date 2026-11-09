@@ -385,10 +385,14 @@ router.post('/proofs/:id/approve', ceoAuthMiddleware, async (req, res) => {
     }
 
     const durationDays = proof.package_duration_days || 30;
+    let planTier = 'BASIC';
+    if (durationDays >= 365) planTier = 'ENTERPRISE';
+    else if (durationDays >= 180) planTier = 'PRO';
+
     const cleanRand = crypto.randomBytes(4).toString('hex').toUpperCase();
     const newLicenseCode = `SIV-${durationDays}D-${cleanRand}`;
 
-    // Perpanjang masa aktif toko
+    // Perpanjang masa aktif toko & set hak akses paket (plan_tier) otomatis
     await pool.execute(`
       UPDATE tenants 
       SET 
@@ -398,9 +402,10 @@ router.post('/proofs/:id/approve', ceoAuthMiddleware, async (req, res) => {
           ELSE DATE_ADD(subscription_until, INTERVAL ? DAY)
         END,
         license_code = ?,
+        plan_tier = ?,
         status = 'active'
       WHERE id = ?
-    `, [durationDays, newLicenseCode, proof.tenant_id]);
+    `, [durationDays, durationDays, newLicenseCode, planTier, proof.tenant_id]);
 
     // Update status bukti transfer
     await pool.execute(`

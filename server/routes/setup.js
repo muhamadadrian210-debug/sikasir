@@ -80,10 +80,10 @@ router.post('/', async (req, res) => {
     try {
       await conn.beginTransaction();
 
-      // Buat tenant dengan trial 30 hari otomatis
+      // Buat tenant dengan trial 30 hari otomatis (Paket BASIC)
       const trialCode = 'SIV-TRIAL-30D-' + Math.floor(1000 + Math.random() * 9000);
       const [tenantIns] = await conn.execute(
-        'INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, status) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), ?, \'active\')',
+        'INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, plan_tier, status) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), ?, \'BASIC\', \'active\')',
         [sn, slug, trialCode]
       );
       const tenantId = tenantIns.insertId;

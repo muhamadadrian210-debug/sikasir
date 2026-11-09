@@ -64,6 +64,19 @@ ATURAN RESPON:
 router.post('/chat', async (req, res) => {
   try {
     const tid = tenantId(req);
+
+    // Proteksi Hak Akses Paket (Asisten Konsultasi AI aktif mulai Paket 6 Bulan / PRO)
+    const [tRows] = await pool.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tid]);
+    const t = tRows[0];
+    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    if (plan === 'BASIC') {
+      return res.status(403).json({
+        error: 'Fitur Asisten Konsultasi Bisnis AI eksklusif untuk Paket 6 Bulan (Pro) & 1 Tahun (Enterprise). Silakan perpanjang lisensi Anda.',
+        upgrade_required: true,
+        required_plan: 'PRO'
+      });
+    }
+
     const { prompt } = req.body;
     
     if (!prompt) return res.status(400).json({ error: 'Prompt kosong' });

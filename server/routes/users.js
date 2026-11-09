@@ -37,6 +37,22 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const tid = tenantId(req);
+
+    // Proteksi Hak Akses Paket (Paket 1 Bulan / BASIC maksimal 2 staf)
+    const [tRows] = await pool.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tid]);
+    const t = tRows[0];
+    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    if (plan === 'BASIC') {
+      const [uCount] = await pool.execute('SELECT COUNT(*) as cnt FROM users WHERE tenant_id = ?', [tid]);
+      if ((uCount[0]?.cnt || 0) >= 2) {
+        return res.status(403).json({
+          error: 'Paket 1 Bulan dibatasi maksimal 2 staf. Upgrade ke Paket 6 Bulan (Pro) atau 1 Tahun untuk menambah staf tanpa batas.',
+          upgrade_required: true,
+          required_plan: 'PRO'
+        });
+      }
+    }
+
     const { username, password, role } = req.body || {};
     const u = String(username || '').trim();
     let r = 'kasir';

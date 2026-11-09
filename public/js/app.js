@@ -714,6 +714,67 @@ function showView(id) {
   }
 }
 
+function isFeatureAllowed(featureId) {
+  const license = window.currentTenantLicense;
+  if (!license || !license.features) return true;
+  if (typeof license.features[featureId] === 'boolean') {
+    return license.features[featureId];
+  }
+  return true;
+}
+
+function showFeatureUpgradeModal(featureKey, featureTitle, requiredTier) {
+  const tierName = requiredTier === 'ENTERPRISE' ? 'Paket 1 Tahun (Enterprise)' : 'Paket 6 Bulan (Pro)';
+  const currentPlan = window.currentTenantLicense?.plan_name || 'Paket 1 Bulan (Operasional Standar)';
+  
+  const modalId = 'modal-feature-upgrade';
+  let modalEl = document.getElementById(modalId);
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.id = modalId;
+    modalEl.className = 'modal-overlay';
+    modalEl.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(4px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+    document.body.appendChild(modalEl);
+  }
+
+  modalEl.innerHTML = `
+    <div class="modal" style="max-width: 440px; width: 100%; padding: 24px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(59, 130, 246, 0.12); color: #3B82F6; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h3 style="margin: 0 0 8px; font-size: 1.18rem; font-weight: 800;">Fitur ${escapeHtml(featureTitle)} Terkunci</h3>
+      <p style="margin: 0 0 16px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.5;">
+        Toko Anda saat ini menggunakan <strong>${escapeHtml(currentPlan)}</strong>. Fitur ini otomatis aktif pada <strong>${escapeHtml(tierName)}</strong> tanpa perlu konfigurasi manual.
+      </p>
+      <div style="background: var(--bg-card); border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 20px; font-size: 0.8rem; text-align: left; color: var(--text-main);">
+        <div style="font-weight: 700; color: #10B981; margin-bottom: 4px;">Keunggulan ${escapeHtml(tierName)}:</div>
+        <div>${requiredTier === 'ENTERPRISE' ? 'Akses penuh tanpa batas ke modul mutasi cabang, radar forensik siber, dan ekspor laporan pembukuan lengkap.' : 'Membuka asisten bisnis AI 24 jam, pembatalan void kasir, buku kasbon pelanggan, dan penambahan staf kasir.'}</div>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" class="btn btn-secondary" id="btn-close-upgrade-modal" style="flex: 1; padding: 10px;">
+          Nanti Saja
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-upgrade-now" style="flex: 1; padding: 10px; font-weight: 700;">
+          Upgrade Lisensi
+        </button>
+      </div>
+    </div>
+  `;
+
+  modalEl.style.display = 'flex';
+  modalEl.querySelector('#btn-close-upgrade-modal').onclick = () => {
+    modalEl.style.display = 'none';
+  };
+  modalEl.querySelector('#btn-upgrade-now').onclick = () => {
+    modalEl.style.display = 'none';
+    showView('license');
+    loadLicensePanel();
+    setTimeout(() => {
+      document.querySelector('.pricing-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+  };
+}
+
 function buildSidebar() {
   const nav = document.getElementById('sidebar-nav');
   const modeLabels = {
@@ -741,7 +802,7 @@ function buildSidebar() {
       items: [
         { id: 'products', label: StoreConfig.getMenuLabel('products', 'Produk & Katalog') },
         { id: 'stock', label: StoreConfig.getMenuLabel('stock', 'Stok & Opname') },
-        { id: 'mutasi', label: 'Mutasi Cabang' },
+        { id: 'mutasi', label: 'Mutasi Cabang', requiredTier: 'ENTERPRISE', badge: '1 TAHUN' },
         { id: 'scan', label: 'Scan & Daftarkan' },
       ]
     },
@@ -750,15 +811,15 @@ function buildSidebar() {
       items: [
         { id: 'expenses', label: 'Kas Keluar / Beban' },
         { id: 'reports', label: 'Laporan & Laba' },
-        { id: 'kasbon-global', label: 'Kasbon Pelanggan' },
+        { id: 'kasbon-global', label: 'Kasbon Pelanggan', requiredTier: 'PRO', badge: 'PRO' },
       ]
     },
     {
       title: 'Sistem & Akses',
       items: [
-        { id: 'users', label: 'Staf & Pengguna' },
-        { id: 'audit', label: 'Log Aktivitas' },
-        { id: 'cybersecurity', label: 'Keamanan Toko' },
+        { id: 'users', label: 'Staf & Pengguna', requiredTier: 'PRO', badge: 'PRO' },
+        { id: 'audit', label: 'Log Aktivitas', requiredTier: 'ENTERPRISE', badge: '1 TAHUN' },
+        { id: 'cybersecurity', label: 'Keamanan Toko', requiredTier: 'ENTERPRISE', badge: '1 TAHUN' },
         { id: 'license', label: 'Lisensi Key' },
       ]
     }
@@ -777,10 +838,16 @@ function buildSidebar() {
       html += `<div class="nav-group-title">${g.title}</div>`;
       visibleItems.forEach(it => {
         const iconSvg = NAV_ICONS[it.id] || '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>';
+        const badgeHtml = it.badge ? `
+          <span style="font-size:0.64rem; background:${it.badge === 'PRO' ? 'rgba(16,185,129,0.18)' : 'rgba(59,130,246,0.18)'}; color:${it.badge === 'PRO' ? '#10B981' : '#60A5FA'}; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:auto;">
+            ${it.badge}
+          </span>
+        ` : '';
         html += `
-          <button type="button" data-view="${it.id}" data-title="${it.label}">
+          <button type="button" data-view="${it.id}" data-title="${it.label}" ${it.requiredTier ? `data-required-tier="${it.requiredTier}"` : ''} style="display:flex; align-items:center; gap:8px;">
             <span class="nav-icon">${iconSvg}</span>
             <span>${it.label}</span>
+            ${badgeHtml}
           </button>
         `;
       });
@@ -791,6 +858,19 @@ function buildSidebar() {
 
   nav.querySelectorAll('button').forEach((btn) => {
     btn.addEventListener('click', () => {
+      if (btn.dataset.requiredTier && window.currentTenantLicense) {
+        const currentTier = window.currentTenantLicense.plan_tier || 'BASIC';
+        const reqTier = btn.dataset.requiredTier;
+        const isAllowed = reqTier === 'PRO'
+          ? (currentTier === 'PRO' || currentTier === 'ENTERPRISE')
+          : (currentTier === 'ENTERPRISE');
+
+        if (!isAllowed) {
+          showFeatureUpgradeModal(btn.dataset.view, btn.dataset.title, reqTier);
+          return;
+        }
+      }
+
       showView(btn.dataset.view);
       document.getElementById('sidebar').classList.remove('open');
       document.getElementById('sidebar-overlay').classList.remove('visible');
@@ -2368,7 +2448,7 @@ async function loadReports() {
     doc.text(`Total Omset: ${money(r.margin.total_revenue)} | Laba Bersih: ${money(r.margin.total_profit)}`, 14, y);
     y += 10;
     (r.margin.products || []).slice(0, 40).forEach((p) => {
-      doc.text(`${p.barcode || ''} ${p.name.substring(0, 35)} — Laba: ${money(p.profit)}`, 14, y);
+      doc.text(`${p.barcode || ''} ${p.name.substring(0, 35)} : Laba ${money(p.profit)}`, 14, y);
       y += 5;
       if (y > 280) {
         doc.addPage();
@@ -2382,6 +2462,10 @@ async function loadReports() {
   };
 
   document.getElementById('rep-export-csv').onclick = () => {
+    if (!isFeatureAllowed('export_excel')) {
+      showFeatureUpgradeModal('export_excel', 'Ekspor Laporan Excel & CSV', 'ENTERPRISE');
+      return;
+    }
     const r = window.__lastReport;
     if (!r) return;
     const header = 'barcode,nama,qty_terjual,omzet,profit\n';
@@ -2691,6 +2775,10 @@ async function loadAuditTable() {
 
 /* -------- History & Void Transaction Management -------- */
 function openVoidModal({ txId, total, onSuccess }) {
+  if (!isFeatureAllowed('void_transaction')) {
+    showFeatureUpgradeModal('void_transaction', 'Koreksi Void & Pengembalian Stok', 'PRO');
+    return;
+  }
   if (document.getElementById('modal-void-tx')) return;
 
   const user = getUser();
@@ -2792,6 +2880,10 @@ function openVoidModal({ txId, total, onSuccess }) {
 }
 
 async function correctTransaction(txId) {
+  if (!isFeatureAllowed('void_transaction')) {
+    showFeatureUpgradeModal('void_transaction', 'Koreksi Void & Pengembalian Stok', 'PRO');
+    return;
+  }
   try {
     const d = await api(`/transactions/${txId}`);
     if (!d || !d.items || !d.items.length) {
@@ -3406,6 +3498,9 @@ if (btnLogoutEl) {
 
 async function init() {
   initTheme();
+  try {
+    await checkLicenseExpiryBanner();
+  } catch {}
   buildSidebar();
   
   // Tampilkan nama toko di topbar
@@ -3502,7 +3597,7 @@ async function checkAppUpdateNotification() {
     if (!res.ok) return;
     const info = await res.json();
     latestAppVersionInfo = info;
-    const currentVersion = '3.9.8';
+    const currentVersion = '3.9.9';
     const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
     const justUpdated = sessionStorage.getItem('sikasir_just_updated');
 
@@ -4754,6 +4849,7 @@ async function loadLicensePanel() {
 
   try {
     const res = await api('/license/status');
+    window.currentTenantLicense = res;
     const startStr = res.subscription_start ? new Date(res.subscription_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
     const endStr = res.subscription_until ? new Date(res.subscription_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belum diatur';
     const days = res.days_remaining !== null ? Number(res.days_remaining) : '-';
@@ -4772,6 +4868,8 @@ async function loadLicensePanel() {
       badgeText = `Segera Berakhir (${days} Hari Tersisa)`;
     }
 
+    const tierBadgeColor = res.plan_tier === 'ENTERPRISE' ? '#60A5FA' : res.plan_tier === 'PRO' ? '#10B981' : 'var(--text-bright)';
+
     el.innerHTML = `
       <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
         
@@ -4787,7 +4885,11 @@ async function loadLicensePanel() {
             </span>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Paket Aktif</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: ${tierBadgeColor}; margin-top: 2px;">${escapeHtml(res.plan_name || 'Paket 1 Bulan (Standard)')}</div>
+            </div>
             <div>
               <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Mulai Aktif</div>
               <div style="font-size: 0.95rem; font-weight: 700; margin-top: 2px;">${startStr}</div>
@@ -4797,8 +4899,44 @@ async function loadLicensePanel() {
               <div style="font-size: 0.95rem; font-weight: 700; color: #10B981; margin-top: 2px;">${endStr}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Kode Lisensi Aktif</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Kode Lisensi</div>
               <div class="mono" style="font-size: 0.84rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">${escapeHtml(res.license_code || '-')}</div>
+            </div>
+          </div>
+
+          <!-- Hak Akses Fitur Otomatis Sesuai Paket -->
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">
+              Fitur Otomatis Terbuka Sesuai Paket:
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; font-size: 0.8rem;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#10B981; font-weight:800;">✓</span> Kasir POS, Meja Dine-In &amp; KDS
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#10B981; font-weight:800;">✓</span> Scan Barcode &amp; Inventori Stok
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.void_transaction ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.void_transaction ? '✓' : '🔒'}</span> Koreksi Void &amp; Retur Transaksi
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.kasbon ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.kasbon ? '✓' : '🔒'}</span> Buku Kasbon Piutang Pelanggan
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.ai_assistant ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.ai_assistant ? '✓' : '🔒'}</span> Asisten Konsultasi Bisnis AI 24 Jam
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.users_manage ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.users_manage ? '✓' : '🔒'}</span> Multi-Staf &amp; Akun Kasir Tambahan
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.mutasi_cabang ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.mutasi_cabang ? '✓' : '🔒'}</span> Mutasi Stok Multi-Cabang
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.cybersecurity ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.cybersecurity ? '✓' : '🔒'}</span> Radar Forensik Keamanan Siber Toko
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:${res.features?.export_excel ? '#10B981' : '#64748B'}; font-weight:800;">${res.features?.export_excel ? '✓' : '🔒'}</span> Ekspor Laporan Excel &amp; CSV Lengkap
+              </div>
             </div>
           </div>
         </div>
@@ -5255,6 +5393,7 @@ async function loadLicensePanel() {
 async function checkLicenseExpiryBanner() {
   try {
     const res = await api('/license/status');
+    window.currentTenantLicense = res;
     const alertEl = document.getElementById('global-alert');
     if (!alertEl) return;
 
