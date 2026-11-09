@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.6',
-    versionCode: 396,
+    version: '3.9.7',
+    versionCode: 397,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.6 Responsive Shell & Pricing Tiers',
-    notes: 'Perbaikan layout desktop/tablet friendly bebas kepotong di seluruh webapp/PWA/APK, dan penambahan kartu pilihan harga paket lisensi resmi.',
+    title: 'SiKasir v3.9.7 Promo Early Bird 1 Bulan',
+    notes: 'Pemberlakuan promo diskon khusus 1 bulan perdana (Paket 1 Tahun promo Rp 600k dari harga normal Rp 1,2 juta).',
     features: [
-      'Perbaikan responsivitas desktop & tablet: layout fit 100% tanpa kepotong di semua menu',
-      'Pilihan Paket & Tarif Lisensi Resmi (1 Bulan Rp 50k, 6 Bulan Rp 270k, 1 Tahun Rp 480k)',
-      'Sinkronisasi nominal transfer dan tombol salin cepat rekening & nominal',
-      'Proteksi overflow-x teruji di layar kasir, inventori, laporan, dan menu admin'
+      'Promo Diskon Peluncuran Terbatas 30 Hari (Hemat s.d 55%)',
+      'Harga normal setelah promo: Paket 1 Tahun Rp 1.200.000 / tahun',
+      'Sinkronisasi nominal transfer cepat ke rekening resmi BRI',
+      'Proteksi tampilan responsive tanpa kepotong di desktop, tablet, dan smartphone'
     ],
     apk_url: '/download/apk'
   });
