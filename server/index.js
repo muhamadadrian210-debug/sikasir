@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.5',
-    versionCode: 395,
+    version: '3.9.6',
+    versionCode: 396,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.5 Enterprise CEO & Executive Release',
-    notes: 'Pembaruan CEO Panel: Rekap Finansial SaaS MRR, Killswitch Bekukan Toko, Running Text Marquee Nasional, dan Meter Kapasitas Database.',
+    title: 'SiKasir v3.9.6 Responsive Shell & Pricing Tiers',
+    notes: 'Perbaikan layout desktop/tablet friendly bebas kepotong di seluruh webapp/PWA/APK, dan penambahan kartu pilihan harga paket lisensi resmi.',
     features: [
-      'Dashboard CEO: Rekap Finansial MRR & Total Uang Masuk',
-      'Killswitch Toko: Bekukan & Aktifkan toko tanpa menghapus data inventori',
-      'Pengumuman Nasional: Broadcast pesan berjalan (Marquee) di seluruh kasir',
-      'Pantauan Trafik Transaksi Nasional & Meter Kapasitas Database MySQL'
+      'Perbaikan responsivitas desktop & tablet: layout fit 100% tanpa kepotong di semua menu',
+      'Pilihan Paket & Tarif Lisensi Resmi (1 Bulan Rp 50k, 6 Bulan Rp 270k, 1 Tahun Rp 480k)',
+      'Sinkronisasi nominal transfer dan tombol salin cepat rekening & nominal',
+      'Proteksi overflow-x teruji di layar kasir, inventori, laporan, dan menu admin'
     ],
     apk_url: '/download/apk'
   });

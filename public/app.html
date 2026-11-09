@@ -30,7 +30,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="/css/app.css?v=3.9.5" />
+    <link rel="stylesheet" href="/css/app.css?v=3.9.6" />
     <style>
       .global-broadcast-ticker {
         background: #0F172A;
@@ -43,6 +43,9 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         position: relative;
         z-index: 40;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
       .marquee-scroller {
         display: inline-block;
@@ -104,7 +107,7 @@
           </button>
           <h2 id="page-title">Kasir POS</h2>
           
-          <div style="display:flex; align-items:center; gap: 0.65rem; margin-left: auto;">
+          <div style="display:flex; align-items:center; gap: 0.5rem; margin-left: auto; flex-shrink: 0; max-width: calc(100% - 130px); overflow-x: auto; padding-bottom: 2px;">
             <button type="button" id="header-install-pwa" data-pwa-install class="btn btn-secondary pwa-install-trigger" style="display:none; align-items:center; gap: 6px; font-size: 0.8rem; padding: 0.35rem 0.75rem; color: #059669; border-color: rgba(5, 150, 105, 0.4); font-weight: 700;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Pasang Web App
@@ -271,6 +274,6 @@
 
     <script src="/js/samsung-redirect.js"></script>
     <script src="/js/pwa-install.js" defer></script>
-    <script type="module" src="/js/app.js?v=3.9.5"></script>
+    <script type="module" src="/js/app.js?v=3.9.6"></script>
   </body>
 </html>

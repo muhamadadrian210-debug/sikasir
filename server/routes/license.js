@@ -473,6 +473,14 @@ Jawab HANYA dalam JSON valid tanpa tanda markdown:
       console.warn('[AI Vision Proof Check] Skipped / manual fallback:', aiErr.message);
     }
 
+    let finalAmount = Number(transfer_amount) || 0;
+    const daysNum = parseInt(package_duration_days, 10) || 30;
+    if (finalAmount <= 0) {
+      if (daysNum >= 365) finalAmount = 480000;
+      else if (daysNum >= 180) finalAmount = 270000;
+      else finalAmount = 50000;
+    }
+
     const [insertResult] = await pool.execute(`
       INSERT INTO payment_proofs (
         tenant_id,
@@ -495,12 +503,12 @@ Jawab HANYA dalam JSON valid tanpa tanda markdown:
       storeName,
       sender_name || 'Pelanggan',
       sender_bank || 'Bank',
-      transfer_amount || 0,
+      finalAmount,
       JSON.stringify(enrichedMetadata),
       JSON.stringify(aiVerification),
       aiStatus,
       image_data,
-      parseInt(package_duration_days, 10) || 30
+      daysNum
     ]);
 
     res.json({

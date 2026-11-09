@@ -1,5 +1,5 @@
-const CACHE_SHELL = 'sikasir-shell-v396';
-const CACHE_DATA = 'sikasir-data-v396';
+const CACHE_SHELL = 'sikasir-shell-v397';
+const CACHE_DATA = 'sikasir-data-v397';
 const ACTIVE_CACHES = [CACHE_SHELL, CACHE_DATA];
 
 const SHELL = [

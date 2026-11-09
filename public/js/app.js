@@ -3502,7 +3502,7 @@ async function checkAppUpdateNotification() {
     if (!res.ok) return;
     const info = await res.json();
     latestAppVersionInfo = info;
-    const currentVersion = '3.9.5';
+    const currentVersion = '3.9.6';
     const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
     const justUpdated = sessionStorage.getItem('sikasir_just_updated');
 
@@ -4827,6 +4827,101 @@ async function loadLicensePanel() {
           </form>
         </div>
 
+        <!-- Section: Pilihan Paket & Daftar Harga Resmi SiKasir -->
+        <div class="panel" style="padding: 24px; border-radius: var(--radius); border: 1px solid var(--border);">
+          <div style="margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; font-weight: 800;">Pilihan Paket &amp; Tarif Langganan</h4>
+                <p style="margin: 0; font-size: 0.84rem; color: var(--text-muted);">
+                  Pilih paket sesuai kebutuhan usaha Anda. Tanpa biaya tersembunyi, semua fitur aktif penuh.
+                </p>
+              </div>
+              <span style="font-size: 0.74rem; font-weight: 700; color: #10B981; background: rgba(16,185,129,0.12); padding: 4px 10px; border-radius: 9999px; border: 1px solid rgba(16,185,129,0.25);">
+                Garansi Tanpa Biaya Tambahan
+              </span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px;">
+            <!-- Card 1: 1 Bulan -->
+            <div class="pricing-card" style="background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 18px 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+              <div>
+                <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Paket Bulanan</div>
+                <h5 style="margin: 4px 0 10px 0; font-size: 1.1rem; font-weight: 800;">1 Bulan (30 Hari)</h5>
+                <div style="margin-bottom: 14px;">
+                  <span style="font-size: 1.65rem; font-weight: 900; color: var(--text-bright);">Rp 50.000</span>
+                  <span style="font-size: 0.78rem; color: var(--text-muted);">/ bulan</span>
+                </div>
+                <ul style="margin: 0 0 18px 0; padding-left: 18px; font-size: 0.8rem; color: var(--text-main); display: flex; flex-direction: column; gap: 6px; line-height: 1.4;">
+                  <li>Full Akses Kasir POS &amp; Meja Dine-In</li>
+                  <li>Scan Barcode Kamera &amp; Scanner Fisik</li>
+                  <li>Layar Dapur &amp; Antrean Koki (KDS)</li>
+                  <li>Laporan Omzet, Transaksi &amp; Laba</li>
+                  <li>Cadangan Data Cloud Otomatis</li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-secondary btn-select-pricing" data-days="30" data-price="50000" style="width: 100%; font-weight: 700; font-size: 0.84rem; padding: 8px;">
+                Pilih 1 Bulan (Rp 50.000)
+              </button>
+            </div>
+
+            <!-- Card 2: 6 Bulan (Best Value) -->
+            <div class="pricing-card" style="background: rgba(16, 185, 129, 0.04); border: 2px solid #10B981; border-radius: var(--radius-sm); padding: 18px 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 15px rgba(16,185,129,0.12);">
+              <div style="position: absolute; top: -11px; right: 14px; background: #10B981; color: #042F2E; font-size: 0.68rem; font-weight: 900; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">
+                Hemat 10% · Populer
+              </div>
+              <div>
+                <div style="font-size: 0.76rem; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 0.04em;">Paket Hemat Semester</div>
+                <h5 style="margin: 4px 0 10px 0; font-size: 1.1rem; font-weight: 800;">6 Bulan (180 Hari)</h5>
+                <div style="margin-bottom: 14px;">
+                  <span style="font-size: 1.65rem; font-weight: 900; color: #10B981;">Rp 270.000</span>
+                  <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                    Setara <strong>Rp 45.000 / bln</strong> (Hemat Rp 30.000)
+                  </div>
+                </div>
+                <ul style="margin: 0 0 18px 0; padding-left: 18px; font-size: 0.8rem; color: var(--text-main); display: flex; flex-direction: column; gap: 6px; line-height: 1.4;">
+                  <li>Semua Fitur Paket 1 Bulan</li>
+                  <li>Multi-Perangkat (HP, Tablet, PC, TV)</li>
+                  <li>Asisten Konsultasi Bisnis AI 24 Jam</li>
+                  <li>Pengembalian Stok &amp; Koreksi Void</li>
+                  <li>Prioritas Layanan Bantuan CEO</li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-primary btn-select-pricing" data-days="180" data-price="270000" style="width: 100%; font-weight: 800; font-size: 0.84rem; padding: 8px;">
+                Pilih 6 Bulan (Rp 270.000)
+              </button>
+            </div>
+
+            <!-- Card 3: 1 Tahun (Max Saving) -->
+            <div class="pricing-card" style="background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 18px 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+              <div style="position: absolute; top: -11px; right: 14px; background: #3B82F6; color: #FFFFFF; font-size: 0.68rem; font-weight: 900; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">
+                Hemat 20%
+              </div>
+              <div>
+                <div style="font-size: 0.76rem; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.04em;">Paket Tahunan Bebas Cemas</div>
+                <h5 style="margin: 4px 0 10px 0; font-size: 1.1rem; font-weight: 800;">1 Tahun (365 Hari)</h5>
+                <div style="margin-bottom: 14px;">
+                  <span style="font-size: 1.65rem; font-weight: 900; color: var(--text-bright);">Rp 480.000</span>
+                  <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                    Setara <strong>Rp 40.000 / bln</strong> (Hemat Rp 120.000)
+                  </div>
+                </div>
+                <ul style="margin: 0 0 18px 0; padding-left: 18px; font-size: 0.8rem; color: var(--text-main); display: flex; flex-direction: column; gap: 6px; line-height: 1.4;">
+                  <li>Semua Fitur Lengkap SiKasir Enterprise</li>
+                  <li>Masa Aktif 365 Hari Tanpa Khawatir Terputus</li>
+                  <li>Gratis Update Semua Fitur Baru SiKasir</li>
+                  <li>Garansi Zero-Loss Data &amp; Prioritas Server</li>
+                  <li>Konsultasi Teknis Prioritas Utama</li>
+                </ul>
+              </div>
+              <button type="button" class="btn btn-secondary btn-select-pricing" data-days="365" data-price="480000" style="width: 100%; font-weight: 700; font-size: 0.84rem; padding: 8px;">
+                Pilih 1 Tahun (Rp 480.000)
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Section: Perpanjang Otomatis via Upload Bukti Transfer Bank BRI -->
         <div class="panel" style="padding: 24px; border-radius: var(--radius); border: 1px solid var(--border);">
           <div style="margin-bottom: 12px;">
@@ -4837,7 +4932,7 @@ async function loadLicensePanel() {
           </div>
 
           <!-- Rekening Card -->
-          <div style="background: var(--bg-card); border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="background: var(--bg-card); border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div>
               <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Rekening Resmi Founder</div>
               <div style="font-size: 1.15rem; font-weight: 800; font-family: var(--font-mono); margin-top: 2px;">
@@ -4850,6 +4945,19 @@ async function loadLicensePanel() {
             </button>
           </div>
 
+          <!-- Nominal Transfer Helper Card -->
+          <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+            <div>
+              <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Nominal yang Harus Ditransfer:</div>
+              <div id="transfer-nominal-display" style="font-size: 1.35rem; font-weight: 900; color: #10B981; font-family: var(--font-mono);">
+                Rp 50.000
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-nominal" data-copy-val="50000" style="font-size: 0.78rem;">
+              Salin Nominal: Rp 50.000
+            </button>
+          </div>
+
           <div id="proof-status-banner" style="display: none; margin-bottom: 16px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 0.86rem;"></div>
 
           <form id="form-upload-proof" style="display: flex; flex-direction: column; gap: 14px;">
@@ -4857,10 +4965,9 @@ async function loadLicensePanel() {
               <div>
                 <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Pilihan Paket Sewa</label>
                 <select id="proof-package-days" style="width: 100%; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-size: 0.88rem;">
-                  <option value="30" selected>Paket 1 Bulan (30 Hari)</option>
-                  <option value="90">Paket 3 Bulan (90 Hari)</option>
-                  <option value="180">Paket 6 Bulan (180 Hari)</option>
-                  <option value="365">Paket 1 Tahun (365 Hari)</option>
+                  <option value="30" data-price="50000" selected>Paket 1 Bulan (30 Hari) : Rp 50.000</option>
+                  <option value="180" data-price="270000">Paket 6 Bulan (180 Hari) : Rp 270.000 (Hemat 10%)</option>
+                  <option value="365" data-price="480000">Paket 1 Tahun (365 Hari) : Rp 480.000 (Hemat 20%)</option>
                 </select>
               </div>
               <div>
@@ -5050,6 +5157,50 @@ async function loadLicensePanel() {
       };
     }
 
+    // Hubungkan Interaksi Kartu Harga & Dynamic Nominal
+    const pkgSelect = document.getElementById('proof-package-days');
+    const nominalDisplay = document.getElementById('transfer-nominal-display');
+    const btnCopyNominal = document.getElementById('btn-copy-nominal');
+
+    const updateNominal = () => {
+      if (!pkgSelect) return;
+      const opt = pkgSelect.options[pkgSelect.selectedIndex];
+      const price = opt?.dataset?.price || (pkgSelect.value === '365' ? '480000' : pkgSelect.value === '180' ? '270000' : '50000');
+      const formatted = Number(price).toLocaleString('id-ID');
+      if (nominalDisplay) nominalDisplay.textContent = `Rp ${formatted}`;
+      if (btnCopyNominal) {
+        btnCopyNominal.textContent = `Salin Nominal: Rp ${formatted}`;
+        btnCopyNominal.dataset.copyVal = price;
+      }
+    };
+
+    if (pkgSelect) {
+      pkgSelect.onchange = updateNominal;
+      updateNominal();
+    }
+
+    if (btnCopyNominal) {
+      btnCopyNominal.onclick = () => {
+        const val = btnCopyNominal.dataset.copyVal || '50000';
+        navigator.clipboard.writeText(val).then(() => {
+          const old = btnCopyNominal.textContent;
+          btnCopyNominal.textContent = 'Nominal Tersalin!';
+          setTimeout(() => { btnCopyNominal.textContent = old; }, 1500);
+        });
+      };
+    }
+
+    document.querySelectorAll('.btn-select-pricing').forEach((btn) => {
+      btn.onclick = () => {
+        const days = btn.dataset.days;
+        if (pkgSelect) {
+          pkgSelect.value = days;
+          pkgSelect.dispatchEvent(new Event('change'));
+          document.getElementById('form-upload-proof')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      };
+    });
+
     // Submit Bukti Transfer Form
     const formUploadProof = document.getElementById('form-upload-proof');
     if (formUploadProof) {
@@ -5061,7 +5212,10 @@ async function loadLicensePanel() {
         }
 
         const btnSubmit = document.getElementById('btn-submit-proof');
-        const pkgDays = document.getElementById('proof-package-days')?.value || '30';
+        const pkgDays = pkgSelect?.value || '30';
+        const opt = pkgSelect?.options[pkgSelect.selectedIndex];
+        const pkgAmount = parseInt(opt?.dataset?.price || (pkgDays === '365' ? '480000' : pkgDays === '180' ? '270000' : '50000'), 10);
+
         btnSubmit.disabled = true;
         btnSubmit.textContent = 'Mengirim Bukti Transfer...';
 
@@ -5071,6 +5225,7 @@ async function loadLicensePanel() {
             body: {
               image_data: compressedImageData,
               package_duration_days: parseInt(pkgDays, 10),
+              transfer_amount: pkgAmount,
               raw_metadata: extractedFileMeta
             }
           });
