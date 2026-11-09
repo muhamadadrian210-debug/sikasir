@@ -90,10 +90,10 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.0',
-    versionCode: 390,
+    version: '3.9.1',
+    versionCode: 391,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.0 Pro Update',
+    title: 'SiKasir v3.9.1 Pro Update',
     notes: 'Fitur baru: Hapus / Batalkan Transaksi (Void) & Koreksi Kasir jika salah input, Pengembalian Stok Otomatis, dan Notifikasi Pembaruan Aplikasi.',
     features: [
       'Pilihan Hapus / Batalkan Transaksi (Void) jika kasir salah input',
