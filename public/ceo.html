@@ -3,28 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SiKasir CEO Radar - Executive Dashboard</title>
-  <link rel="icon" type="image/svg+xml" href="/icons/icon-192.png" />
+  <title>SiKasir CEO</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/logo.svg" />
   <style>
     :root {
-      --bg: #090D16;
-      --bg-card: #0F172A;
-      --bg-hover: #1E293B;
-      --border: #334155;
-      --border-subtle: #1E293B;
-      --text: #F8FAFC;
-      --text-muted: #94A3B8;
-      --primary: #10B981;
-      --primary-hover: #059669;
-      --primary-subtle: rgba(16, 185, 129, 0.12);
-      --warning: #F59E0B;
-      --warning-subtle: rgba(245, 158, 11, 0.12);
-      --danger: #EF4444;
-      --danger-subtle: rgba(239, 68, 68, 0.12);
-      --info: #38BDF8;
-      --info-subtle: rgba(56, 189, 248, 0.12);
-      --radius: 8px;
-      --radius-sm: 6px;
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --border-dark: #CBD5E1;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --text-light: #94A3B8;
+      --primary: #0F172A;
+      --primary-hover: #1E293B;
+      --success: #16A34A;
+      --success-bg: #DCFCE7;
+      --warning: #D97706;
+      --warning-bg: #FEF3C7;
+      --danger: #DC2626;
+      --danger-bg: #FEE2E2;
+      --radius: 6px;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
@@ -40,669 +38,631 @@
       color: var(--text);
       font-family: var(--font-sans);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
       -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
     }
 
-    /* Top Bar */
-    header.ceo-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 24px;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .brand-wrap {
+    /* Minimalist PIN Gate */
+    #gate-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
     }
 
-    .brand-logo {
-      background: var(--primary);
-      color: #000;
-      font-weight: 900;
-      font-size: 0.9rem;
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-      letter-spacing: 0.5px;
+    .gate-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
     }
 
-    .brand-title {
-      font-size: 1.1rem;
+    .gate-title {
+      font-size: 1.15rem;
       font-weight: 700;
-      letter-spacing: -0.3px;
+      margin-bottom: 4px;
+      color: var(--text);
     }
 
-    .brand-subtitle {
-      font-size: 0.78rem;
+    .gate-desc {
+      font-size: 0.85rem;
       color: var(--text-muted);
+      margin-bottom: 20px;
     }
 
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .pin-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 1.15rem;
+      font-family: var(--font-mono);
+      letter-spacing: 4px;
+      text-align: center;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius);
+      outline: none;
+      margin-bottom: 14px;
+      background: var(--surface);
+    }
+
+    .pin-input:focus {
+      border-color: var(--primary);
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
       padding: 8px 14px;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 600;
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius);
       border: 1px solid transparent;
       cursor: pointer;
       text-decoration: none;
-      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-block {
+      width: 100%;
     }
 
     .btn-primary {
       background: var(--primary);
-      color: #042F2E;
+      color: #FFFFFF;
     }
+
     .btn-primary:hover {
       background: var(--primary-hover);
     }
 
     .btn-secondary {
-      background: var(--bg-card);
+      background: var(--surface);
       color: var(--text);
-      border-color: var(--border);
+      border-color: var(--border-dark);
     }
+
     .btn-secondary:hover {
-      background: var(--bg-hover);
-      border-color: #475569;
+      background: #F1F5F9;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #FFFFFF;
+    }
+
+    .btn-success:hover {
+      background: #15803D;
     }
 
     .btn-danger {
-      background: var(--danger-subtle);
-      color: var(--danger);
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-    .btn-danger:hover {
       background: var(--danger);
-      color: #fff;
+      color: #FFFFFF;
+    }
+
+    .btn-danger:hover {
+      background: #B91C1C;
     }
 
     .btn-sm {
-      padding: 5px 10px;
+      padding: 4px 10px;
       font-size: 0.78rem;
     }
 
-    /* Container */
-    main.ceo-container {
-      max-width: 1200px;
-      width: 100%;
+    /* Main Container */
+    #dashboard-view {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    header.topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .tabs-nav {
+      display: flex;
+      gap: 4px;
+      background: #F1F5F9;
+      padding: 3px;
+      border-radius: var(--radius);
+    }
+
+    .tab-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .tab-badge {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 1px 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 10px;
+      background: #EF4444;
+      color: #FFFFFF;
+    }
+
+    main.content {
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 24px 20px 60px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
+      padding: 24px 20px;
+      width: 100%;
     }
 
-    /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+    .tab-pane {
+      display: none;
     }
 
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .tab-pane.active {
+      display: block;
     }
 
-    .stat-label {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .stat-val {
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      line-height: 1.1;
-    }
-
-    .stat-sub {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    /* Card Panels */
     .panel {
-      background: var(--bg-card);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      margin-bottom: 20px;
       overflow: hidden;
     }
 
-    .panel-header {
-      padding: 16px 20px;
+    .panel-head {
+      padding: 14px 18px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
     }
 
     .panel-title {
-      font-size: 1rem;
+      font-size: 0.92rem;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      color: var(--text);
     }
 
     .panel-body {
-      padding: 20px;
+      padding: 18px;
     }
 
-    /* Table */
-    .table-responsive {
-      overflow-x: auto;
+    /* Minimal Table */
+    .table-wrap {
       width: 100%;
+      overflow-x: auto;
     }
 
-    table.ceo-table {
+    table.data-table {
       width: 100%;
       border-collapse: collapse;
+      font-size: 0.84rem;
       text-align: left;
-      font-size: 0.86rem;
     }
 
-    table.ceo-table th {
-      background: #0B1120;
+    table.data-table th {
+      padding: 10px 14px;
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border);
       color: var(--text-muted);
       font-weight: 600;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
       white-space: nowrap;
     }
 
-    table.ceo-table td {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border-subtle);
+    table.data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
 
-    table.ceo-table tr:hover td {
-      background: rgba(30, 41, 59, 0.4);
-    }
-
-    .store-name {
-      font-weight: 700;
-      color: #fff;
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    .store-slug {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
-
-    /* Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .badge-active {
-      background: var(--primary-subtle);
-      color: var(--primary);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .badge-warning {
-      background: var(--warning-subtle);
-      color: var(--warning);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .badge-expired {
-      background: var(--danger-subtle);
-      color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .badge-gray {
-      background: rgba(148, 163, 184, 0.1);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
+    table.data-table tr:last-child td {
+      border-bottom: none;
     }
 
     .mono {
       font-family: var(--font-mono);
+      font-size: 0.82rem;
     }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    .badge-success { background: var(--success-bg); color: #15803D; }
+    .badge-warning { background: var(--warning-bg); color: #B45309; }
+    .badge-danger  { background: var(--danger-bg);  color: #B91C1C; }
+    .badge-neutral { background: #F1F5F9; color: #475569; }
 
     /* Forms */
-    .form-row {
+    .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 16px;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-size: 0.8rem;
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-muted);
+      margin-bottom: 5px;
     }
 
-    input, select, textarea {
-      background: #090D16;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 0.88rem;
-      font-family: inherit;
+    .form-control {
+      width: 100%;
+      padding: 8px 11px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius);
       outline: none;
-      transition: border-color 0.15s;
+      background: var(--surface);
     }
 
-    input:focus, select:focus, textarea:focus {
+    .form-control:focus {
       border-color: var(--primary);
     }
 
-    /* PIN Gate Overlay */
-    #gate-screen {
-      position: fixed;
-      inset: 0;
-      background: #050811;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 20px;
-    }
-
-    .gate-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      max-width: 380px;
-      width: 100%;
-      padding: 32px 28px;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-    }
-
-    .gate-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      background: var(--primary-subtle);
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-      font-weight: 900;
-      font-size: 1.2rem;
-    }
-
-    .gate-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .gate-desc {
-      font-size: 0.84rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      line-height: 1.4;
-    }
-
-    .pin-input {
-      font-size: 1.6rem;
-      letter-spacing: 6px;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-weight: 800;
-      padding: 12px;
-      margin-bottom: 16px;
-      width: 100%;
-    }
-
-    .gate-alert {
-      font-size: 0.8rem;
-      color: var(--danger);
-      background: var(--danger-subtle);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      margin-bottom: 16px;
-      display: none;
-    }
-
     /* Modal */
-    .modal-overlay {
+    .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(15, 23, 42, 0.45);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 200;
-      padding: 20px;
-    }
-    .modal-overlay.open {
-      display: flex;
-    }
-    .modal-content {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      max-width: 460px;
-      width: 100%;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      padding: 16px;
     }
 
-    .generated-card {
-      background: #090D16;
-      border: 1px solid var(--primary);
-      border-radius: var(--radius-sm);
-      padding: 14px;
-      margin-top: 10px;
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .modal-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
     }
 
-    .generated-code {
+    .modal-body {
+      padding: 18px;
+      overflow-y: auto;
+      font-size: 0.86rem;
+    }
+
+    .modal-foot {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      background: #F8FAFC;
+    }
+
+    /* Preview Canvas Area */
+    .img-preview-box {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #000;
+      text-align: center;
+      position: relative;
+      margin-bottom: 12px;
+      max-height: 380px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .img-preview-box canvas {
+      max-width: 100%;
+      max-height: 380px;
+      display: block;
+      object-fit: contain;
+    }
+
+    .meta-box {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
       font-family: var(--font-mono);
-      font-weight: 800;
-      font-size: 1.05rem;
-      color: var(--primary);
-      letter-spacing: 0.5px;
-    }
-
-    @media (max-width: 640px) {
-      header.ceo-topbar {
-        padding: 12px 16px;
-      }
-      main.ceo-container {
-        padding: 16px 12px 40px;
-      }
-      .panel-body {
-        padding: 14px;
-      }
+      font-size: 0.74rem;
+      color: #334155;
+      line-height: 1.6;
     }
   </style>
 </head>
 <body>
 
-  <!-- PIN Security Gate -->
+  <!-- Minimalist Gate -->
   <div id="gate-screen">
-    <div class="gate-box">
-      <div class="gate-icon">CEO</div>
-      <h2 class="gate-title">Executive Radar</h2>
-      <p class="gate-desc">Masukkan PIN otoritas founder untuk mengakses pemantauan toko dan generator lisensi.</p>
-      
-      <div id="gate-alert" class="gate-alert"></div>
-      
+    <div class="gate-card">
+      <h2 class="gate-title">Akses Founder</h2>
+      <p class="gate-desc">Masukkan PIN otoritas untuk melanjutkan</p>
       <form id="gate-form">
         <input 
           type="password" 
           id="pin-field" 
           class="pin-input" 
+          placeholder="•••••••" 
           maxlength="10" 
-          placeholder="••••••" 
           autocomplete="off" 
-          required 
           autofocus 
+          required 
         />
-        <button type="submit" id="btn-submit-pin" class="btn btn-primary" style="width: 100%; padding: 12px;">
-          Buka Radar CEO
-        </button>
+        <button type="submit" id="btn-gate-submit" class="btn btn-primary btn-block">Buka Panel</button>
       </form>
-      <div style="margin-top: 16px;">
-        <a href="/" style="font-size: 0.8rem; color: var(--text-muted); text-decoration: none;">Kembali ke Halaman Utama</a>
+      <div id="gate-alert" style="margin-top: 10px; font-size: 0.8rem; color: var(--danger); display: none;"></div>
+      <div style="margin-top: 18px;">
+        <a href="/" style="font-size: 0.78rem; color: var(--text-muted); text-decoration: none;">Kembali ke Kasir POS</a>
       </div>
     </div>
   </div>
 
-  <!-- Main CEO Dashboard View -->
-  <header class="ceo-topbar">
-    <div class="brand-wrap">
-      <span class="brand-logo">SIVILIZE</span>
+  <!-- Dashboard View -->
+  <div id="dashboard-view">
+    <header class="topbar">
       <div>
-        <h1 class="brand-title">SiKasir CEO Radar</h1>
-        <div class="brand-subtitle">Subscription Lifecycle &amp; Tenant Radar</div>
+        <div class="brand-title">SiKasir CEO</div>
+        <div class="brand-sub">Founder Dashboard &amp; License Manager</div>
       </div>
-    </div>
-    <div class="top-actions">
-      <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh">
-        Muat Ulang
-      </button>
-      <button type="button" class="btn btn-danger btn-sm" id="btn-lock">
-        Kunci Radar
-      </button>
-    </div>
-  </header>
 
-  <main class="ceo-container">
+      <nav class="tabs-nav">
+        <button type="button" class="tab-btn active" data-tab="tab-proofs">
+          Verifikasi Pembayaran <span class="tab-badge" id="pending-proofs-badge" style="display:none;">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="tab-tenants">Daftar Toko</button>
+        <button type="button" class="tab-btn" data-tab="tab-generator">Buat Lisensi</button>
+        <button type="button" class="tab-btn" data-tab="tab-codes">Riwayat Lisensi</button>
+      </nav>
 
-    <!-- KPI Summary Cards -->
-    <section class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-label">Total Toko Terdaftar</span>
-        <span class="stat-val" id="stat-total">0</span>
-        <span class="stat-sub">Semua tenant aktif di sistem cloud</span>
+      <div style="display:flex; gap: 8px;">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh">Muat Ulang</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-lock">Kunci</button>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">Toko Aktif (Aman)</span>
-        <span class="stat-val" style="color: var(--primary);" id="stat-active">0</span>
-        <span class="stat-sub">Masa aktif langganan &gt; 7 hari</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Masa Aktif Segera Habis</span>
-        <span class="stat-val" style="color: var(--warning);" id="stat-warning">0</span>
-        <span class="stat-sub">Pemberitahuan kadaluarsa (H-7 ke bawah)</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Sudah Kadaluarsa</span>
-        <span class="stat-val" style="color: var(--danger);" id="stat-expired">0</span>
-        <span class="stat-sub">Memerlukan aktivasi kode perpanjangan</span>
-      </div>
-    </section>
+    </header>
 
-    <!-- Radar Toko Table -->
-    <section class="panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <span>📡 Radar Masa Aktif &amp; Toko Terdaftar</span>
-          <span class="badge badge-gray" id="tenants-count-badge">0 Toko</span>
+    <main class="content">
+
+      <!-- TAB 1: VERIFIKASI PEMBAYARAN (BUKTI TRANSFER) -->
+      <section id="tab-proofs" class="tab-pane active">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Antrean Bukti Transfer Toko</span>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">
+              Rekening Tujuan: BRI 7485 0101 2399 501 (Muhamad Adrian)
+            </span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nama Toko</th>
+                  <th>Waktu Upload</th>
+                  <th>Paket</th>
+                  <th>Status AI</th>
+                  <th>Status Approval</th>
+                  <th style="text-align: right;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="proofs-tbody">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Memuat bukti transfer...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <input 
-            type="text" 
-            id="search-store" 
-            placeholder="Cari nama toko..." 
-            style="padding: 6px 10px; font-size: 0.8rem; width: 180px;" 
-          />
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="ceo-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nama Toko &amp; Jenis</th>
-              <th>Mulai</th>
-              <th>Berakhir</th>
-              <th>Sisa Waktu</th>
-              <th>Status Lisensi</th>
-              <th>Kode Terakhir</th>
-              <th style="text-align: right;">Aksi Eksekutif</th>
-            </tr>
-          </thead>
-          <tbody id="tenants-tbody">
-            <tr>
-              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                Memuat data radar toko...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      </section>
 
-    <!-- Generator Kode Lisensi SIV- -->
-    <section class="panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <span>🔑 Generator Kode Lisensi Resmi (SIV-)</span>
+      <!-- TAB 2: DAFTAR TOKO -->
+      <section id="tab-tenants" class="tab-pane">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Daftar Toko Terdaftar</span>
+            <input type="text" id="tenant-search" class="form-control" placeholder="Cari toko..." style="max-width: 200px; padding: 4px 8px; font-size: 0.8rem;" />
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nama Toko</th>
+                  <th>Mulai</th>
+                  <th>Berakhir</th>
+                  <th>Sisa Hari</th>
+                  <th>Status</th>
+                  <th>Lisensi Aktif</th>
+                  <th style="text-align: right;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tenants-tbody">
+                <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Memuat data toko...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">
-          Kode langsung aktif dan siap dikirimkan ke pelanggan via WhatsApp
-        </span>
-      </div>
-      <div class="panel-body">
-        <form id="gen-code-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="gen-duration">Pilihan Paket Durasi</label>
-              <select id="gen-duration" required>
-                <option value="30" selected>30 Hari (Paket 1 Bulan)</option>
-                <option value="90">90 Hari (Paket 3 Bulan)</option>
-                <option value="180">180 Hari (Paket 6 Bulan)</option>
-                <option value="365">365 Hari (Paket 1 Tahun)</option>
-                <option value="custom">Custom Durasi (Hari)</option>
-              </select>
-            </div>
-            <div class="form-group" id="custom-duration-wrap" style="display: none;">
-              <label for="gen-custom-days">Jumlah Hari Custom</label>
-              <input type="number" id="gen-custom-days" min="1" max="1825" placeholder="Contoh: 60" />
-            </div>
-            <div class="form-group">
-              <label for="gen-count">Jumlah Kode</label>
-              <select id="gen-count">
-                <option value="1" selected>1 Kode</option>
-                <option value="3">3 Kode</option>
-                <option value="5">5 Kode</option>
-                <option value="10">10 Kode</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="gen-notes">Catatan / Nama Mitra Toko</label>
-              <input type="text" id="gen-notes" placeholder="Contoh: Perpanjangan Kopi Papa Ganteng" />
+      </section>
+
+      <!-- TAB 3: BUAT KODE LISENSI -->
+      <section id="tab-generator" class="tab-pane">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Buat Kode Lisensi Baru (SIV-)</span>
+          </div>
+          <div class="panel-body">
+            <form id="form-gen-code">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Durasi Paket</label>
+                  <select id="gen-duration" class="form-control">
+                    <option value="30">30 Hari (1 Bulan)</option>
+                    <option value="90">90 Hari (3 Bulan)</option>
+                    <option value="180">180 Hari (6 Bulan)</option>
+                    <option value="365">365 Hari (1 Tahun)</option>
+                    <option value="custom">Custom Hari</option>
+                  </select>
+                </div>
+                <div class="form-group" id="custom-days-group" style="display: none;">
+                  <label>Jumlah Hari Custom</label>
+                  <input type="number" id="gen-custom-days" class="form-control" placeholder="Contoh: 45" min="1" max="1825" />
+                </div>
+                <div class="form-group">
+                  <label>Jumlah Kode</label>
+                  <select id="gen-count" class="form-control">
+                    <option value="1">1 Kode</option>
+                    <option value="3">3 Kode</option>
+                    <option value="5">5 Kode</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Catatan / Nama Toko</label>
+                  <input type="text" id="gen-notes" class="form-control" placeholder="Contoh: Mitra Kopi Papa Ganteng" />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" id="btn-submit-gen">Generate Kode</button>
+            </form>
+
+            <div id="gen-output" style="margin-top: 18px; display: none;">
+              <div style="font-size: 0.82rem; font-weight: 600; margin-bottom: 8px;">Kode Lisensi Siap Pakai:</div>
+              <div id="gen-codes-container" style="display: flex; flex-direction: column; gap: 6px;"></div>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary" id="btn-gen-code">
-            Buat Kode Lisensi Sekarang
-          </button>
-        </form>
+        </div>
+      </section>
 
-        <div id="gen-results" style="margin-top: 16px; display: none;">
-          <h4 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted);">Kode Lisensi Siap Pakai:</h4>
-          <div id="gen-codes-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <!-- TAB 4: RIWAYAT KODE -->
+      <section id="tab-codes" class="tab-pane">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Riwayat Kode Lisensi yang Pernah Dibuat</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kode Lisensi</th>
+                  <th>Durasi</th>
+                  <th>Dibuat</th>
+                  <th>Status</th>
+                  <th>Digunakan Oleh</th>
+                  <th>Catatan</th>
+                </tr>
+              </thead>
+              <tbody id="codes-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Memuat riwayat kode...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: PREVIEW BUKTI TRANSFER & FILTER PERTAJAM KONTRAS -->
+  <div id="modal-proof" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="panel-title" id="proof-modal-title">Bukti Transfer</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-close-proof-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.78rem; color: var(--text-muted);" id="proof-store-label">Toko: -</span>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-filter-normal">Asli</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-filter-sharp" title="Pertajam kontras pixel teks struk yang buram">Pertajam Teks</button>
+          </div>
+        </div>
+
+        <div class="img-preview-box">
+          <canvas id="proof-canvas"></canvas>
+        </div>
+
+        <div style="margin-bottom: 8px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">
+          Metadata Permanen &amp; Log Perangkat:
+        </div>
+        <div class="meta-box" id="proof-meta-display">
+          Memuat metadata...
         </div>
       </div>
-    </section>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-modal-cancel">Tutup</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btn-modal-reject">Tolak</button>
+        <button type="button" class="btn btn-success btn-sm" id="btn-modal-approve">Setujui &amp; Aktifkan</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- Riwayat Lisensi Codes -->
-    <section class="panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <span>📋 Riwayat Kode Lisensi yang Pernah Dibuat</span>
+  <!-- MODAL: PERPANJANG TOKO MANUAL -->
+  <div id="modal-extend" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-head">
+        <span class="panel-title">Perpanjang Masa Aktif Toko</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-close-extend-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px; font-size: 0.85rem;" id="extend-store-desc">Perpanjang masa aktif:</p>
+        <div class="form-group">
+          <label>Tambah Durasi (Hari)</label>
+          <input type="number" id="extend-days-input" class="form-control" value="30" min="1" max="1825" />
         </div>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-codes">
-          Perbarui List Kode
-        </button>
       </div>
-      <div class="table-responsive">
-        <table class="ceo-table">
-          <thead>
-            <tr>
-              <th>Kode Lisensi</th>
-              <th>Durasi</th>
-              <th>Dibuat Pada</th>
-              <th>Status Penggunaan</th>
-              <th>Digunakan Oleh Toko</th>
-              <th>Catatan</th>
-            </tr>
-          </thead>
-          <tbody id="codes-tbody">
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
-                Memuat riwayat kode...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Modal Perpanjang Toko -->
-  <div id="modal-extend" class="modal-overlay">
-    <div class="modal-content">
-      <h3 style="font-size: 1.1rem; font-weight: 700;" id="modal-extend-title">Perpanjang Masa Aktif Toko</h3>
-      <p style="font-size: 0.84rem; color: var(--text-muted);" id="modal-extend-desc">Pilih durasi tambahan atau tentukan tanggal berakhir secara manual.</p>
-      
-      <div class="form-group">
-        <label for="ext-days-select">Tambah Hari</label>
-        <select id="ext-days-select">
-          <option value="30">+30 Hari (1 Bulan)</option>
-          <option value="90">+90 Hari (3 Bulan)</option>
-          <option value="180">+180 Hari (6 Bulan)</option>
-          <option value="365" selected>+365 Hari (1 Tahun)</option>
-          <option value="custom">Tentukan Tanggal Spesifik</option>
-        </select>
-      </div>
-
-      <div class="form-group" id="ext-date-wrap" style="display: none;">
-        <label for="ext-specific-date">Tanggal Berakhir Baru</label>
-        <input type="date" id="ext-specific-date" />
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-        <button type="button" class="btn btn-secondary" id="btn-cancel-extend">Batal</button>
-        <button type="button" class="btn btn-primary" id="btn-confirm-extend">Simpan Perubahan</button>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-extend">Batal</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-confirm-extend">Simpan Perpanjangan</button>
       </div>
     </div>
   </div>
@@ -710,384 +670,482 @@
   <script>
     const CEO_PIN = '2421204';
     let ceoToken = localStorage.getItem('sikasir_ceo_token') || '';
-    let tenantsData = [];
-    let activeTenantForExtend = null;
+    let tenantsList = [];
+    let proofsList = [];
+    let activeProof = null;
+    let activeTenantToExtend = null;
+    let originalImageEl = null;
 
+    // Elements
     const gateScreen = document.getElementById('gate-screen');
-    const gateForm = document.getElementById('gate-form');
+    const dashboardView = document.getElementById('dashboard-view');
     const pinField = document.getElementById('pin-field');
     const gateAlert = document.getElementById('gate-alert');
+    const proofCanvas = document.getElementById('proof-canvas');
 
-    // Init Gate
+    // Init
     if (ceoToken) {
-      verifyAndLoad();
-    } else {
-      gateScreen.style.display = 'flex';
-      pinField.focus();
+      verifyTokenAndOpen();
     }
 
-    gateForm.addEventListener('submit', async (e) => {
+    document.getElementById('gate-form').onsubmit = async (e) => {
       e.preventDefault();
+      const pin = pinField.value.trim();
+      if (!pin) return;
       gateAlert.style.display = 'none';
-      const inputPin = pinField.value.trim();
-
-      if (inputPin !== CEO_PIN) {
-        gateAlert.textContent = 'PIN Otoritas Founder Salah!';
-        gateAlert.style.display = 'block';
-        pinField.value = '';
-        pinField.focus();
-        return;
-      }
 
       try {
         const res = await fetch('/api/ceo/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: inputPin })
+          body: JSON.stringify({ pin }),
         });
-        const data = await res.json();
-        if (data.success && data.token) {
-          ceoToken = data.token;
-          localStorage.setItem('sikasir_ceo_token', ceoToken);
-          gateScreen.style.display = 'none';
-          loadDashboard();
-        } else {
-          throw new Error(data.error || 'Login gagal');
+        const d = await res.json();
+        if (!res.ok || !d.success) {
+          throw new Error(d.error || 'PIN salah');
         }
+        ceoToken = d.token;
+        localStorage.setItem('sikasir_ceo_token', ceoToken);
+        openDashboard();
       } catch (err) {
-        gateAlert.textContent = err.message || 'Gagal koneksi ke server';
+        gateAlert.textContent = err.message || 'Akses ditolak';
         gateAlert.style.display = 'block';
+        pinField.value = '';
+        pinField.focus();
       }
-    });
+    };
 
-    async function verifyAndLoad() {
+    async function verifyTokenAndOpen() {
       try {
         const res = await fetch('/api/ceo/tenants', {
-          headers: { 
-            'Authorization': 'Bearer ' + ceoToken,
-            'x-ceo-pin': CEO_PIN
-          }
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
         });
-        if (res.status === 401 || res.status === 403) {
+        if (res.ok) {
+          openDashboard();
+        } else {
           localStorage.removeItem('sikasir_ceo_token');
-          gateScreen.style.display = 'flex';
-          pinField.value = '';
-          return;
+          ceoToken = '';
         }
-        gateScreen.style.display = 'none';
-        loadDashboard();
       } catch {
-        gateScreen.style.display = 'flex';
+        localStorage.removeItem('sikasir_ceo_token');
+        ceoToken = '';
       }
     }
 
-    document.getElementById('btn-lock').addEventListener('click', () => {
+    function openDashboard() {
+      gateScreen.style.display = 'none';
+      dashboardView.style.display = 'flex';
+      loadAllData();
+    }
+
+    document.getElementById('btn-lock').onclick = () => {
       localStorage.removeItem('sikasir_ceo_token');
       ceoToken = '';
+      dashboardView.style.display = 'none';
       gateScreen.style.display = 'flex';
       pinField.value = '';
       pinField.focus();
+    };
+
+    document.getElementById('btn-refresh').onclick = () => loadAllData();
+
+    // Tab Navigation
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.dataset.tab;
+        document.getElementById(target)?.classList.add('active');
+      };
     });
 
-    document.getElementById('btn-refresh').addEventListener('click', () => {
-      loadTenants();
-      loadCodes();
-    });
-
-    document.getElementById('btn-refresh-codes').addEventListener('click', loadCodes);
-
-    function loadDashboard() {
-      loadTenants();
-      loadCodes();
+    async function loadAllData() {
+      await Promise.all([loadProofs(), loadTenants(), loadCodes()]);
     }
 
+    // 1. Load Proofs
+    async function loadProofs() {
+      const tbody = document.getElementById('proofs-tbody');
+      try {
+        const res = await fetch('/api/ceo/proofs', {
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        const d = await res.json();
+        proofsList = d.proofs || [];
+
+        const pendingCount = proofsList.filter(p => p.status === 'PENDING').length;
+        const badge = document.getElementById('pending-proofs-badge');
+        if (badge) {
+          if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+
+        if (proofsList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">Belum ada bukti transfer yang diunggah.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = proofsList.map(p => {
+          let statusBadge = '<span class="badge badge-neutral">PENDING</span>';
+          if (p.status === 'APPROVED') statusBadge = '<span class="badge badge-success">DISETUJUI</span>';
+          if (p.status === 'REJECTED') statusBadge = '<span class="badge badge-danger">DITOLAK</span>';
+
+          let aiBadge = '<span class="badge badge-neutral">Review Manual</span>';
+          if (p.ai_status === 'AI_MATCHED') aiBadge = '<span class="badge badge-success">Rekening &amp; Nama Cocok</span>';
+          if (p.ai_status === 'SUSPICIOUS') aiBadge = '<span class="badge badge-danger">Mencurigakan</span>';
+
+          const uploadDate = p.created_at ? new Date(p.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+
+          return `
+            <tr>
+              <td class="mono">#${p.id}</td>
+              <td style="font-weight:600;">${escapeHtml(p.store_name)}</td>
+              <td>${uploadDate}</td>
+              <td>${p.package_duration_days} Hari</td>
+              <td>${aiBadge}</td>
+              <td>${statusBadge}</td>
+              <td style="text-align:right; white-space:nowrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openProofModal(${p.id})">Lihat Bukti</button>
+                ${p.status === 'PENDING' ? `
+                  <button type="button" class="btn btn-success btn-sm" style="margin-left:4px;" onclick="quickApproveProof(${p.id})">Setujui</button>
+                  <button type="button" class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="quickRejectProof(${p.id})">Tolak</button>
+                ` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger); text-align:center; padding:16px;">Gagal memuat bukti transfer: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Modal Proof Viewer with Sharpening
+    window.openProofModal = (proofId) => {
+      const p = proofsList.find(x => x.id === proofId);
+      if (!p) return;
+      activeProof = p;
+
+      document.getElementById('proof-modal-title').textContent = `Bukti Transfer #${p.id}`;
+      document.getElementById('proof-store-label').textContent = `Toko: ${p.store_name} · Paket: ${p.package_duration_days} Hari`;
+
+      // Render Metadata
+      let metaObj = {};
+      try {
+        metaObj = typeof p.raw_metadata === 'string' ? JSON.parse(p.raw_metadata) : (p.raw_metadata || {});
+      } catch {}
+
+      document.getElementById('proof-meta-display').innerHTML = `
+        <div>File Asli: ${escapeHtml(metaObj.original_filename || 'receipt.webp')} (${Math.round((metaObj.original_size_bytes || 0)/1024)} KB)</div>
+        <div>Waktu HP: ${metaObj.device_last_modified || '-'}</div>
+        <div>Waktu Server: ${p.created_at}</div>
+        <div>IP Pengunggah: ${escapeHtml(metaObj.client_ip || '-')}</div>
+        <div>User Agent: ${escapeHtml(metaObj.user_agent || '-')}</div>
+      `;
+
+      // Action buttons in modal
+      const btnApprove = document.getElementById('btn-modal-approve');
+      const btnReject = document.getElementById('btn-modal-reject');
+      if (p.status === 'APPROVED') {
+        btnApprove.style.display = 'none';
+        btnReject.style.display = 'none';
+      } else {
+        btnApprove.style.display = '';
+        btnReject.style.display = '';
+        btnApprove.onclick = () => {
+          quickApproveProof(p.id);
+          closeProofModal();
+        };
+        btnReject.onclick = () => {
+          quickRejectProof(p.id);
+          closeProofModal();
+        };
+      }
+
+      // Draw Image to Canvas
+      originalImageEl = new Image();
+      originalImageEl.onload = () => {
+        proofCanvas.width = originalImageEl.naturalWidth || 600;
+        proofCanvas.height = originalImageEl.naturalHeight || 800;
+        const ctx = proofCanvas.getContext('2d');
+        ctx.drawImage(originalImageEl, 0, 0);
+      };
+      originalImageEl.src = p.image_url;
+
+      document.getElementById('modal-proof').style.display = 'flex';
+    };
+
+    function closeProofModal() {
+      document.getElementById('modal-proof').style.display = 'none';
+      activeProof = null;
+    }
+    document.getElementById('btn-close-proof-modal').onclick = closeProofModal;
+    document.getElementById('btn-modal-cancel').onclick = closeProofModal;
+
+    // Filter Buttons: Normal vs Sharpening
+    document.getElementById('btn-filter-normal').onclick = () => {
+      if (!originalImageEl) return;
+      const ctx = proofCanvas.getContext('2d');
+      ctx.drawImage(originalImageEl, 0, 0);
+    };
+
+    document.getElementById('btn-filter-sharp').onclick = () => {
+      if (!originalImageEl) return;
+      const ctx = proofCanvas.getContext('2d');
+      ctx.drawImage(originalImageEl, 0, 0);
+      const imgData = ctx.getImageData(0, 0, proofCanvas.width, proofCanvas.height);
+      const d = imgData.data;
+
+      // Adaptive text sharpening & binarization for blurry low-light receipts
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i+1], b = d[i+2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        const enhanced = lum > 140 ? Math.min(255, lum * 1.2) : Math.max(0, lum * 0.65);
+        d[i] = enhanced;
+        d[i+1] = enhanced;
+        d[i+2] = enhanced;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    };
+
+    window.quickApproveProof = async (proofId) => {
+      if (!confirm(`Setujui bukti transfer #${proofId} dan aktifkan lisensi toko?`)) return;
+      try {
+        const res = await fetch(`/api/ceo/proofs/${proofId}/approve`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal menyetujui');
+        alert(d.message || 'Bukti transfer disetujui');
+        loadAllData();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    window.quickRejectProof = async (proofId) => {
+      const reason = prompt('Masukkan alasan penolakan bukti transfer:', 'Bukti transfer tidak valid atau dana belum masuk');
+      if (reason === null) return;
+      try {
+        const res = await fetch(`/api/ceo/proofs/${proofId}/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ceoToken}`,
+          },
+          body: JSON.stringify({ reason }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal menolak');
+        alert(d.message || 'Bukti transfer ditolak');
+        loadAllData();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    // 2. Load Tenants
     async function loadTenants() {
       const tbody = document.getElementById('tenants-tbody');
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Memuat data radar toko...</td></tr>';
-      
       try {
         const res = await fetch('/api/ceo/tenants', {
-          headers: { 
-            'Authorization': 'Bearer ' + ceoToken,
-            'x-ceo-pin': CEO_PIN
-          }
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
         });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
-
-        tenantsData = data.tenants || [];
-        
-        // Update stats
-        document.getElementById('stat-total').textContent = data.summary.total_stores || tenantsData.length;
-        document.getElementById('stat-active').textContent = data.summary.active_stores || 0;
-        document.getElementById('stat-warning').textContent = data.summary.near_expiry_stores || 0;
-        document.getElementById('stat-expired').textContent = data.summary.expired_stores || 0;
-        document.getElementById('tenants-count-badge').textContent = `${tenantsData.length} Toko`;
-
-        renderTenantsTable(tenantsData);
+        const d = await res.json();
+        tenantsList = d.tenants || [];
+        renderTenantsTable(tenantsList);
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 20px;">Gagal memuat radar toko: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:var(--danger); text-align:center; padding:16px;">Gagal memuat toko: ${err.message}</td></tr>`;
       }
     }
 
     function renderTenantsTable(list) {
       const tbody = document.getElementById('tenants-tbody');
       if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Tidak ada toko yang cocok dengan pencarian.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">Tidak ada toko terdaftar.</td></tr>';
         return;
       }
 
       tbody.innerHTML = list.map(t => {
-        const startStr = t.subscription_start ? new Date(t.subscription_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
-        const endStr = t.subscription_until ? new Date(t.subscription_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+        let badge = '<span class="badge badge-success">Aktif</span>';
+        if (t.is_expired) badge = '<span class="badge badge-danger">Kadaluarsa</span>';
+        else if (t.is_near_expiry) badge = '<span class="badge badge-warning">Segera Habis</span>';
 
-        let badgeClass = 'badge-active';
-        if (t.badge === 'warning') badgeClass = 'badge-warning';
-        if (t.badge === 'expired') badgeClass = 'badge-expired';
-        if (t.badge === 'unknown') badgeClass = 'badge-gray';
-
-        const isProtected = t.id === 27;
+        const startDate = t.subscription_start ? new Date(t.subscription_start).toLocaleDateString('id-ID') : '-';
+        const endDate = t.subscription_until ? new Date(t.subscription_until).toLocaleDateString('id-ID') : '-';
+        const isPapaGanteng = t.id === 27;
 
         return `
           <tr>
-            <td class="mono font-bold" style="color: var(--text-muted);">#${t.id}</td>
-            <td>
-              <span class="store-name">${escapeHtml(t.name)}</span>
-              <span class="store-slug">slug: ${escapeHtml(t.slug || '-')}</span>
-            </td>
-            <td>${startStr}</td>
-            <td><strong style="color: #fff;">${endStr}</strong></td>
-            <td>
-              <span class="badge ${badgeClass}">${t.badgeLabel}</span>
-            </td>
-            <td>
-              <span style="font-size: 0.8rem; text-transform: uppercase;">${t.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
-            </td>
-            <td class="mono" style="font-size: 0.78rem; color: var(--info);">${escapeHtml(t.license_code || '-')}</td>
-            <td style="text-align: right; white-space: nowrap;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="openExtendModal(${t.id}, '${escapeHtml(t.name)}')">
-                Perpanjang
-              </button>
-              ${isProtected ? '' : `
-                <button type="button" class="btn btn-danger btn-sm" onclick="deleteTenant(${t.id}, '${escapeHtml(t.name)}')">
-                  Hapus
-                </button>
-              `}
+            <td class="mono">#${t.id}</td>
+            <td style="font-weight:600;">${escapeHtml(t.name)}</td>
+            <td>${startDate}</td>
+            <td>${endDate}</td>
+            <td class="mono font-bold">${t.days_remaining !== null ? t.days_remaining + ' hari' : '-'}</td>
+            <td>${badge}</td>
+            <td class="mono" style="font-size:0.75rem;">${escapeHtml(t.license_code || '-')}</td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openExtendModal(${t.id}, '${escapeHtml(t.name)}')">Perpanjang</button>
+              ${!isPapaGanteng ? `
+                <button type="button" class="btn btn-danger btn-sm" style="margin-left:4px;" onclick="deleteTenant(${t.id}, '${escapeHtml(t.name)}')">Hapus</button>
+              ` : ''}
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    // Filter Search
-    document.getElementById('search-store').addEventListener('input', (e) => {
+    document.getElementById('tenant-search').oninput = (e) => {
       const q = e.target.value.toLowerCase().trim();
-      const filtered = tenantsData.filter(t => 
-        (t.name && t.name.toLowerCase().includes(q)) || 
-        (t.slug && t.slug.toLowerCase().includes(q)) ||
-        (t.license_code && t.license_code.toLowerCase().includes(q))
-      );
+      const filtered = tenantsList.filter(t => t.name.toLowerCase().includes(q) || String(t.id).includes(q));
       renderTenantsTable(filtered);
-    });
+    };
 
-    // Durasi Form Toggle
-    document.getElementById('gen-duration').addEventListener('change', (e) => {
-      const wrap = document.getElementById('custom-duration-wrap');
-      wrap.style.display = e.target.value === 'custom' ? 'flex' : 'none';
-    });
+    window.openExtendModal = (id, name) => {
+      activeTenantToExtend = id;
+      document.getElementById('extend-store-desc').textContent = `Perpanjang masa aktif untuk: ${name}`;
+      document.getElementById('modal-extend').style.display = 'flex';
+    };
+    function closeExtendModal() {
+      document.getElementById('modal-extend').style.display = 'none';
+      activeTenantToExtend = null;
+    }
+    document.getElementById('btn-close-extend-modal').onclick = closeExtendModal;
+    document.getElementById('btn-cancel-extend').onclick = closeExtendModal;
 
-    // Generate License Code
-    document.getElementById('gen-code-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const durationVal = document.getElementById('gen-duration').value;
-      let durationDays = parseInt(durationVal, 10);
-      if (durationVal === 'custom') {
-        durationDays = parseInt(document.getElementById('gen-custom-days').value, 10);
+    document.getElementById('btn-confirm-extend').onclick = async () => {
+      if (!activeTenantToExtend) return;
+      const days = parseInt(document.getElementById('extend-days-input').value, 10) || 30;
+      try {
+        const res = await fetch(`/api/ceo/tenants/${activeTenantToExtend}/extend`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ceoToken}`,
+          },
+          body: JSON.stringify({ days }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal memperpanjang');
+        alert(d.message || 'Masa aktif diperpanjang');
+        closeExtendModal();
+        loadTenants();
+      } catch (err) {
+        alert(err.message);
       }
-      const count = parseInt(document.getElementById('gen-count').value, 10);
+    };
+
+    window.deleteTenant = async (id, name) => {
+      if (!confirm(`Hapus toko "${name}" beserta seluruh datanya? Tindakan ini tidak dapat dibatalkan.`)) return;
+      try {
+        const res = await fetch(`/api/ceo/tenants/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal menghapus');
+        alert(d.message || 'Toko dihapus');
+        loadTenants();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    // 3. Generator Kode Lisensi
+    document.getElementById('gen-duration').onchange = (e) => {
+      document.getElementById('custom-days-group').style.display = e.target.value === 'custom' ? 'block' : 'none';
+    };
+
+    document.getElementById('form-gen-code').onsubmit = async (e) => {
+      e.preventDefault();
+      const durType = document.getElementById('gen-duration').value;
+      let durationDays = parseInt(durType, 10);
+      if (durType === 'custom') {
+        durationDays = parseInt(document.getElementById('gen-custom-days').value, 10) || 30;
+      }
+      const count = parseInt(document.getElementById('gen-count').value, 10) || 1;
       const notes = document.getElementById('gen-notes').value.trim();
 
-      const btn = document.getElementById('btn-gen-code');
+      const btn = document.getElementById('btn-submit-gen');
       btn.disabled = true;
-      btn.textContent = 'Membuat Kode...';
+      btn.textContent = 'Membuat...';
 
       try {
         const res = await fetch('/api/ceo/license-codes/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + ceoToken,
-            'x-ceo-pin': CEO_PIN
+            'Authorization': `Bearer ${ceoToken}`,
           },
-          body: JSON.stringify({
-            duration_days: durationDays,
-            count: count,
-            notes: notes
-          })
+          body: JSON.stringify({ duration_days: durationDays, count, notes }),
         });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal membuat kode');
 
-        const resWrap = document.getElementById('gen-results');
-        const listWrap = document.getElementById('gen-codes-list');
-        resWrap.style.display = 'block';
-
-        listWrap.innerHTML = data.codes.map(c => `
-          <div class="generated-card">
-            <div>
-              <div class="generated-code">${c.code}</div>
-              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
-                Masa Aktif: ${c.duration_days} Hari · ${notes ? escapeHtml(notes) : 'Lisensi Resmi Sivilize'}
-              </div>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="copyText('${c.code}', this)">
-                Salin Kode
-              </button>
-              <a href="${c.whatsapp_share_url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="background:#25D366; color:#000;">
-                Kirim WA
-              </a>
-            </div>
+        const out = document.getElementById('gen-codes-container');
+        out.innerHTML = (d.codes || []).map(c => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border:1px solid var(--border); padding:8px 12px; border-radius:4px;">
+            <span class="mono" style="font-weight:700;">${c.code}</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="copyText('${c.code}', this)">Salin</button>
           </div>
         `).join('');
-
+        document.getElementById('gen-output').style.display = 'block';
         loadCodes();
       } catch (err) {
-        alert('Gagal membuat kode: ' + err.message);
+        alert(err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Buat Kode Lisensi Sekarang';
+        btn.textContent = 'Generate Kode';
       }
-    });
+    };
 
-    // Load License History
+    window.copyText = (text, btn) => {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Tersalin!';
+        setTimeout(() => btn.textContent = orig, 1500);
+      });
+    };
+
+    // 4. Load Codes
     async function loadCodes() {
       const tbody = document.getElementById('codes-tbody');
       try {
         const res = await fetch('/api/ceo/license-codes', {
-          headers: { 
-            'Authorization': 'Bearer ' + ceoToken,
-            'x-ceo-pin': CEO_PIN
-          }
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
         });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
-
-        const list = data.codes || [];
-        if (list.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Belum ada riwayat kode lisensi.</td></tr>';
+        const d = await res.json();
+        const codes = d.codes || [];
+        if (codes.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">Belum ada riwayat kode.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = list.map(c => {
-          const isUsed = !!c.used_at;
-          const createdStr = new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-          const usedStr = c.used_at ? new Date(c.used_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+        tbody.innerHTML = codes.map(c => {
+          const used = !!c.used_at;
+          const statusBadge = used ? '<span class="badge badge-neutral">Sudah Digunakan</span>' : '<span class="badge badge-success">Tersedia</span>';
+          const createdDate = c.created_at ? new Date(c.created_at).toLocaleDateString('id-ID') : '-';
 
           return `
             <tr>
-              <td class="mono font-bold" style="color: var(--primary);">${c.code}</td>
+              <td class="mono font-bold">${c.code}</td>
               <td>${c.duration_days} Hari</td>
-              <td>${createdStr}</td>
-              <td>
-                <span class="badge ${isUsed ? 'badge-gray' : 'badge-active'}">
-                  ${isUsed ? 'Sudah Digunakan' : 'Tersedia'}
-                </span>
-              </td>
-              <td>${isUsed ? (escapeHtml(c.used_by_tenant_name || '-') + ` (${usedStr})`) : '-'}</td>
-              <td style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(c.notes || '-')}</td>
+              <td>${createdDate}</td>
+              <td>${statusBadge}</td>
+              <td>${escapeHtml(c.used_by_tenant_name || '-')}</td>
+              <td style="color:var(--text-muted);">${escapeHtml(c.notes || '-')}</td>
             </tr>
           `;
         }).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Gagal: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger); text-align:center; padding:16px;">Gagal memuat kode: ${err.message}</td></tr>`;
       }
     }
-
-    // Modal Extend Functions
-    window.openExtendModal = function(id, name) {
-      activeTenantForExtend = id;
-      document.getElementById('modal-extend-title').textContent = `Perpanjang Toko: ${name}`;
-      document.getElementById('modal-extend').classList.add('open');
-    };
-
-    document.getElementById('btn-cancel-extend').addEventListener('click', () => {
-      document.getElementById('modal-extend').classList.remove('open');
-      activeTenantForExtend = null;
-    });
-
-    document.getElementById('ext-days-select').addEventListener('change', (e) => {
-      document.getElementById('ext-date-wrap').style.display = e.target.value === 'custom' ? 'block' : 'none';
-    });
-
-    document.getElementById('btn-confirm-extend').addEventListener('click', async () => {
-      if (!activeTenantForExtend) return;
-      const selectVal = document.getElementById('ext-days-select').value;
-      let body = {};
-      if (selectVal === 'custom') {
-        const dateVal = document.getElementById('ext-specific-date').value;
-        if (!dateVal) {
-          alert('Pilih tanggal spesifik terlebih dahulu');
-          return;
-        }
-        body.until_date = dateVal + ' 23:59:59';
-      } else {
-        body.days = parseInt(selectVal, 10);
-      }
-
-      try {
-        const res = await fetch(`/api/ceo/tenants/${activeTenantForExtend}/extend`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + ceoToken,
-            'x-ceo-pin': CEO_PIN
-          },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
-
-        alert(data.message || 'Masa aktif berhasil diperpanjang');
-        document.getElementById('modal-extend').classList.remove('open');
-        activeTenantForExtend = null;
-        loadTenants();
-      } catch (err) {
-        alert('Gagal: ' + err.message);
-      }
-    });
-
-    // Delete Store Function
-    window.deleteTenant = async function(id, name) {
-      if (!confirm(`Apakah Anda yakin ingin menghapus toko "${name}" (ID #${id}) beserta seluruh datanya? Tindakan ini tidak dapat dibatalkan.`)) {
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/ceo/tenants/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': 'Bearer ' + ceoToken,
-            'x-ceo-pin': CEO_PIN
-          }
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error);
-
-        alert(data.message || 'Toko berhasil dihapus');
-        loadTenants();
-      } catch (err) {
-        alert('Gagal menghapus toko: ' + err.message);
-      }
-    };
-
-    window.copyText = function(text, btn) {
-      navigator.clipboard.writeText(text).then(() => {
-        const oldText = btn.textContent;
-        btn.textContent = 'Tersalin!';
-        setTimeout(() => btn.textContent = oldText, 2000);
-      });
-    };
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -1096,9 +1154,8 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>
 </html>
-

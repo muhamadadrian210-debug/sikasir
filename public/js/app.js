@@ -4800,7 +4800,7 @@ async function loadLicensePanel() {
         <div class="panel" style="padding: 24px; border-radius: var(--radius); border: 1px solid var(--border);">
           <h4 style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700;">Masukkan Kode Lisensi Baru</h4>
           <p style="margin: 0 0 16px 0; font-size: 0.84rem; color: var(--text-muted);">
-            Gunakan kode aktivasi resmi dari WhatsApp admin atau CEO untuk memperpanjang masa aktif toko Anda.
+            Punya kode lisensi resmi berawalan SIV-? Masukkan kode untuk memperpanjang toko seketika:
           </p>
 
           <form id="form-redeem-license" style="display: flex; flex-direction: column; gap: 12px;">
@@ -4820,15 +4820,74 @@ async function loadLicensePanel() {
           </form>
         </div>
 
+        <!-- Section: Perpanjang Otomatis via Upload Bukti Transfer Bank BRI -->
+        <div class="panel" style="padding: 24px; border-radius: var(--radius); border: 1px solid var(--border);">
+          <div style="margin-bottom: 12px;">
+            <h4 style="margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 700;">Konfirmasi Pembayaran Transfer Bank</h4>
+            <p style="margin: 0; font-size: 0.84rem; color: var(--text-muted);">
+              Transfer langsung ke rekening resmi, lalu unggah bukti transfer. Sistem akan mengompresi gambar tanpa mengurangi keterbacaan teks dan langsung masuk ke radar approval CEO tanpa perlu chat WhatsApp manual.
+            </p>
+          </div>
+
+          <!-- Rekening Card -->
+          <div style="background: var(--bg-card); border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Rekening Resmi Founder</div>
+              <div style="font-size: 1.15rem; font-weight: 800; font-family: var(--font-mono); margin-top: 2px;">
+                BRI: 7485 0101 2399 501
+              </div>
+              <div style="font-size: 0.84rem; color: var(--text-muted);">Atas Nama: <strong>Muhamad Adrian</strong></div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-bri">
+              Salin No. Rekening
+            </button>
+          </div>
+
+          <div id="proof-status-banner" style="display: none; margin-bottom: 16px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 0.86rem;"></div>
+
+          <form id="form-upload-proof" style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+              <div>
+                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Pilihan Paket Sewa</label>
+                <select id="proof-package-days" style="width: 100%; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-size: 0.88rem;">
+                  <option value="30" selected>Paket 1 Bulan (30 Hari)</option>
+                  <option value="90">Paket 3 Bulan (90 Hari)</option>
+                  <option value="180">Paket 6 Bulan (180 Hari)</option>
+                  <option value="365">Paket 1 Tahun (365 Hari)</option>
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">File Bukti Transfer</label>
+                <input type="file" id="proof-file-input" accept="image/*" style="width: 100%; padding: 7px; font-size: 0.82rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text);" required />
+              </div>
+            </div>
+
+            <!-- Preview & Compression Info -->
+            <div id="proof-preview-wrap" style="display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">Preview Bukti Transfer:</span>
+                <span id="proof-compression-stat" style="font-size: 0.74rem; font-weight: 700; color: #10B981; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 4px;"></span>
+              </div>
+              <div style="text-align: center; max-height: 240px; overflow: hidden; background: #000; border-radius: 4px;">
+                <img id="proof-preview-img" style="max-height: 240px; max-width: 100%; object-fit: contain;" />
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit-proof" class="btn btn-primary" style="padding: 10px 18px; font-weight: 700; align-self: flex-start;">
+              Kirim Bukti Transfer ke CEO
+            </button>
+          </form>
+        </div>
+
         <!-- Bantuan Billing & WhatsApp -->
         <div class="panel" style="padding: 20px 24px; border-radius: var(--radius); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.04);">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
             <div>
               <div style="font-weight: 800; font-size: 0.96rem; color: #10B981; margin-bottom: 2px;">
-                Belum Punya Kode Lisensi? Hubungi Kami
+                Butuh Bantuan Otorisasi Manual?
               </div>
               <div style="font-size: 0.82rem; color: var(--text-muted);">
-                Layanan perpanjangan dan paket berlangganan SiKasir siap dibantu langsung melalui WhatsApp resmi.
+                Jika mengalami kendala transfer atau membutuhkan aktivasi cepat, silakan hubungi kontak resmi.
               </div>
             </div>
             <a href="${res.support_whatsapp_url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="background: #25D366; color: #042F2E; font-weight: 700; padding: 9px 18px; text-decoration: none; border-radius: 6px;">
@@ -4875,6 +4934,146 @@ async function loadLicensePanel() {
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Terapkan Lisensi';
+        }
+      };
+    }
+
+    // Tombol Salin No Rekening BRI
+    const btnCopyBri = document.getElementById('btn-copy-bri');
+    if (btnCopyBri) {
+      btnCopyBri.onclick = () => {
+        navigator.clipboard.writeText('748501012399501').then(() => {
+          btnCopyBri.textContent = 'Tersalin!';
+          setTimeout(() => btnCopyBri.textContent = 'Salin No. Rekening', 1500);
+        });
+      };
+    }
+
+    // Cek Status Bukti Transfer Terakhir
+    try {
+      const proofRes = await api('/license/proof-status');
+      const pBanner = document.getElementById('proof-status-banner');
+      if (pBanner && proofRes?.proof) {
+        const pr = proofRes.proof;
+        pBanner.style.display = 'block';
+        if (pr.status === 'PENDING') {
+          pBanner.style.background = 'rgba(56, 189, 248, 0.12)';
+          pBanner.style.color = '#0284C7';
+          pBanner.style.border = '1px solid rgba(2, 132, 199, 0.3)';
+          pBanner.innerHTML = `<strong>Bukti Transfer Terkirim (#${pr.id}):</strong> Sedang dalam antrean verifikasi CEO. Lisensi toko Anda akan otomatis diperpanjang setelah disetujui.`;
+        } else if (pr.status === 'APPROVED') {
+          pBanner.style.background = 'rgba(16, 185, 129, 0.12)';
+          pBanner.style.color = '#10B981';
+          pBanner.style.border = '1px solid #10B981';
+          pBanner.innerHTML = `<strong>Bukti Transfer Disetujui:</strong> Masa aktif toko Anda telah berhasil diperpanjang.`;
+        } else if (pr.status === 'REJECTED') {
+          pBanner.style.background = 'rgba(239, 68, 68, 0.12)';
+          pBanner.style.color = '#EF4444';
+          pBanner.style.border = '1px solid #EF4444';
+          pBanner.innerHTML = `<strong>Bukti Transfer Ditolak:</strong> ${escapeHtml(pr.rejection_reason || 'Bukti transfer tidak valid atau dana belum masuk')}. Silakan periksa kembali dan unggah ulang bukti yang benar.`;
+        }
+      }
+    } catch {}
+
+    // Handle File Input: Client-side Ultra-Efficient WebP Compression & Metadata Extraction
+    let compressedImageData = null;
+    let extractedFileMeta = {};
+    const fileInput = document.getElementById('proof-file-input');
+    const previewWrap = document.getElementById('proof-preview-wrap');
+    const previewImg = document.getElementById('proof-preview-img');
+    const statEl = document.getElementById('proof-compression-stat');
+
+    if (fileInput) {
+      fileInput.onchange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 1. Ekstrak Metadata Permanen Asli dari HP/Perangkat SEBELUM Kompresi
+        extractedFileMeta = {
+          original_filename: file.name,
+          original_size_bytes: file.size,
+          original_mime_type: file.type,
+          device_last_modified: new Date(file.lastModified).toISOString(),
+          client_timestamp: new Date().toISOString(),
+          user_agent: navigator.userAgent
+        };
+
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          const img = new Image();
+          img.onload = () => {
+            // 2. Client-side Canvas WebP Compression (Max 1600px width/height, 85% quality)
+            const canvas = document.createElement('canvas');
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            const maxDim = 1600;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            let dataUrl = canvas.toDataURL('image/webp', 0.85);
+            if (!dataUrl.startsWith('data:image/webp')) {
+              dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            }
+            compressedImageData = dataUrl;
+
+            const base64Len = dataUrl.length - (dataUrl.indexOf(',') + 1);
+            const compressedBytes = Math.round((base64Len * 3) / 4);
+            const origKb = Math.round(file.size / 1024);
+            const compKb = Math.round(compressedBytes / 1024);
+            const savingPct = Math.max(0, Math.round((1 - compressedBytes / file.size) * 100));
+
+            statEl.textContent = `Kompresi: ${origKb} KB → ${compKb} KB (Hemat ${savingPct}%, Teks Tetap Tajam)`;
+            previewImg.src = dataUrl;
+            previewWrap.style.display = 'block';
+          };
+          img.src = re.target.result;
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+
+    // Submit Bukti Transfer Form
+    const formUploadProof = document.getElementById('form-upload-proof');
+    if (formUploadProof) {
+      formUploadProof.onsubmit = async (e) => {
+        e.preventDefault();
+        if (!compressedImageData) {
+          alert('Silakan pilih file bukti transfer terlebih dahulu.');
+          return;
+        }
+
+        const btnSubmit = document.getElementById('btn-submit-proof');
+        const pkgDays = document.getElementById('proof-package-days')?.value || '30';
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Mengirim Bukti Transfer...';
+
+        try {
+          const upRes = await api('/license/upload-proof', {
+            method: 'POST',
+            body: {
+              image_data: compressedImageData,
+              package_duration_days: parseInt(pkgDays, 10),
+              raw_metadata: extractedFileMeta
+            }
+          });
+
+          alert(upRes.message || 'Bukti transfer berhasil dikirim ke CEO.');
+          loadLicensePanel();
+        } catch (err) {
+          alert('Gagal mengirim bukti transfer: ' + err.message);
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Kirim Bukti Transfer ke CEO';
         }
       };
     }

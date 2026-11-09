@@ -324,5 +324,143 @@ router.get('/license-codes', ceoAuthMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/ceo/proofs
+ * Mengambil antrean bukti transfer pembayaran toko
+ */
+router.get('/proofs', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT 
+        id,
+        tenant_id,
+        store_name,
+        sender_name,
+        sender_bank,
+        target_account,
+        target_name,
+        target_bank,
+        transfer_amount,
+        transfer_time,
+        raw_metadata,
+        ai_verification,
+        ai_status,
+        status,
+        image_url,
+        package_duration_days,
+        rejection_reason,
+        approved_at,
+        created_at
+      FROM payment_proofs
+      ORDER BY 
+        CASE WHEN status = 'PENDING' THEN 0 ELSE 1 END,
+        id DESC
+      LIMIT 100
+    `);
+
+    res.json({
+      success: true,
+      proofs: rows,
+    });
+  } catch (err) {
+    console.error('[ceo-radar] Error fetch payment proofs:', err);
+    res.status(500).json({ error: 'Gagal mengambil antrean bukti transfer: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/ceo/proofs/:id/approve
+ * Menyetujui bukti transfer: langsung perpanjang masa aktif toko & generate lisensi
+ */
+router.post('/proofs/:id/approve', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const proofId = parseInt(req.params.id, 10);
+    const [rows] = await pool.execute('SELECT * FROM payment_proofs WHERE id = ? LIMIT 1', [proofId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Bukti transfer tidak ditemukan' });
+    }
+    const proof = rows[0];
+    if (proof.status === 'APPROVED') {
+      return res.status(400).json({ error: 'Bukti transfer ini sudah disetujui sebelumnya.' });
+    }
+
+    const durationDays = proof.package_duration_days || 30;
+    const cleanRand = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const newLicenseCode = `SIV-${durationDays}D-${cleanRand}`;
+
+    // Perpanjang masa aktif toko
+    await pool.execute(`
+      UPDATE tenants 
+      SET 
+        subscription_until = CASE 
+          WHEN subscription_until IS NULL OR subscription_until < NOW() 
+            THEN DATE_ADD(NOW(), INTERVAL ? DAY)
+          ELSE DATE_ADD(subscription_until, INTERVAL ? DAY)
+        END,
+        license_code = ?,
+        status = 'active'
+      WHERE id = ?
+    `, [durationDays, newLicenseCode, proof.tenant_id]);
+
+    // Update status bukti transfer
+    await pool.execute(`
+      UPDATE payment_proofs 
+      SET 
+        status = 'APPROVED', 
+        approved_at = NOW() 
+      WHERE id = ?
+    `, [proofId]);
+
+    // Catat ke license_codes
+    try {
+      await pool.execute(`
+        INSERT INTO license_codes (code, duration_days, created_at, used_at, used_by_tenant_id, notes) 
+        VALUES (?, ?, NOW(), NOW(), ?, ?)
+      `, [newLicenseCode, durationDays, proof.tenant_id, `Aktivasi bukti transfer #${proofId} (${proof.store_name})`]);
+    } catch {}
+
+    res.json({
+      success: true,
+      message: `Bukti transfer #${proofId} disetujui. Toko ${proof.store_name} diperpanjang +${durationDays} hari.`,
+      license_code: newLicenseCode,
+    });
+  } catch (err) {
+    console.error('[ceo-radar] Error approving proof:', err);
+    res.status(500).json({ error: 'Gagal menyetujui bukti transfer: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/ceo/proofs/:id/reject
+ * Menolak bukti transfer yang tidak valid / tidak sesuai
+ */
+router.post('/proofs/:id/reject', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const proofId = parseInt(req.params.id, 10);
+    const { reason = 'Bukti transfer tidak valid atau dana belum masuk' } = req.body || {};
+
+    const [rows] = await pool.execute('SELECT id, status FROM payment_proofs WHERE id = ? LIMIT 1', [proofId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Bukti transfer tidak ditemukan' });
+    }
+
+    await pool.execute(`
+      UPDATE payment_proofs 
+      SET 
+        status = 'REJECTED', 
+        rejection_reason = ? 
+      WHERE id = ?
+    `, [String(reason).trim(), proofId]);
+
+    res.json({
+      success: true,
+      message: `Bukti transfer #${proofId} telah ditolak.`,
+    });
+  } catch (err) {
+    console.error('[ceo-radar] Error rejecting proof:', err);
+    res.status(500).json({ error: 'Gagal menolak bukti transfer: ' + err.message });
+  }
+});
+
 module.exports = router;
 

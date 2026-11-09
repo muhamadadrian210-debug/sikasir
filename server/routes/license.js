@@ -317,4 +317,164 @@ router.post('/activate', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/license/proof-status
+ * Mengecek status bukti transfer yang pernah diunggah oleh toko ini
+ */
+router.get('/proof-status', authMiddleware, requireTenant, async (req, res) => {
+  try {
+    const tenantId = req.user.tenant_id;
+    const [rows] = await pool.execute(`
+      SELECT 
+        id, 
+        status, 
+        package_duration_days, 
+        transfer_amount, 
+        ai_status,
+        rejection_reason, 
+        created_at, 
+        approved_at
+      FROM payment_proofs
+      WHERE tenant_id = ?
+      ORDER BY id DESC
+      LIMIT 1
+    `, [tenantId]);
+
+    res.json({
+      success: true,
+      proof: rows.length > 0 ? rows[0] : null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal memeriksa status bukti: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/license/upload-proof
+ * Mengunggah bukti transfer (WebP terkompresi + metadata asli)
+ */
+router.post('/upload-proof', authMiddleware, requireTenant, async (req, res) => {
+  try {
+    const tenantId = req.user.tenant_id;
+    const {
+      image_data,
+      package_duration_days = 30,
+      raw_metadata = {},
+      transfer_amount = 0,
+      sender_name = '',
+      sender_bank = '',
+    } = req.body || {};
+
+    if (!image_data) {
+      return res.status(400).json({ error: 'Gambar bukti transfer wajib disertakan.' });
+    }
+
+    const [tRows] = await pool.execute('SELECT name FROM tenants WHERE id = ? LIMIT 1', [tenantId]);
+    const storeName = tRows.length > 0 ? tRows[0].name : 'Toko Mitra';
+
+    const enrichedMetadata = {
+      ...(typeof raw_metadata === 'object' ? raw_metadata : {}),
+      server_received_at: new Date().toISOString(),
+      client_ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown',
+      uploader_username: req.user.username,
+      tenant_id: tenantId,
+    };
+
+    let aiStatus = 'MANUAL_REVIEW';
+    let aiVerification = {
+      note: 'Menunggu review visual CEO',
+    };
+
+    // Vision AI Quick Inspection jika key tersedia
+    try {
+      const { GoogleGenAI } = require('@google/genai');
+      const apiKey = process.env.GEMINI_API_KEY || (process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',')[0].trim() : null);
+      if (apiKey && image_data.includes('base64,')) {
+        const base64Data = image_data.split('base64,')[1];
+        const mimeMatch = image_data.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'image/webp';
+
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Analisis struk bukti transfer bank ini secara teliti.
+Rekening tujuan yang benar: Bank BRI, No Rek: 7485 0101 2399 501 / 748501012399501, Atas Nama: Muhamad Adrian.
+Jawab HANYA dalam JSON valid tanpa tanda markdown:
+{
+  "target_account_detected": "string",
+  "target_account_matched": true,
+  "target_name_detected": "string",
+  "target_name_matched": true,
+  "transfer_time_detected": "string",
+  "transfer_amount_detected": 0,
+  "tampering_detected": false,
+  "verdict": "MATCHED"
+}`;
+
+        const aiRes = await ai.models.generateContent({
+          model: 'gemini-1.5-flash',
+          contents: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: base64Data,
+              },
+            },
+          ],
+        });
+
+        const rawText = aiRes.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(rawText);
+        aiVerification = parsed;
+        if (parsed.verdict === 'MATCHED' && parsed.target_account_matched && parsed.target_name_matched) {
+          aiStatus = 'AI_MATCHED';
+        } else if (parsed.tampering_detected || parsed.verdict === 'SUSPICIOUS') {
+          aiStatus = 'SUSPICIOUS';
+        }
+      }
+    } catch (aiErr) {
+      console.warn('[AI Vision Proof Check] Skipped / manual fallback:', aiErr.message);
+    }
+
+    const [insertResult] = await pool.execute(`
+      INSERT INTO payment_proofs (
+        tenant_id,
+        store_name,
+        sender_name,
+        sender_bank,
+        target_account,
+        target_name,
+        target_bank,
+        transfer_amount,
+        raw_metadata,
+        ai_verification,
+        ai_status,
+        status,
+        image_url,
+        package_duration_days
+      ) VALUES (?, ?, ?, ?, '748501012399501', 'Muhamad Adrian', 'BRI', ?, ?, ?, ?, 'PENDING', ?, ?)
+    `, [
+      tenantId,
+      storeName,
+      sender_name || 'Pelanggan',
+      sender_bank || 'Bank',
+      transfer_amount || 0,
+      JSON.stringify(enrichedMetadata),
+      JSON.stringify(aiVerification),
+      aiStatus,
+      image_data,
+      parseInt(package_duration_days, 10) || 30
+    ]);
+
+    res.json({
+      success: true,
+      proof_id: insertResult.insertId,
+      ai_status: aiStatus,
+      message: 'Bukti transfer berhasil dikirim. Menunggu persetujuan CEO di dashboard.',
+    });
+  } catch (err) {
+    console.error('[license] Upload proof error:', err);
+    res.status(500).json({ error: 'Gagal mengunggah bukti transfer: ' + err.message });
+  }
+});
+
 module.exports = router;
