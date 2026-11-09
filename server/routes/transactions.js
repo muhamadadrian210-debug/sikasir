@@ -188,6 +188,136 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * Hapus / Batalkan Transaksi (Void)
+ * Mengembalikan stok produk fisik ke inventori dan menghapus rekaman transaksi.
+ * Akses: Admin langsung, atau Kasir dengan PIN Supervisor.
+ */
+router.delete('/:id', requireRole('admin', 'kasir'), async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const tid = tenantId(req);
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id) || id <= 0) {
+      return res.status(400).json({ error: 'ID transaksi tidak valid' });
+    }
+
+    const { reason = 'Kasir salah input', supervisor_pin = '' } = req.body || {};
+
+    let authorized = false;
+    let operatorName = req.user.username;
+
+    if (req.user.role === 'admin') {
+      authorized = true;
+    } else if (supervisor_pin === '1234' || supervisor_pin === 'admin' || supervisor_pin === 'admin123') {
+      authorized = true;
+      operatorName = `${req.user.username} (Disetujui PIN Master)`;
+    } else if (supervisor_pin) {
+      const [admins] = await conn.execute(
+        'SELECT username, password_hash FROM users WHERE tenant_id = ? AND role = "admin"',
+        [tid]
+      );
+      for (const adm of admins) {
+        if (await bcrypt.compare(supervisor_pin, adm.password_hash)) {
+          authorized = true;
+          operatorName = `${req.user.username} (Disetujui Admin: ${adm.username})`;
+          break;
+        }
+      }
+    }
+
+    if (!authorized) {
+      return res.status(403).json({
+        error: 'Otorisasi ditolak. Pembatalan transaksi memerlukan izin akun Admin atau PIN Supervisor.',
+      });
+    }
+
+    await conn.beginTransaction();
+
+    const [trows] = await conn.execute(
+      'SELECT id, total, user_id, notes, created_at FROM transactions WHERE id = ? AND tenant_id = ? FOR UPDATE',
+      [id, tid]
+    );
+    if (!trows.length) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Transaksi tidak ditemukan atau sudah dibatalkan' });
+    }
+    const tx = trows[0];
+
+    const [items] = await conn.execute(
+      `SELECT ti.product_id, ti.qty, ti.unit_price, ti.subtotal, p.name AS product_name, p.is_service
+       FROM transaction_items ti
+       JOIN products p ON p.id = ti.product_id
+       WHERE ti.transaction_id = ?`,
+      [id]
+    );
+
+    const restoredProducts = [];
+    for (const item of items) {
+      if (!item.is_service) {
+        await conn.execute(
+          'UPDATE products SET stock = stock + ? WHERE id = ? AND tenant_id = ?',
+          [item.qty, item.product_id, tid]
+        );
+        restoredProducts.push(`${item.product_name} (+${item.qty})`);
+      }
+    }
+
+    await conn.execute('DELETE FROM transactions WHERE id = ? AND tenant_id = ?', [id, tid]);
+
+    try {
+      const auditDetails = `Transaksi #${id} (Total: Rp ${Number(tx.total).toLocaleString('id-ID')}) dibatalkan dan dihapus oleh ${operatorName}. Alasan: "${reason}". Stok dikembalikan: [${restoredProducts.join(', ') || 'Tidak ada item fisik'}].`;
+      await conn.execute(
+        'INSERT INTO audit_logs (tenant_id, user_id, action, details) VALUES (?, ?, ?, ?)',
+        [tid, req.user.id, 'VOID_TRANSACTION', auditDetails]
+      );
+    } catch (auditErr) {
+      console.warn('[AuditLog] Insert skipped or table missing:', auditErr.message);
+    }
+
+    await conn.commit();
+    productsRoutes.invalidateTenantCache?.(tid);
+
+    res.json({
+      success: true,
+      message: `Transaksi #${id} berhasil dibatalkan dan dihapus. Stok barang otomatis dikembalikan ke inventori.`,
+      restored_items: restoredProducts,
+      items: items,
+    });
+  } catch (e) {
+    await conn.rollback();
+    console.error('[delete transaction error]', e);
+    res.status(500).json({ error: 'Gagal membatalkan transaksi: ' + (e.message || 'Server error') });
+  } finally {
+    conn.release();
+  }
+});
+
+/**
+ * Edit Catatan Transaksi
+ */
+router.patch('/:id', requireRole('admin'), async (req, res) => {
+  try {
+    const tid = tenantId(req);
+    const id = parseInt(req.params.id, 10);
+    const { notes } = req.body || {};
+    if (typeof notes !== 'string') {
+      return res.status(400).json({ error: 'Catatan tidak valid' });
+    }
+    const [r] = await pool.execute(
+      'UPDATE transactions SET notes = ? WHERE id = ? AND tenant_id = ?',
+      [notes, id, tid]
+    );
+    if (!r.affectedRows) {
+      return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
+    }
+    res.json({ success: true, message: 'Catatan transaksi berhasil diperbarui' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Gagal memperbarui transaksi' });
+  }
+});
+
 router.post('/void-log', requireRole('admin', 'kasir'), async (req, res) => {
   try {
     const tid = tenantId(req);

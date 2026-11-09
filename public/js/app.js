@@ -2640,51 +2640,275 @@ async function loadAuditTable() {
   }
 }
 
-/* -------- History -------- */
+/* -------- History & Void Transaction Management -------- */
+function openVoidModal({ txId, total, onSuccess }) {
+  if (document.getElementById('modal-void-tx')) return;
+
+  const user = getUser();
+  const isAdmin = user?.role === 'admin';
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-void-tx';
+  modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(3px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
+  
+  modal.innerHTML = `
+    <div style="background:var(--surface, #FFFFFF); color:var(--text-primary, #0F172A); width:100%; max-width:440px; border-radius:14px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); border:1px solid var(--border, #E2E8F0); overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border, #E2E8F0); display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:6px; background:rgba(220,38,38,0.12); color:var(--danger, #DC2626); display:flex; align-items:center; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </div>
+          <strong style="font-size:1.05rem;">Batalkan Transaksi #${txId}</strong>
+        </div>
+        <button type="button" id="btn-void-x" style="background:none; border:none; font-size:1.4rem; color:var(--text-muted, #94A3B8); cursor:pointer; line-height:1;">&times;</button>
+      </div>
+
+      <div style="padding:20px;">
+        <div style="background:rgba(220,38,38,0.06); border:1px solid rgba(220,38,38,0.2); border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:0.86rem; color:var(--danger, #DC2626);">
+          <strong>Perhatian:</strong> Nilai transaksi <strong>${money(total)}</strong> akan dihapus dari rekap omzet, dan seluruh barang fisik akan <strong>otomatis dikembalikan ke stok toko</strong>.
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="display:block; font-size:0.84rem; font-weight:600; margin-bottom:6px;">Alasan Pembatalan / Salah Input:</label>
+          <select id="void-reason-select" style="width:100%; padding:8px 10px; border:1px solid var(--border, #CBD5E1); border-radius:6px; background:var(--input-bg, #FFFFFF); color:var(--text-primary, #0F172A); font-size:0.88rem;">
+            <option value="Kasir salah input item atau jumlah">Kasir salah input item atau jumlah</option>
+            <option value="Pelanggan batal membeli">Pelanggan batal membeli</option>
+            <option value="Salah metode pembayaran / salah hitung">Salah metode pembayaran / salah hitung</option>
+            <option value="Transaksi ganda (duplikat)">Transaksi ganda (duplikat)</option>
+            <option value="Uji coba sistem kasir">Uji coba sistem kasir</option>
+          </select>
+        </div>
+
+        ${!isAdmin ? `
+        <div style="margin-bottom:14px;">
+          <label style="display:block; font-size:0.84rem; font-weight:600; margin-bottom:6px;">PIN Supervisor / Password Admin:</label>
+          <input type="password" id="void-supervisor-pin" placeholder="Masukkan PIN otorisasi..." style="width:100%; padding:8px 10px; border:1px solid var(--border, #CBD5E1); border-radius:6px; font-size:0.88rem; box-sizing:border-box;" />
+          <small style="color:var(--text-muted, #64748B); font-size:0.75rem; display:block; margin-top:4px;">Kasir memerlukan otorisasi akun Owner/Admin.</small>
+        </div>
+        ` : `
+        <div style="font-size:0.82rem; color:#059669; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          Terotorisasi langsung sebagai Admin (${user?.username || 'Owner'})
+        </div>
+        `}
+      </div>
+
+      <div style="padding:14px 20px; background:var(--bg-subtle, #F8FAFC); border-top:1px solid var(--border, #E2E8F0); display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-void-cancel">Batal</button>
+        <button type="button" class="btn btn-danger btn-sm" id="btn-void-submit" style="background:#DC2626; border-color:#DC2626; color:#FFFFFF; font-weight:700;">
+          Ya, Batalkan &amp; Hapus
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#btn-void-x').onclick = close;
+  modal.querySelector('#btn-void-cancel').onclick = close;
+
+  modal.querySelector('#btn-void-submit').onclick = async () => {
+    const reason = modal.querySelector('#void-reason-select').value;
+    const pin = !isAdmin ? (modal.querySelector('#void-supervisor-pin')?.value || '') : '';
+
+    if (!isAdmin && !pin) {
+      alert('PIN Supervisor / Password Admin wajib diisi');
+      return;
+    }
+
+    const btn = modal.querySelector('#btn-void-submit');
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+
+    try {
+      const res = await api(`/transactions/${txId}`, {
+        method: 'DELETE',
+        body: { reason, supervisor_pin: pin }
+      });
+      close();
+      window.showMinimalNotification({
+        type: 'success',
+        title: 'TRANSAKSI DIBATALKAN',
+        message: res.message || `Transaksi #${txId} berhasil dibatalkan dan stok dikembalikan ke inventori.`
+      });
+      window.dispatchEvent(new CustomEvent('sikasir:product-updated'));
+      if (typeof onSuccess === 'function') onSuccess(res);
+    } catch (err) {
+      alert(err.message || 'Gagal membatalkan transaksi');
+      btn.disabled = false;
+      btn.textContent = 'Ya, Batalkan & Hapus';
+    }
+  };
+}
+
+async function correctTransaction(txId) {
+  try {
+    const d = await api(`/transactions/${txId}`);
+    if (!d || !d.items || !d.items.length) {
+      alert('Data transaksi tidak ditemukan');
+      return;
+    }
+
+    const user = getUser();
+    const isAdmin = user?.role === 'admin';
+
+    const confirmMsg = `KOREKSI TRANSAKSI #${txId}:\n\nTransaksi yang salah input ini (Total: ${money(d.total)}) akan dibatalkan, stok barang dikembalikan ke rak, dan seluruh ${d.items.length} item akan dimuat ke Kasir POS agar Anda bisa memperbaiki kesalahan kasir.\n\nLanjutkan koreksi?`;
+    if (!confirm(confirmMsg)) return;
+
+    let pin = '';
+    if (!isAdmin) {
+      pin = prompt('Masukkan PIN Supervisor / Password Admin untuk otorisasi koreksi:');
+      if (!pin) return;
+    }
+
+    await api(`/transactions/${txId}`, {
+      method: 'DELETE',
+      body: { reason: 'Koreksi Salah Input Kasir', supervisor_pin: pin }
+    });
+
+    cart = d.items.map((it) => ({
+      product_id: it.product_id,
+      barcode: it.barcode,
+      name: it.product_name,
+      sale_price: Number(it.unit_price),
+      qty: Number(it.qty)
+    }));
+
+    showView('pos');
+    renderCart();
+
+    window.showMinimalNotification({
+      type: 'info',
+      title: `KOREKSI TRANSAKSI #${txId}`,
+      message: `${d.items.length} item dimuat ke Kasir POS. Silakan sesuaikan jumlah atau barang yang salah, lalu selesaikan pembayaran ulang.`
+    });
+
+    window.dispatchEvent(new CustomEvent('sikasir:product-updated'));
+  } catch (err) {
+    alert(err.message || 'Gagal memuat koreksi transaksi');
+  }
+}
+
 async function loadHistoryTable() {
   const el = document.getElementById('view-history');
   el.innerHTML = `<div id="hist-wrap"></div>`;
   try {
     const rows = await api('/transactions');
+    const user = getUser();
+    const isAdmin = user?.role === 'admin';
+
     document.getElementById('hist-wrap').innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 style="margin:0; font-size:1.15rem;">Riwayat Transaksi Penjualan</h3>
+          <p style="margin:2px 0 0 0; color:var(--text-muted); font-size:0.84rem;">Daftar transaksi kasir toko. Jika kasir salah input, Anda dapat membatalkan atau mengoreksi transaksi.</p>
+        </div>
+        <div style="font-size:0.82rem; background:rgba(16,185,129,0.1); color:#059669; font-weight:700; padding:4px 10px; border-radius:6px;">
+          Total: ${rows.length} Transaksi
+        </div>
+      </div>
       <div class="table-wrap"><table class="data">
-        <thead><tr><th>ID</th><th>Waktu</th><th>Kasir</th><th>Total</th><th></th></tr></thead>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Waktu</th>
+            <th>Kasir</th>
+            <th>Total</th>
+            <th style="text-align:right;">Aksi</th>
+          </tr>
+        </thead>
         <tbody>
+        ${rows.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada riwayat transaksi tercatat.</td></tr>` : ''}
         ${rows
           .map(
             (r) => `
           <tr>
-            <td class="mono">#${r.id}</td>
+            <td class="mono font-bold">#${r.id}</td>
             <td>${new Date(r.created_at).toLocaleString('id-ID')}</td>
             <td>${r.kasir_name}</td>
-            <td class="mono">${money(r.total)}</td>
-            <td><button type="button" class="btn btn-secondary" data-tx="${r.id}">Detail</button></td>
+            <td class="mono font-bold" style="color:#059669;">${money(r.total)}</td>
+            <td style="white-space:nowrap; text-align:right;">
+              <button type="button" class="btn btn-secondary btn-sm" data-tx="${r.id}" style="padding:0.25rem 0.65rem; font-size:0.78rem;">Detail</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-correct-tx="${r.id}" style="padding:0.25rem 0.65rem; font-size:0.78rem; color:#0284c7; border-color:rgba(2,132,199,0.3); margin-left:4px;" title="Koreksi Salah Input & Muat ke Keranjang Kasir">Koreksi</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-void-tx="${r.id}" data-tx-total="${r.total}" style="padding:0.25rem 0.65rem; font-size:0.78rem; color:var(--danger, #DC2626); border-color:rgba(220,38,38,0.3); margin-left:4px;" title="Hapus & Batalkan Transaksi (Kembalikan Stok)">Hapus (Void)</button>
+            </td>
           </tr>`
           )
           .join('')}
         </tbody>
       </table></div>
       <div id="hist-detail"></div>`;
+
     el.querySelectorAll('[data-tx]').forEach((b) => {
       b.onclick = async () => {
         const d = await api(`/transactions/${b.dataset.tx}`);
         document.getElementById('hist-detail').innerHTML = `
-          <div class="panel mt-1">
-            <h4>Transaksi #${d.id}</h4>
-            <p>Total ${money(d.total)} · Bayar ${money(d.paid)} · Kembali ${money(d.change_amount)}</p>
+          <div class="panel mt-1" style="border-top:2px solid #10b981;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+              <div>
+                <h4 style="margin:0 0 4px 0; font-size:1.1rem;">Rincian Transaksi #${d.id}</h4>
+                <p style="margin:0; font-size:0.86rem; color:var(--text-muted);">
+                  Kasir: <strong>${d.kasir_name}</strong> · Waktu: ${new Date(d.created_at).toLocaleString('id-ID')}
+                </p>
+                <p style="margin:4px 0 0 0; font-size:0.92rem; font-weight:700;">
+                  Total ${money(d.total)} · Bayar ${money(d.paid)} · Kembali ${money(d.change_amount)}
+                </p>
+              </div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-detail-correct-${d.id}" style="color:#0284c7; border-color:rgba(2,132,199,0.4); display:inline-flex; align-items:center; gap:5px; font-weight:600;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Koreksi ke Kasir POS
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-detail-void-${d.id}" style="color:var(--danger, #DC2626); border-color:rgba(220,38,38,0.4); display:inline-flex; align-items:center; gap:5px; font-weight:600;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Hapus (Void)
+                </button>
+              </div>
+            </div>
+
             <div class="table-wrap"><table class="data">
-              <thead><tr><th>Barcode</th><th>Nama</th><th>Qty</th><th>Subtotal</th></tr></thead>
+              <thead><tr><th>Barcode</th><th>Nama Produk</th><th>Qty</th><th>Subtotal</th></tr></thead>
               <tbody>
               ${d.items
                 .map(
                   (i) =>
-                    `<tr><td class="mono">${i.barcode}</td><td>${i.product_name}</td><td>${i.qty}</td><td class="mono">${money(i.subtotal)}</td></tr>`
+                    `<tr><td class="mono">${i.barcode}</td><td>${i.product_name}</td><td><strong>${i.qty}</strong></td><td class="mono font-bold">${money(i.subtotal)}</td></tr>`
                 )
                 .join('')}
               </tbody>
             </table></div>
           </div>`;
+
+        const btnInnerVoid = document.getElementById(`btn-detail-void-${d.id}`);
+        if (btnInnerVoid) {
+          btnInnerVoid.onclick = () => {
+            openVoidModal({
+              txId: d.id,
+              total: d.total,
+              onSuccess: () => loadHistoryTable()
+            });
+          };
+        }
+        const btnInnerCorrect = document.getElementById(`btn-detail-correct-${d.id}`);
+        if (btnInnerCorrect) {
+          btnInnerCorrect.onclick = () => correctTransaction(d.id);
+        }
       };
+    });
+
+    el.querySelectorAll('[data-void-tx]').forEach((b) => {
+      b.onclick = () => {
+        openVoidModal({
+          txId: b.dataset.voidTx,
+          total: b.dataset.txTotal,
+          onSuccess: () => loadHistoryTable()
+        });
+      };
+    });
+
+    el.querySelectorAll('[data-correct-tx]').forEach((b) => {
+      b.onclick = () => correctTransaction(b.dataset.correctTx);
     });
   } catch (e) {
     document.getElementById('hist-wrap').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
@@ -3181,7 +3405,7 @@ async function init() {
     btnInstall.onclick = () => window.__installPWA?.();
   }
 
-  // Hardware back button — intercept popstate so Android back doesn't exit app
+  // Hardware back button: intercept popstate so Android back does not exit app
   history.pushState({ view: start }, '');
   window.addEventListener('popstate', (e) => {
     // If scan modal is open, close it
@@ -3205,6 +3429,101 @@ async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
+
+  // Cek dan tampilkan pemberitahuan pembaruan aplikasi otomatis
+  checkAppUpdateNotification();
+}
+
+/* -------- In-App Update Notifier System -------- */
+async function checkAppUpdateNotification() {
+  try {
+    const res = await fetch('/api/app-version', { cache: 'no-store' });
+    if (!res.ok) return;
+    const info = await res.json();
+    const currentVersion = '3.9.0';
+    const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
+
+    const brandSub = document.querySelector('.sidebar-brand-sub');
+    if (brandSub && !document.getElementById('sidebar-ver-tag')) {
+      const verTag = document.createElement('span');
+      verTag.id = 'sidebar-ver-tag';
+      verTag.style.cssText = 'display:inline-block; margin-left:6px; font-size:0.68rem; font-weight:700; color:#10b981; background:rgba(16,185,129,0.12); padding:1px 6px; border-radius:4px; vertical-align:middle; cursor:pointer;';
+      verTag.textContent = `v${info.version || currentVersion}`;
+      verTag.title = 'Lihat Pembaruan Aplikasi';
+      verTag.onclick = () => showAppUpdateModal(info, true);
+      brandSub.appendChild(verTag);
+    }
+
+    if (notifiedVersion !== info.version) {
+      setTimeout(() => {
+        showAppUpdateModal(info, false);
+      }, 1000);
+    }
+  } catch (err) {
+    console.warn('[Update Check] Skipped:', err.message);
+  }
+}
+
+function showAppUpdateModal(info, force = false) {
+  if (document.getElementById('modal-app-update')) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-app-update';
+  modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+  modal.innerHTML = `
+    <div style="background:var(--surface, #FFFFFF); color:var(--text-primary, #0F172A); width:100%; max-width:480px; border-radius:14px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.25); border:1px solid var(--border, #E2E8F0); overflow:hidden; display:flex; flex-direction:column;">
+      <div style="padding:16px 20px; background:linear-gradient(135deg, #059669 0%, #047857 100%); color:#FFFFFF; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="background:rgba(255,255,255,0.2); width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </div>
+          <div>
+            <div style="font-weight:800; font-size:1.05rem; line-height:1.2;">Pembaruan SiKasir v${info.version}</div>
+            <div style="font-size:0.75rem; opacity:0.9;">Rilis Resmi: ${info.releaseDate || 'Hari Ini'}</div>
+          </div>
+        </div>
+        <button type="button" id="btn-close-update-x" style="background:none; border:none; color:#FFFFFF; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px;">&times;</button>
+      </div>
+
+      <div style="padding:20px; font-size:0.9rem; line-height:1.55; max-height:60vh; overflow-y:auto;">
+        <p style="margin:0 0 12px 0; font-weight:600; color:var(--text-primary, #1E293B);">
+          ${info.notes || 'Pembaruan fitur sistem kasir dan manajemen transaksi:'}
+        </p>
+        <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+          <ul style="margin:0; padding-left:18px; color:var(--text-secondary, #334155); font-size:0.86rem; display:flex; flex-direction:column; gap:6px;">
+            ${(info.features || []).map(f => `<li><strong>${f}</strong></li>`).join('')}
+          </ul>
+        </div>
+        <p style="margin:0; font-size:0.8rem; color:var(--text-muted, #64748B);">
+          Sistem Web, PWA, dan aplikasi kasir Anda telah otomatis diperbarui. Jika Anda memakai file APK Android mandiri, Anda dapat mengunduh APK terbaru di bawah.
+        </p>
+      </div>
+
+      <div style="padding:14px 20px; background:var(--bg-subtle, #F8FAFC); border-top:1px solid var(--border, #E2E8F0); display:flex; gap:10px; justify-content:flex-end; align-items:center;">
+        <a href="${info.apk_url || '/download/apk'}" class="btn btn-primary btn-sm" id="btn-update-download-apk" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh APK Android
+        </a>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-update-dismiss">
+          Saya Mengerti
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => {
+    localStorage.setItem('sikasir_update_notified_v', info.version);
+    modal.remove();
+  };
+
+  modal.querySelector('#btn-close-update-x').onclick = close;
+  modal.querySelector('#btn-update-dismiss').onclick = close;
+  modal.onclick = (e) => {
+    if (e.target === modal) close();
+  };
 }
 
 init();

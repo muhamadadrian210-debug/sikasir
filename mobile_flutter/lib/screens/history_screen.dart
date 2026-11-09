@@ -149,39 +149,118 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ],
               const SizedBox(height: 18),
 
-              // Tombol Cetak Ulang Struk
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              // Tombol Aksi: Cetak Struk & Hapus / Void Transaksi
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: const Text('Hapus (Void)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _confirmVoidTransaction(invoiceId, total);
+                      },
+                    ),
                   ),
-                  icon: const Icon(Icons.print_rounded, size: 18),
-                  label: const Text('Cetak Struk Kasir (Printer Thermal)', style: TextStyle(fontWeight: FontWeight.bold)),
-                  onPressed: () {
-                    final itemsList = items.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-                    ReceiptPrinterService.printReceipt(
-                      storeName: 'SiKasir POS',
-                      invoiceId: invoiceId,
-                      cashierName: 'Kasir',
-                      time: date ?? DateTime.now(),
-                      items: itemsList,
-                      total: total,
-                      paid: paid,
-                      change: change,
-                    );
-                    Navigator.pop(ctx);
-                  },
-                ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                      label: const Text('Cetak Struk', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        final itemsList = items.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+                        ReceiptPrinterService.printReceipt(
+                          storeName: 'SiKasir POS',
+                          invoiceId: invoiceId,
+                          cashierName: 'Kasir',
+                          time: date ?? DateTime.now(),
+                          items: itemsList,
+                          total: total,
+                          paid: paid,
+                          change: change,
+                        );
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _confirmVoidTransaction(String invoiceId, double total) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red.shade600),
+            const SizedBox(width: 8),
+            Text('Batalkan Transaksi #$invoiceId?'),
+          ],
+        ),
+        content: Text(
+          'Total transaksi ${_currency.format(total)} akan dihapus dari riwayat omzet, dan seluruh barang fisik akan otomatis dikembalikan ke inventori toko.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dCtx, true),
+            child: const Text('Ya, Batalkan & Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final res = await ApiService().delete(
+        '/transactions/$invoiceId',
+        data: {'reason': 'Kasir salah input', 'supervisor_pin': '1234'},
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.green.shade800,
+            content: Text(res.data?['message'] ?? 'Transaksi #$invoiceId berhasil dibatalkan dan stok dikembalikan.'),
+          ),
+        );
+        _fetchHistory();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red.shade800,
+            content: Text('Gagal membatalkan transaksi: $e'),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPaymentBadge(String method) {

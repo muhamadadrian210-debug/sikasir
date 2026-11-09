@@ -1,6 +1,6 @@
 <div align="center">
   <img src="public/icons/logo.png" alt="SiKasir Logo" width="120" height="120" style="border-radius: 24px;">
-  <h1>SiKasir v3.7.0 Pro AI Enterprise</h1>
+  <h1>SiKasir v3.9.0 Pro AI Enterprise</h1>
   <p><b>Sistem Point of Sales & Multi-Branch Retail Engine Masa Depan</b></p>
   <p><i>Powered by Clean Native Flutter POS Engine + Express Multi-Tenant Architecture + Gemini AI Copilot</i></p>
 </div>

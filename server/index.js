@@ -83,6 +83,25 @@ app.use('/api/license', licenseRoutes);
 /** Setup admin pertama: tidak butuh auth */
 app.use('/api/setup', setupRoutes);
 
+/** Informasi Versi & Update Notifikasi Resmi SiKasir */
+app.get('/api/app-version', (req, res) => {
+  res.json({
+    version: '3.9.0',
+    versionCode: 390,
+    releaseDate: '2026-11-09',
+    title: 'SiKasir v3.9.0 Pro Update',
+    notes: 'Fitur baru: Hapus / Batalkan Transaksi (Void) & Koreksi Kasir jika salah input, Pengembalian Stok Otomatis, dan Notifikasi Pembaruan Aplikasi.',
+    features: [
+      'Pilihan Hapus / Batalkan Transaksi (Void) jika kasir salah input',
+      'Fitur Koreksi Transaksi (Muat ulang item ke Keranjang Kasir POS)',
+      'Pengembalian Stok Otomatis ke rak inventori saat transaksi dibatalkan',
+      'Proteksi Otorisasi Akun Owner / PIN Supervisor untuk Kasir',
+      'Notifikasi Pembaruan Aplikasi Otomatis'
+    ],
+    apk_url: '/download/apk'
+  });
+});
+
 app.use('/api', apiLimiter);
 app.use('/api', csrfProtection);
 
@@ -104,6 +123,7 @@ app.use('/api/shifts', shiftsRoutes);
 app.get('/download/apk', (req, res) => {
   const fs = require('fs');
   const candidates = [
+    path.join(__dirname, '..', 'SiKasir-v3.9.0.apk'),
     path.join(__dirname, '..', 'public', 'downloads', 'sikasir-pos.apk'),
     path.join(__dirname, '..', 'SiKasir-v3.8.6.apk'),
     path.join(__dirname, '..', 'SiKasir-POS-Mobile.apk'),
