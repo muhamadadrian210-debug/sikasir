@@ -81,7 +81,7 @@ app.use('/api/dine-in', dineInRoutes);
 /** License Activation: Aktivasi Kode Sewa Website Sivilize Ecosystem */
 app.use('/api/license', licenseRoutes);
 
-/** Radar CEO & Lisensi: Akses Khusus Founder PIN 2421204 */
+/** Radar CEO & Lisensi: Akses Khusus Founder PIN 241204 */
 app.use('/api/ceo', ceoRoutes);
 
 /** Setup admin pertama: tidak butuh auth */
@@ -90,10 +90,10 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.3',
-    versionCode: 393,
+    version: '3.9.4',
+    versionCode: 394,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.3 Pro Update',
+    title: 'SiKasir v3.9.4 Pro Update',
     notes: 'Fitur baru: Hapus / Batalkan Transaksi (Void) & Koreksi Kasir jika salah input, Pengembalian Stok Otomatis, dan Notifikasi Pembaruan Aplikasi.',
     features: [
       'Pilihan Hapus / Batalkan Transaksi (Void) jika kasir salah input',

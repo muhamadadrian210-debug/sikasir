@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { pool } = require('../config/db');
 
 const router = express.Router();
-const CEO_PIN = '2421204';
+const CEO_PIN = '241204';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 /**
@@ -39,7 +39,7 @@ function ceoAuthMiddleware(req, res, next) {
 
 /**
  * POST /api/ceo/login
- * Validasi PIN 2421204 dan keluarkan session token CEO
+ * Validasi PIN 241204 dan keluarkan session token CEO
  */
 router.post('/login', (req, res) => {
   const { pin } = req.body || {};
