@@ -20,6 +20,7 @@ import 'screens/multi_outlet_screen.dart';
 import 'screens/kds_screen.dart';
 import 'screens/audit_logs_screen.dart';
 import 'screens/cybersecurity_screen.dart';
+import 'screens/license_screen.dart';
 import 'core/widgets/customer_display_modal.dart';
 
 void main() {
@@ -453,6 +454,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             iconColor: const Color(0xFF059669),
             bgColor: const Color(0xFFD1FAE5),
             onTap: () => _openFeature('Log Audit Admin', const AuditLogsScreen()),
+          ),
+          _HubItem(
+            title: 'Lisensi Key',
+            subtitle: 'Masa aktif langganan & perpanjang',
+            icon: Icons.key_rounded,
+            iconColor: const Color(0xFF10B981),
+            bgColor: const Color(0xFFECFDF5),
+            onTap: () => _openFeature('Lisensi Key Toko', const LicenseScreen()),
           ),
         ]),
         const SizedBox(height: 24),

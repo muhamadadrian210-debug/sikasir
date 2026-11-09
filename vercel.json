@@ -20,6 +20,10 @@
       "dest": "public/index.html"
     },
     {
+      "src": "/ceo",
+      "dest": "public/ceo.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "public/$1"
     }

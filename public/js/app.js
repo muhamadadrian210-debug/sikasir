@@ -24,7 +24,8 @@ const NAV_ICONS = {
   'kasbon-global': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
   users: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   audit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-  cybersecurity: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+  cybersecurity: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  license: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
 };
 
 function initTheme() {
@@ -540,7 +541,8 @@ const NAV_ADMIN = [
   { id: 'users', label: 'Kasir', title: 'Manajemen Kasir',  },
   { id: 'audit', label: 'Log Audit', title: 'Log Audit Admin',  },
   { id: 'history', label: 'Riwayat', title: 'Riwayat Transaksi',  },
-  { id: 'cybersecurity', label: 'Keamanan Toko', title: 'Keamanan Toko',  }
+  { id: 'cybersecurity', label: 'Keamanan Toko', title: 'Keamanan Toko',  },
+  { id: 'license', label: 'Lisensi Key', title: 'Lisensi Key & Masa Aktif Toko',  }
 ];
 
 const NAV_KASIR = [
@@ -553,6 +555,7 @@ const NAV_KASIR = [
 ];
 
 const TITLE_LOOKUP = {
+  license: 'Lisensi Key & Masa Aktif Toko',
   expenses: 'Bayar Nota & Kas Keluar',
   dinein: 'Manajemen Meja & Pesanan QR (Dine-In)',
   kds: 'Layar Dapur & Antrean Koki (Kitchen Display System)',
@@ -756,6 +759,7 @@ function buildSidebar() {
         { id: 'users', label: 'Staf & Pengguna' },
         { id: 'audit', label: 'Log Aktivitas' },
         { id: 'cybersecurity', label: 'Keamanan Toko' },
+        { id: 'license', label: 'Lisensi Key' },
       ]
     }
   ];
@@ -805,6 +809,7 @@ function buildSidebar() {
       if (btn.dataset.view === 'users') loadUsersTable();
       if (btn.dataset.view === 'audit') loadAuditTable();
       if (btn.dataset.view === 'cybersecurity') loadCybersecurityPanel();
+      if (btn.dataset.view === 'license') loadLicensePanel();
     });
   });
 
@@ -4733,3 +4738,192 @@ async function loadKdsOrders() {
 }
 
 
+
+
+async function loadLicensePanel() {
+  const el = document.getElementById('view-license');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:2.5rem; text-align:center; color:var(--text-muted); font-size:0.95rem;">Memuat status lisensi toko...</div>';
+
+  try {
+    const res = await api('/license/status');
+    const startStr = res.subscription_start ? new Date(res.subscription_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+    const endStr = res.subscription_until ? new Date(res.subscription_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belum diatur';
+    const days = res.days_remaining !== null ? Number(res.days_remaining) : '-';
+
+    let badgeColor = '#10B981';
+    let badgeBg = 'rgba(16, 185, 129, 0.12)';
+    let badgeText = `${days} Hari Aktif`;
+
+    if (res.is_expired) {
+      badgeColor = '#EF4444';
+      badgeBg = 'rgba(239, 68, 68, 0.12)';
+      badgeText = 'Masa Aktif Berakhir';
+    } else if (res.is_near_expiry) {
+      badgeColor = '#F59E0B';
+      badgeBg = 'rgba(245, 158, 11, 0.12)';
+      badgeText = `Segera Berakhir (${days} Hari Tersisa)`;
+    }
+
+    el.innerHTML = `
+      <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Status Card -->
+        <div class="panel" style="padding: 24px; border-radius: var(--radius); border: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+            <div>
+              <h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 800;">${escapeHtml(res.store_name)}</h3>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">Paket Sewa &amp; Langganan Cloud SiKasir</div>
+            </div>
+            <span style="background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 0.82rem;">
+              ${badgeText}
+            </span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Mulai Aktif</div>
+              <div style="font-size: 0.95rem; font-weight: 700; margin-top: 2px;">${startStr}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Berakhir Pada</div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #10B981; margin-top: 2px;">${endStr}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Kode Lisensi Aktif</div>
+              <div class="mono" style="font-size: 0.84rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">${escapeHtml(res.license_code || '-')}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Redeem Lisensi -->
+        <div class="panel" style="padding: 24px; border-radius: var(--radius); border: 1px solid var(--border);">
+          <h4 style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700;">Masukkan Kode Lisensi Baru</h4>
+          <p style="margin: 0 0 16px 0; font-size: 0.84rem; color: var(--text-muted);">
+            Gunakan kode aktivasi resmi dari WhatsApp admin atau CEO untuk memperpanjang masa aktif toko Anda.
+          </p>
+
+          <form id="form-redeem-license" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <input 
+                type="text" 
+                id="input-license-code" 
+                placeholder="Contoh: SIV-30D-XXXX-XXXX" 
+                style="flex: 1; min-width: 240px; padding: 10px 14px; font-family: var(--font-mono); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text);" 
+                required 
+              />
+              <button type="submit" id="btn-submit-redeem" class="btn btn-primary" style="padding: 10px 22px; font-weight: 700;">
+                Terapkan Lisensi
+              </button>
+            </div>
+            <div id="redeem-msg" style="display: none; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.86rem;"></div>
+          </form>
+        </div>
+
+        <!-- Bantuan Billing & WhatsApp -->
+        <div class="panel" style="padding: 20px 24px; border-radius: var(--radius); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.04);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="font-weight: 800; font-size: 0.96rem; color: #10B981; margin-bottom: 2px;">
+                Belum Punya Kode Lisensi? Hubungi Kami
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">
+                Layanan perpanjangan dan paket berlangganan SiKasir siap dibantu langsung melalui WhatsApp resmi.
+              </div>
+            </div>
+            <a href="${res.support_whatsapp_url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="background: #25D366; color: #042F2E; font-weight: 700; padding: 9px 18px; text-decoration: none; border-radius: 6px;">
+              Chat WhatsApp (081338219957)
+            </a>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    const form = document.getElementById('form-redeem-license');
+    if (form) {
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const codeInput = document.getElementById('input-license-code');
+        const msgEl = document.getElementById('redeem-msg');
+        const submitBtn = document.getElementById('btn-submit-redeem');
+
+        const code = codeInput.value.trim().toUpperCase();
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Memverifikasi...';
+        msgEl.style.display = 'none';
+
+        try {
+          const redeemRes = await api('/license/redeem', {
+            method: 'POST',
+            body: { code }
+          });
+          msgEl.style.display = 'block';
+          msgEl.style.background = 'rgba(16, 185, 129, 0.15)';
+          msgEl.style.color = '#10B981';
+          msgEl.style.border = '1px solid #10B981';
+          msgEl.textContent = redeemRes.message || 'Lisensi berhasil diperpanjang!';
+          codeInput.value = '';
+          checkLicenseExpiryBanner();
+          setTimeout(() => loadLicensePanel(), 1500);
+        } catch (err) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgEl.style.color = '#EF4444';
+          msgEl.style.border = '1px solid #EF4444';
+          msgEl.textContent = err.message || 'Gagal mengaktifkan kode lisensi.';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Terapkan Lisensi';
+        }
+      };
+    }
+  } catch (e) {
+    el.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--danger);">Gagal memuat status lisensi: ${e.message}</div>`;
+  }
+}
+
+async function checkLicenseExpiryBanner() {
+  try {
+    const res = await api('/license/status');
+    const alertEl = document.getElementById('global-alert');
+    if (!alertEl) return;
+
+    if (res.is_expired) {
+      alertEl.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid #EF4444; color: #EF4444; padding: 12px 18px; border-radius: var(--radius); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <strong>Masa Aktif Lisensi Berakhir:</strong> Toko Anda telah melewati batas masa aktif langganan. Harap perpanjang melalui menu Lisensi Key untuk melanjutkan pencatatan kasir.
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="showView('license'); loadLicensePanel();" style="border-color:#EF4444; color:#EF4444;">
+              Buka Lisensi Key
+            </button>
+            <a href="https://wa.me/6281338219957?text=${encodeURIComponent('Halo Admin SiKasir, saya ingin memperpanjang lisensi toko ' + (res.store_name || ''))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary" style="background:#25D366; color:#042F2E; text-decoration:none;">
+              Chat WhatsApp (081338219957)
+            </a>
+          </div>
+        </div>
+      `;
+    } else if (res.is_near_expiry) {
+      const endStr = res.subscription_until ? new Date(res.subscription_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      alertEl.innerHTML = `
+        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #F59E0B; color: #F59E0B; padding: 12px 18px; border-radius: var(--radius); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <strong>Pemberitahuan Masa Aktif:</strong> Sisa waktu langganan toko Anda tersisa <strong>${res.days_remaining} hari lagi</strong> (berakhir ${endStr}).
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="showView('license'); loadLicensePanel();" style="border-color:#F59E0B; color:#F59E0B;">
+              Perpanjang Sekarang
+            </button>
+            <a href="https://wa.me/6281338219957?text=${encodeURIComponent('Halo Admin SiKasir, saya ingin memperpanjang lisensi toko ' + (res.store_name || ''))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary" style="background:#25D366; color:#042F2E; text-decoration:none;">
+              Chat WhatsApp (081338219957)
+            </a>
+          </div>
+        </div>
+      `;
+    } else {
+      alertEl.innerHTML = '';
+    }
+  } catch {}
+}

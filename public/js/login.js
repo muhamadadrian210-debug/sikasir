@@ -16,7 +16,7 @@ if (localStorage.getItem('sikasir_token')) {
   window.location.href = '/app.html';
 }
 
-// Cek apakah setup sudah dilakukan — HANYA redirect jika server explicitly merespon hasAdmin === false
+// Cek apakah setup sudah dilakukan: HANYA redirect jika server explicitly merespon hasAdmin === false
 (async () => {
   try {
     const res = await fetch('/api/setup/status');
@@ -125,7 +125,37 @@ registerForm.addEventListener('submit', async (e) => {
     if (company_id) localStorage.setItem('sikasir_company_id', company_id);
     const defaultMode = data.user.role === 'admin' ? 'both' : 'kasir';
     localStorage.setItem('sikasir_app_mode', defaultMode);
-    window.location.href = '/app.html';
+
+    const trialNotice = data.trial_notice || 'ini adalah trial 1 bulan untuk digunakan,untuk melanjutkan ini silahkan chat nomor berikut "081338219957"';
+
+    if (modalSuccess && actSuccessMessage) {
+      const modalTitle = modalSuccess.querySelector('h3');
+      if (modalTitle) modalTitle.textContent = 'Pendaftaran Toko Berhasil (Trial 1 Bulan)';
+      
+      const waLink = 'https://wa.me/6281338219957?text=' + encodeURIComponent('Halo Admin SiKasir, saya baru saja mendaftarkan toko ' + full_store_name + ' dan ingin berkonsultasi mengenai aktivasi lisensi.');
+      
+      actSuccessMessage.innerHTML = `
+        <div style="font-size:0.95rem; font-weight:700; color:var(--text-bright); margin-bottom:12px; line-height:1.5;">${trialNotice}</div>
+        <div style="margin-top:14px; margin-bottom:10px;">
+          <a href="${waLink}" 
+             target="_blank" rel="noopener noreferrer" 
+             class="btn btn-secondary btn-block" 
+             style="display:flex; align-items:center; justify-content:center; gap:6px; color:#25D366; border-color:#25D366; text-decoration:none; padding:10px; font-size:0.9rem; font-weight:700;">
+            💬 Hubungi WhatsApp (081338219957)
+          </a>
+        </div>
+      `;
+      modalSuccess.classList.remove('hidden');
+      if (btnProceedDashboard) {
+        btnProceedDashboard.textContent = 'Lanjut Masuk ke Kasir POS';
+        btnProceedDashboard.onclick = () => {
+          window.location.href = '/app.html';
+        };
+      }
+    } else {
+      alert(trialNotice);
+      window.location.href = '/app.html';
+    }
   } catch (err) {
     showAlert(err.message || 'Gagal mendaftar toko');
   }

@@ -80,10 +80,11 @@ router.post('/', async (req, res) => {
     try {
       await conn.beginTransaction();
 
-      // Buat tenant
+      // Buat tenant dengan trial 30 hari otomatis
+      const trialCode = 'SIV-TRIAL-30D-' + Math.floor(1000 + Math.random() * 9000);
       const [tenantIns] = await conn.execute(
-        'INSERT INTO tenants (name, slug) VALUES (?, ?)',
-        [sn, slug]
+        'INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, status) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), ?, \'active\')',
+        [sn, slug, trialCode]
       );
       const tenantId = tenantIns.insertId;
 
@@ -105,11 +106,16 @@ router.post('/', async (req, res) => {
         );
       }
 
+      const trialNotice = 'ini adalah trial 1 bulan untuk digunakan,untuk melanjutkan ini silahkan chat nomor berikut "081338219957"';
       res.status(201).json({
         ok: true,
         message: 'Setup berhasil. Silakan login.',
         tenant: { id: tenantId, name: sn, slug },
         user: { id: userIns.insertId, username: u, role: 'admin' },
+        trial_notice: trialNotice,
+        trial_days: 30,
+        support_phone: '081338219957',
+        support_whatsapp_url: 'https://wa.me/6281338219957?text=' + encodeURIComponent('Halo Admin SiKasir, saya baru saja mendaftarkan toko ' + sn + '. Saya ingin berkonsultasi mengenai paket langganan.')
       });
     } catch (e) {
       await conn.rollback();

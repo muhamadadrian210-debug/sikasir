@@ -30,6 +30,7 @@ const shiftsRoutes = require('./routes/shifts');
 const cdsRoutes = require('./routes/cds');
 const dineInRoutes = require('./routes/dineIn');
 const licenseRoutes = require('./routes/license');
+const ceoRoutes = require('./routes/ceo');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -79,6 +80,9 @@ app.use('/api/dine-in', dineInRoutes);
 
 /** License Activation: Aktivasi Kode Sewa Website Sivilize Ecosystem */
 app.use('/api/license', licenseRoutes);
+
+/** Radar CEO & Lisensi: Akses Khusus Founder PIN 2421204 */
+app.use('/api/ceo', ceoRoutes);
 
 /** Setup admin pertama: tidak butuh auth */
 app.use('/api/setup', setupRoutes);
@@ -137,6 +141,10 @@ app.get('/download/apk', (req, res) => {
     return res.redirect(process.env.APK_DOWNLOAD_URL);
   }
   res.status(404).send('File APK belum tersedia untuk diunduh saat ini.');
+});
+
+app.get('/ceo', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'ceo.html'));
 });
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
