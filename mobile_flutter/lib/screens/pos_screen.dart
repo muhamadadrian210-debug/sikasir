@@ -38,11 +38,27 @@ class _PosScreenState extends State<PosScreen> {
   void initState() {
     super.initState();
     _loadProducts();
+    _checkAppUpdate();
     _paidController.addListener(() {
       setState(() {
         _paidAmount = double.tryParse(_paidController.text.replaceAll(RegExp(r'\D'), '')) ?? 0;
       });
     });
+  }
+
+  Future<void> _checkAppUpdate() async {
+    try {
+      final res = await ApiService().get('/app-version');
+      if (res.statusCode == 200 && mounted) {
+        final data = res.data;
+        final v = data['version']?.toString() ?? '3.9.0';
+        PremiumNotification.showInfo(
+          context,
+          title: 'SiKasir v$v Aktif',
+          message: 'Pembaruan aplikasi siap. Fitur Hapus & Koreksi Transaksi telah aktif tanpa mengganggu pesanan.',
+        );
+      }
+    } catch (_) {}
   }
 
   @override

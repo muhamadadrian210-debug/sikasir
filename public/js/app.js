@@ -892,8 +892,52 @@ function renderPosCatalog(filterText = '') {
   });
 }
 
+/* -------- Cart & Order Persistence (Zero-Loss Reliability) -------- */
+function saveCartState() {
+  try {
+    if (Array.isArray(cart) && cart.length > 0) {
+      localStorage.setItem('sikasir_active_cart', JSON.stringify(cart));
+    } else {
+      localStorage.removeItem('sikasir_active_cart');
+    }
+    if (Array.isArray(heldBills) && heldBills.length > 0) {
+      localStorage.setItem('sikasir_active_held_bills', JSON.stringify(heldBills));
+    } else {
+      localStorage.removeItem('sikasir_active_held_bills');
+    }
+  } catch (e) {
+    // safely ignore
+  }
+}
+
+function restoreCartState() {
+  try {
+    const rawCart = localStorage.getItem('sikasir_active_cart');
+    if (rawCart) {
+      const parsed = JSON.parse(rawCart);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cart = parsed;
+      }
+    }
+    const rawHeld = localStorage.getItem('sikasir_active_held_bills');
+    if (rawHeld) {
+      const parsedHeld = JSON.parse(rawHeld);
+      if (Array.isArray(parsedHeld)) {
+        heldBills = parsedHeld;
+      }
+    }
+  } catch (e) {
+    // safely ignore
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  saveCartState();
+});
+
 function renderCart(newItemName) {
   if (newItemName) window.showScanToast(`Ditambahkan: ${newItemName}`);
+  saveCartState();
   const list = document.getElementById('pos-cart-list');
   if (!list) return;
   
@@ -3372,6 +3416,9 @@ async function init() {
     // Silently ignore category load error
   }
 
+  // Pulihkan keranjang belanja dan antrian pesanan aktif jika ada sesi tersimpan
+  restoreCartState();
+
   const start = getDefaultStartView();
 
   if (start === 'pos') renderPOS();
@@ -3434,14 +3481,29 @@ async function init() {
   checkAppUpdateNotification();
 }
 
-/* -------- In-App Update Notifier System -------- */
+/* -------- In-App Update Notifier & Zero-Loss System -------- */
+let latestAppVersionInfo = null;
+
 async function checkAppUpdateNotification() {
   try {
     const res = await fetch('/api/app-version', { cache: 'no-store' });
     if (!res.ok) return;
     const info = await res.json();
+    latestAppVersionInfo = info;
     const currentVersion = '3.9.0';
     const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
+    const justUpdated = sessionStorage.getItem('sikasir_just_updated');
+
+    if (justUpdated) {
+      sessionStorage.removeItem('sikasir_just_updated');
+      setTimeout(() => {
+        window.showMinimalNotification({
+          type: 'success',
+          title: `SIKASIR v${info.version || currentVersion} AKTIF`,
+          message: 'Pembaruan berhasil diterapkan. Seluruh pesanan aktif Anda tetap aman tersimpan.'
+        });
+      }, 500);
+    }
 
     const brandSub = document.querySelector('.sidebar-brand-sub');
     if (brandSub && !document.getElementById('sidebar-ver-tag')) {
@@ -3450,26 +3512,86 @@ async function checkAppUpdateNotification() {
       verTag.style.cssText = 'display:inline-block; margin-left:6px; font-size:0.68rem; font-weight:700; color:#10b981; background:rgba(16,185,129,0.12); padding:1px 6px; border-radius:4px; vertical-align:middle; cursor:pointer;';
       verTag.textContent = `v${info.version || currentVersion}`;
       verTag.title = 'Lihat Pembaruan Aplikasi';
-      verTag.onclick = () => showAppUpdateModal(info, true);
+      verTag.onclick = () => showAppUpdateModal(info);
       brandSub.appendChild(verTag);
     }
 
+    const topbarPill = document.getElementById('btn-topbar-update');
+    const topbarLabel = document.getElementById('topbar-update-label');
+    if (topbarPill) {
+      topbarPill.style.display = 'inline-flex';
+      if (topbarLabel) topbarLabel.textContent = `Update v${info.version}`;
+      topbarPill.onclick = () => showAppUpdateModal(info);
+    }
+
     if (notifiedVersion !== info.version) {
+      if (Array.isArray(cart) && cart.length > 0) {
+        return;
+      }
       setTimeout(() => {
-        showAppUpdateModal(info, false);
-      }, 1000);
+        showFloatingUpdateBanner(info);
+      }, 1200);
     }
   } catch (err) {
     console.warn('[Update Check] Skipped:', err.message);
   }
 }
 
-function showAppUpdateModal(info, force = false) {
+function applyUpdateSafely() {
+  saveCartState();
+  sessionStorage.setItem('sikasir_just_updated', 'true');
+  if (latestAppVersionInfo?.version) {
+    localStorage.setItem('sikasir_update_notified_v', latestAppVersionInfo.version);
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.update());
+    }).catch(() => {});
+  }
+  window.location.reload();
+}
+
+function showFloatingUpdateBanner(info) {
+  if (document.getElementById('sikasir-floating-update-banner')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'sikasir-floating-update-banner';
+  banner.className = 'sikasir-floating-update-banner';
+  banner.setAttribute('role', 'status');
+
+  banner.innerHTML = `
+    <div class="update-banner-left">
+      <span class="update-banner-badge">v${info.version}</span>
+      <span class="update-banner-msg">Pembaruan SiKasir tersedia. Pesanan aktif Anda tetap aman.</span>
+    </div>
+    <div class="update-banner-right">
+      <button type="button" class="btn-update-apply" id="btn-update-apply-pill">Perbarui</button>
+      <button type="button" class="btn-update-dismiss" id="btn-update-dismiss-pill" aria-label="Tutup">&times;</button>
+    </div>
+  `;
+
+  document.body.appendChild(banner);
+
+  const btnApply = banner.querySelector('#btn-update-apply-pill');
+  if (btnApply) {
+    btnApply.onclick = () => applyUpdateSafely();
+  }
+
+  const btnDismiss = banner.querySelector('#btn-update-dismiss-pill');
+  if (btnDismiss) {
+    btnDismiss.onclick = () => {
+      localStorage.setItem('sikasir_update_notified_v', info.version);
+      banner.remove();
+    };
+  }
+}
+
+function showAppUpdateModal(info) {
   if (document.getElementById('modal-app-update')) return;
 
   const modal = document.createElement('div');
   modal.id = 'modal-app-update';
-  modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
+  modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.2s ease-out;';
 
   modal.innerHTML = `
     <div style="background:var(--surface, #FFFFFF); color:var(--text-primary, #0F172A); width:100%; max-width:480px; border-radius:14px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.25); border:1px solid var(--border, #E2E8F0); overflow:hidden; display:flex; flex-direction:column;">
@@ -3495,18 +3617,20 @@ function showAppUpdateModal(info, force = false) {
             ${(info.features || []).map(f => `<li><strong>${f}</strong></li>`).join('')}
           </ul>
         </div>
-        <p style="margin:0; font-size:0.8rem; color:var(--text-muted, #64748B);">
-          Sistem Web, PWA, dan aplikasi kasir Anda telah otomatis diperbarui. Jika Anda memakai file APK Android mandiri, Anda dapat mengunduh APK terbaru di bawah.
-        </p>
+        <div style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2); border-radius:8px; padding:10px 12px; margin-bottom:10px; font-size:0.8rem; color:#1e40af;">
+          <strong>Garansi Tanpa Gangguan:</strong> Pesanan yang sedang dikerjakan kasir tidak akan hilang. Seluruh item dalam keranjang otomatis tersimpan saat Anda memperbarui aplikasi.
+        </div>
       </div>
 
-      <div style="padding:14px 20px; background:var(--bg-subtle, #F8FAFC); border-top:1px solid var(--border, #E2E8F0); display:flex; gap:10px; justify-content:flex-end; align-items:center;">
-        <a href="${info.apk_url || '/download/apk'}" class="btn btn-primary btn-sm" id="btn-update-download-apk" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Unduh APK Android
+      <div style="padding:14px 20px; background:var(--bg-subtle, #F8FAFC); border-top:1px solid var(--border, #E2E8F0); display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary btn-sm" id="btn-modal-apply-update" style="font-weight:700;">
+          Terapkan Pembaruan
+        </button>
+        <a href="${info.apk_url || '/download/apk'}" class="btn btn-secondary btn-sm" id="btn-update-download-apk" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          Unduh APK
         </a>
         <button type="button" class="btn btn-secondary btn-sm" id="btn-update-dismiss">
-          Saya Mengerti
+          Tutup
         </button>
       </div>
     </div>
@@ -3521,6 +3645,10 @@ function showAppUpdateModal(info, force = false) {
 
   modal.querySelector('#btn-close-update-x').onclick = close;
   modal.querySelector('#btn-update-dismiss').onclick = close;
+  modal.querySelector('#btn-modal-apply-update').onclick = () => {
+    close();
+    applyUpdateSafely();
+  };
   modal.onclick = (e) => {
     if (e.target === modal) close();
   };
