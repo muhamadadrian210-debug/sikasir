@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.7',
-    versionCode: 397,
+    version: '3.9.8',
+    versionCode: 398,
     releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.7 Promo Early Bird 1 Bulan',
-    notes: 'Pemberlakuan promo diskon khusus 1 bulan perdana (Paket 1 Tahun promo Rp 600k dari harga normal Rp 1,2 juta).',
+    title: 'SiKasir v3.9.8 Tarif Resmi & Limit Trial 1 Bulan',
+    notes: 'Pemberlakuan struktur tarif resmi (1 Bulan Rp 300rb, 6 Bulan Rp 600rb, 1 Tahun Rp 1.2jt) serta penegasan batas masa trial maksimal 1 bulan.',
     features: [
-      'Promo Diskon Peluncuran Terbatas 30 Hari (Hemat s.d 55%)',
-      'Harga normal setelah promo: Paket 1 Tahun Rp 1.200.000 / tahun',
-      'Sinkronisasi nominal transfer cepat ke rekening resmi BRI',
-      'Proteksi tampilan responsive tanpa kepotong di desktop, tablet, dan smartphone'
+      'Struktur harga transparan: 1 Bulan Rp 300.000, 6 Bulan Rp 600.000, 1 Tahun Rp 1.200.000',
+      'Penegasan batas masa trial maksimal 30 hari untuk toko mitra',
+      'Proteksi tampilan responsive tanpa kepotong di desktop, tablet, dan smartphone',
+      'Sinkronisasi nominal transfer langsung ke rekening resmi BRI founder'
     ],
     apk_url: '/download/apk'
   });

@@ -476,9 +476,9 @@ Jawab HANYA dalam JSON valid tanpa tanda markdown:
     let finalAmount = Number(transfer_amount) || 0;
     const daysNum = parseInt(package_duration_days, 10) || 30;
     if (finalAmount <= 0) {
-      if (daysNum >= 365) finalAmount = 600000;
-      else if (daysNum >= 180) finalAmount = 250000;
-      else finalAmount = 50000;
+      if (daysNum >= 365) finalAmount = 1200000;
+      else if (daysNum >= 180) finalAmount = 600000;
+      else finalAmount = 300000;
     }
 
     const [insertResult] = await pool.execute(`

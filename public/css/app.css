@@ -846,17 +846,21 @@ a:hover {
   grid-template-columns: 1fr;
   gap: 1.25rem;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 @media (min-width: 960px) {
   .pos-layout {
-    grid-template-columns: 1.65fr 1fr;
+    grid-template-columns: minmax(0, 1.65fr) minmax(310px, 1fr);
   }
 }
 
 @media (min-width: 1300px) {
   .pos-layout {
-    grid-template-columns: 1.85fr 1fr;
+    grid-template-columns: minmax(0, 1.85fr) minmax(340px, 1fr);
   }
 }
 
@@ -867,6 +871,9 @@ a:hover {
   border-radius: var(--radius);
   padding: 1.25rem;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .pos-search-bar-wrap {
@@ -1037,6 +1044,9 @@ a:hover {
   box-shadow: var(--shadow-sm);
   position: sticky;
   top: calc(var(--topbar-h) + 1.25rem);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .pos-cart-header {
@@ -1182,11 +1192,14 @@ a:hover {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   margin-bottom: 0.85rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pos-pm-btn {
-  flex: 1;
-  padding: 0.45rem 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.45rem 0.35rem;
   border-radius: 4px;
   border: none;
   background: transparent;
@@ -1199,6 +1212,7 @@ a:hover {
   justify-content: center;
   gap: 5px;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .pos-pm-btn.active {
@@ -1860,8 +1874,11 @@ table.data tbody tr:hover {
 /* --- TABLET STYLING (768px to 1023px) --- */
 @media (min-width: 768px) and (max-width: 1023px) {
   .pos-layout {
-    grid-template-columns: 1.35fr 1fr !important;
+    grid-template-columns: minmax(0, 1.25fr) minmax(290px, 1fr) !important;
     gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .pos-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
