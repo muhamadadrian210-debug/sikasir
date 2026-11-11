@@ -1,5 +1,5 @@
-const CACHE_SHELL = 'sikasir-shell-v401';
-const CACHE_DATA = 'sikasir-data-v401';
+const CACHE_SHELL = 'sikasir-shell-v402';
+const CACHE_DATA = 'sikasir-data-v402';
 const ACTIVE_CACHES = [CACHE_SHELL, CACHE_DATA];
 
 const SHELL = [
@@ -17,6 +17,7 @@ const SHELL = [
   '/js/login.js',
   '/js/scanner.js',
   '/js/thermal-printer.js',
+  '/js/maintenance-guard.js',
   '/js/pwa-install.js',
   '/manifest.json',
   '/icons/logo.svg',

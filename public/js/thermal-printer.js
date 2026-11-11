@@ -320,3 +320,4 @@ class ThermalBluetoothPrinter {
 
 // Instance global thermal printer
 window.thermalPrinter = new ThermalBluetoothPrinter();
+

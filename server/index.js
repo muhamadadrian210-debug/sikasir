@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.10.0',
-    versionCode: 400,
+    version: '3.10.1',
+    versionCode: 401,
     releaseDate: '2026-11-11',
-    title: 'SiKasir v3.10.0 Trial Enterprise 1 Bulan Penuh & Akses Kopi Papa Ganteng',
-    notes: 'Masa trial 30 hari pertama kini otomatis menikmati seluruh fitur Enterprise tanpa batasan apa pun, termasuk Kopi Papa Ganteng dan seluruh mitra baru.',
+    title: 'SiKasir v3.10.1 Fitur Maintenance Mode & Universal Direct Bluetooth Printing',
+    notes: 'Penambahan kontrol Mode Pemeliharaan Sistem (Major Update Lockdown) di panel CEO dan cetak printer Bluetooth langsung tanpa aplikasi tambahan.',
     features: [
-      'Masa uji coba (trial) 30 hari otomatis mendapatkan akses penuh versi Enterprise gratis tanpa kunci',
-      'Aktivasi versi Enterprise penuh untuk toko mitra Kopi Papa Ganteng',
-      'Asisten bisnis AI 24 jam, koreksi void, kasbon, dan mutasi cabang aktif untuk seluruh tenant trial',
-      'Audit log forensik dan radar keamanan siber toko aktif otomatis selama masa trial'
+      'Mode Pemeliharaan Sistem (Maintenance Mode) dengan layar pengunci otomatis saat update mayor berlangsung',
+      'Kontrol penuh aktivasi dan penonaktifan maintenance dari CEO Panel',
+      'Direct Web Bluetooth ESC/POS engine: cetak struk tanpa instal aplikasi pihak ketiga apa pun',
+      'Akses penuh Enterprise 1 bulan gratis untuk seluruh mitra trial'
     ],
     apk_url: '/download/apk'
   });
@@ -117,6 +117,74 @@ app.get('/api/broadcast/active', async (req, res) => {
   } catch {
     res.json({ active: false, message: '' });
   }
+});
+
+/** Mode Pemeliharaan Sistem (Maintenance Mode State & Middleware) */
+let maintenanceCache = {
+  is_active: false,
+  title: 'Pemeliharaan Sistem Skala Besar (Major Update)',
+  message: 'Kami sedang melakukan pembaruan inti pada server dan basis data SiKasir untuk menghadirkan performa yang lebih cepat dan aman.',
+  estimated_finish: '15-30 Menit',
+  last_checked: 0
+};
+
+async function getMaintenanceState() {
+  const now = Date.now();
+  if (now - maintenanceCache.last_checked < 4000) {
+    return maintenanceCache;
+  }
+  try {
+    const { pool } = require('./config/db');
+    const [rows] = await pool.execute('SELECT is_active, title, message, estimated_finish FROM system_maintenance ORDER BY id DESC LIMIT 1');
+    if (rows.length > 0) {
+      maintenanceCache = {
+        is_active: rows[0].is_active === 1,
+        title: rows[0].title || 'Pemeliharaan Sistem Skala Besar (Major Update)',
+        message: rows[0].message || 'Kami sedang melakukan pembaruan sistem.',
+        estimated_finish: rows[0].estimated_finish || '15-30 Menit',
+        last_checked: now
+      };
+    }
+  } catch (err) {
+    console.warn('[maintenance] Gagal membaca state dari DB:', err.message);
+  }
+  return maintenanceCache;
+}
+
+/** Endpoint publik status maintenance untuk PWA, webapp, dan APK */
+app.get('/api/maintenance/status', async (req, res) => {
+  const state = await getMaintenanceState();
+  res.json({
+    maintenance: state.is_active,
+    title: state.title,
+    message: state.message,
+    estimated_finish: state.estimated_finish
+  });
+});
+
+/** Middleware pengunci aplikasi saat maintenance aktif (kecuali route CEO, status, dan CSRF) */
+app.use(async (req, res, next) => {
+  if (!req.path.startsWith('/api')) return next();
+  if (
+    req.path.startsWith('/api/ceo') ||
+    req.path === '/api/maintenance/status' ||
+    req.path === '/api/app-version' ||
+    req.path === '/api/csrf-token'
+  ) {
+    return next();
+  }
+
+  const state = await getMaintenanceState();
+  if (state.is_active) {
+    return res.status(503).json({
+      error: 'Sistem sedang dalam pemeliharaan (Maintenance Mode). Sementara tidak dapat digunakan hingga pembaruan selesai.',
+      maintenance: true,
+      title: state.title,
+      message: state.message,
+      estimated_finish: state.estimated_finish
+    });
+  }
+  next();
 });
 
 app.use('/api', apiLimiter);

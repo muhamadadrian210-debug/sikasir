@@ -354,6 +354,7 @@
         </button>
         <button type="button" class="tab-btn" data-tab="tab-tenants">Daftar Toko</button>
         <button type="button" class="tab-btn" data-tab="tab-broadcast">Broadcast Pengumuman</button>
+        <button type="button" class="tab-btn" data-tab="tab-maintenance">Mode Maintenance</button>
         <button type="button" class="tab-btn" data-tab="tab-generator">Buat Lisensi</button>
         <button type="button" class="tab-btn" data-tab="tab-codes">Riwayat Lisensi</button>
       </nav>
@@ -526,6 +527,71 @@
                   Belum ada pesan broadcast yang aktif saat ini.
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: MODE PEMELIHARAAN SISTEM (MAINTENANCE LOCKDOWN) -->
+      <section id="tab-maintenance" class="tab-pane">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Kontrol Mode Pemeliharaan (Maintenance Lockdown)</span>
+            <span id="maintenance-live-badge" class="badge badge-success">Status: Sistem Normal (Online)</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">
+              Aktifkan mode ini saat ada <strong>Major Update</strong> atau pemeliharaan server besar. Seluruh pengguna di website, PWA, dan APK Android akan otomatis melihat layar pemberitahuan pemeliharaan resmi dan sementara tidak dapat melakukan transaksi sebelum pemeliharaan selesai.
+            </p>
+
+            <form id="form-maintenance">
+              <div class="form-grid" style="margin-bottom: 14px;">
+                <div class="form-group">
+                  <label>Judul Pemeliharaan / Update</label>
+                  <input 
+                    type="text" 
+                    id="maint-title-input" 
+                    class="form-control" 
+                    value="Pemeliharaan Sistem Skala Besar (Major Update)" 
+                    required 
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Estimasi Durasi Pengerjaan</label>
+                  <input 
+                    type="text" 
+                    id="maint-est-input" 
+                    class="form-control" 
+                    value="15-30 Menit" 
+                    placeholder="Contoh: 30 Menit / 1 Jam" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 18px;">
+                <label>Pesan Penjelasan untuk Seluruh Pengguna &amp; Mitra Toko</label>
+                <textarea 
+                  id="maint-msg-input" 
+                  class="form-control" 
+                  rows="3" 
+                  required
+                >Kami sedang melakukan pembaruan inti pada server dan basis data SiKasir untuk menghadirkan performa yang lebih cepat dan aman. Seluruh transaksi kasir sementara dikunci demi keamanan data Anda.</textarea>
+              </div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-danger" id="btn-maint-activate" style="font-weight:700;">
+                  🔒 Aktifkan Mode Maintenance (Kunci Semua Aplikasi)
+                </button>
+                <button type="button" class="btn btn-success" id="btn-maint-deactivate" style="font-weight:700;">
+                  🟢 Matikan Maintenance (Buka Kembali Aplikasi)
+                </button>
+              </div>
+            </form>
+
+            <div style="margin-top: 24px; padding: 14px; background: rgba(239, 68, 68, 0.08); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 0.8rem; color: var(--text-muted);">
+              <div style="font-weight: 700; color: #EF4444; margin-bottom: 4px;">Informasi Keamanan CEO:</div>
+              <div>Panel CEO ini dan jalur verifikasi tetap dapat diakses 100% oleh founder selama maintenance berlangsung. Setelah update selesai di Vercel/server, klik tombol hijau <strong>"Matikan Maintenance"</strong> agar seluruh kasir mitra toko bisa langsung bertransaksi kembali.</div>
             </div>
           </div>
         </div>
@@ -757,7 +823,7 @@
     });
 
     async function loadAllData() {
-      await Promise.all([loadOverview(), loadProofs(), loadTenants(), loadBroadcast(), loadCodes()]);
+      await Promise.all([loadOverview(), loadProofs(), loadTenants(), loadBroadcast(), loadMaintenance(), loadCodes()]);
     }
 
     function formatMoney(num) {
@@ -1169,6 +1235,87 @@
         if (!res.ok) throw new Error(d.error || 'Gagal mematikan broadcast');
         alert(d.message || 'Broadcast dimatikan');
         loadBroadcast();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    // 4b. Kontrol Mode Maintenance (Lockdown Sistem)
+    async function loadMaintenance() {
+      try {
+        const res = await fetch('/api/ceo/maintenance', {
+          headers: { 'Authorization': `Bearer ${ceoToken}` },
+        });
+        if (!res.ok) return;
+        const d = await res.json();
+        const m = d.maintenance;
+        const liveBadge = document.getElementById('maintenance-live-badge');
+        const titleInput = document.getElementById('maint-title-input');
+        const estInput = document.getElementById('maint-est-input');
+        const msgInput = document.getElementById('maint-msg-input');
+
+        if (m) {
+          if (m.title && titleInput) titleInput.value = m.title;
+          if (m.estimated_finish && estInput) estInput.value = m.estimated_finish;
+          if (m.message && msgInput) msgInput.value = m.message;
+
+          if (m.is_active === 1 || m.is_active === true) {
+            liveBadge.className = 'badge badge-danger';
+            liveBadge.textContent = '🔴 STATUS: MAINTENANCE AKTIF (SEMUA APLIKASI TERKUNCI)';
+          } else {
+            liveBadge.className = 'badge badge-success';
+            liveBadge.textContent = '🟢 STATUS: SISTEM NORMAL (ONLINE)';
+          }
+        }
+      } catch {}
+    }
+
+    document.getElementById('form-maintenance').onsubmit = async (e) => {
+      e.preventDefault();
+      if (!confirm('PERINGATAN: Mengaktifkan mode maintenance akan MENGUNCI seluruh aplikasi kasir (web, PWA, APK) sehingga pengguna tidak dapat bertransaksi sementara waktu. Lanjutkan?')) return;
+
+      const title = document.getElementById('maint-title-input').value.trim();
+      const estimated_finish = document.getElementById('maint-est-input').value.trim();
+      const message = document.getElementById('maint-msg-input').value.trim();
+
+      const btn = document.getElementById('btn-maint-activate');
+      btn.disabled = true;
+      btn.textContent = 'Mengunci Sistem...';
+
+      try {
+        const res = await fetch('/api/ceo/maintenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ceoToken}` },
+          body: JSON.stringify({ is_active: true, title, estimated_finish, message }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal mengaktifkan mode maintenance');
+        alert(d.message || 'Mode Maintenance berhasil diaktifkan.');
+        loadMaintenance();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔒 Aktifkan Mode Maintenance (Kunci Semua Aplikasi)';
+      }
+    };
+
+    document.getElementById('btn-maint-deactivate').onclick = async () => {
+      if (!confirm('Buka kembali kuncian dan kembalikan sistem ke status normal online?')) return;
+      const title = document.getElementById('maint-title-input').value.trim();
+      const estimated_finish = document.getElementById('maint-est-input').value.trim();
+      const message = document.getElementById('maint-msg-input').value.trim();
+
+      try {
+        const res = await fetch('/api/ceo/maintenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ceoToken}` },
+          body: JSON.stringify({ is_active: false, title, estimated_finish, message }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Gagal mematikan mode maintenance');
+        alert(d.message || 'Mode Maintenance berhasil dimatikan. Seluruh aplikasi telah normal kembali.');
+        loadMaintenance();
       } catch (err) {
         alert(err.message);
       }

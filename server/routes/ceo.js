@@ -676,5 +676,55 @@ router.delete('/broadcast', ceoAuthMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/ceo/maintenance
+ * Membaca status mode pemeliharaan (maintenance mode)
+ */
+router.get('/maintenance', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM system_maintenance ORDER BY id DESC LIMIT 1');
+    res.json({
+      success: true,
+      maintenance: rows.length > 0 ? rows[0] : {
+        is_active: 0,
+        title: 'Pemeliharaan Sistem Skala Besar (Major Update)',
+        message: 'Kami sedang melakukan pembaruan inti pada server dan basis data SiKasir.',
+        estimated_finish: '15-30 Menit'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mengambil data maintenance: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/ceo/maintenance
+ * Mengaktifkan atau mematikan mode pemeliharaan (lockdown aplikasi)
+ */
+router.post('/maintenance', ceoAuthMiddleware, async (req, res) => {
+  try {
+    const { is_active, title, message, estimated_finish } = req.body || {};
+    const activeVal = is_active ? 1 : 0;
+    const cleanTitle = String(title || 'Pemeliharaan Sistem Skala Besar (Major Update)').trim();
+    const cleanMsg = String(message || 'Kami sedang melakukan pembaruan inti pada sistem. Aplikasi sementara tidak dapat digunakan demi keamanan data.').trim();
+    const cleanEst = String(estimated_finish || '15-30 Menit').trim();
+
+    await pool.execute(
+      'INSERT INTO system_maintenance (is_active, title, message, estimated_finish, updated_by) VALUES (?, ?, ?, ?, ?)',
+      [activeVal, cleanTitle, cleanMsg, cleanEst, 'CEO']
+    );
+
+    res.json({
+      success: true,
+      is_active: activeVal === 1,
+      message: activeVal === 1
+        ? 'Mode Maintenance berhasil DIAKTIFKAN. Seluruh web, PWA, dan APK sekarang terkunci sementara.'
+        : 'Mode Maintenance berhasil DIMATIKAN. Seluruh aplikasi telah kembali normal.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mengubah status maintenance: ' + err.message });
+  }
+});
+
 module.exports = router;
 

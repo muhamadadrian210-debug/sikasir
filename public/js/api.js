@@ -141,6 +141,11 @@ export async function api(path, opts = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 503 && data?.maintenance) {
+      if (typeof window.showMaintenanceLockdown === 'function') {
+        window.showMaintenanceLockdown(data);
+      }
+    }
     const err = new Error(data?.error || res.statusText);
     err.status = res.status;
     err.body = data;

@@ -3784,7 +3784,7 @@ async function checkAppUpdateNotification() {
     if (!res.ok) return;
     const info = await res.json();
     latestAppVersionInfo = info;
-    const currentVersion = '3.10.0';
+    const currentVersion = '3.10.1';
     const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
     const justUpdated = sessionStorage.getItem('sikasir_just_updated');
 
