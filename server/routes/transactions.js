@@ -212,7 +212,8 @@ router.delete('/:id', requireRole('admin', 'kasir'), async (req, res) => {
     // Proteksi Hak Akses Paket (Void Transaksi aktif mulai Paket 6 Bulan / PRO)
     const [tRows] = await conn.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tid]);
     const t = tRows[0];
-    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    const code = String(t?.license_code || '').toUpperCase();
+    const plan = code.includes('TRIAL') ? 'ENTERPRISE' : (t?.plan_tier || (code.includes('365D') || code.includes('ENTERPRISE') ? 'ENTERPRISE' : code.includes('180D') || code.includes('PRO') ? 'PRO' : 'BASIC'));
     if (plan === 'BASIC') {
       conn.release();
       return res.status(403).json({

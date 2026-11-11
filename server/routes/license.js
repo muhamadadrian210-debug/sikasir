@@ -37,10 +37,15 @@ router.get('/status', authMiddleware, requireTenant, async (req, res) => {
     const isExpired = days !== null && days < 0;
     const isNearExpiry = days !== null && days >= 0 && days <= 7;
 
-    // Hitung otomatis paket layanan & fitur sesuai durasi yang dibayar
+    // Hitung otomatis paket layanan & fitur sesuai status trial atau durasi yang dibayar
+    const code = String(t.license_code || '').toUpperCase();
+    const isTrial = code.includes('TRIAL');
+
     let planTier = t.plan_tier;
-    if (!planTier || planTier === 'BASIC') {
-      const code = String(t.license_code || '').toUpperCase();
+    // Masa trial 30 hari gratis otomatis mendapatkan versi Enterprise penuh tanpa kunci
+    if (isTrial) {
+      planTier = 'ENTERPRISE';
+    } else if (!planTier || planTier === 'BASIC') {
       if (code.includes('365D') || code.includes('1Y') || code.includes('ENTERPRISE')) {
         planTier = 'ENTERPRISE';
       } else if (code.includes('180D') || code.includes('6M') || code.includes('PRO')) {
@@ -138,9 +143,10 @@ router.get('/status', authMiddleware, requireTenant, async (req, res) => {
       is_expired: isExpired,
       is_near_expiry: isNearExpiry,
       is_frozen: t.status === 'frozen',
+      is_trial: isTrial,
       license_code: t.license_code || 'SIV-TRIAL-30D',
       plan_tier: planTier,
-      plan_name: currentTier.name,
+      plan_name: isTrial ? 'Trial 1 Bulan (Enterprise Gratis Penuh)' : currentTier.name,
       features: currentTier.features,
       status: t.status === 'frozen' ? 'frozen' : (isExpired ? 'expired' : t.status),
       support_phone: supportPhone,

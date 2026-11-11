@@ -41,7 +41,8 @@ router.post('/', async (req, res) => {
     // Proteksi Hak Akses Paket (Paket 1 Bulan / BASIC maksimal 2 staf)
     const [tRows] = await pool.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tid]);
     const t = tRows[0];
-    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    const code = String(t?.license_code || '').toUpperCase();
+    const plan = code.includes('TRIAL') ? 'ENTERPRISE' : (t?.plan_tier || (code.includes('365D') || code.includes('ENTERPRISE') ? 'ENTERPRISE' : code.includes('180D') || code.includes('PRO') ? 'PRO' : 'BASIC'));
     if (plan === 'BASIC') {
       const [uCount] = await pool.execute('SELECT COUNT(*) as cnt FROM users WHERE tenant_id = ?', [tid]);
       if ((uCount[0]?.cnt || 0) >= 2) {

@@ -26,7 +26,8 @@ router.get('/status', authMiddleware, requireTenant, requireRole('admin'), async
   try {
     const [tRows] = await pool.execute('SELECT plan_tier, license_code FROM tenants WHERE id = ?', [tenantId]);
     const t = tRows[0];
-    const plan = t?.plan_tier || ((t?.license_code || '').includes('365D') ? 'ENTERPRISE' : (t?.license_code || '').includes('180D') ? 'PRO' : 'BASIC');
+    const code = String(t?.license_code || '').toUpperCase();
+    const plan = code.includes('TRIAL') ? 'ENTERPRISE' : (t?.plan_tier || (code.includes('365D') || code.includes('ENTERPRISE') ? 'ENTERPRISE' : code.includes('180D') || code.includes('PRO') ? 'PRO' : 'BASIC'));
     if (plan !== 'ENTERPRISE') {
       return res.status(403).json({
         error: 'Fitur Radar Forensik Keamanan Siber eksklusif untuk Paket 1 Tahun (Enterprise). Silakan perpanjang lisensi toko Anda.',

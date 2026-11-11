@@ -3597,7 +3597,7 @@ async function checkAppUpdateNotification() {
     if (!res.ok) return;
     const info = await res.json();
     latestAppVersionInfo = info;
-    const currentVersion = '3.9.9';
+    const currentVersion = '3.10.0';
     const notifiedVersion = localStorage.getItem('sikasir_update_notified_v');
     const justUpdated = sessionStorage.getItem('sikasir_just_updated');
 
@@ -4903,6 +4903,13 @@ async function loadLicensePanel() {
               <div class="mono" style="font-size: 0.84rem; font-weight: 700; color: var(--text-muted); margin-top: 2px;">${escapeHtml(res.license_code || '-')}</div>
             </div>
           </div>
+
+          ${res.is_trial ? `
+          <div style="margin-top: 14px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: #93C5FD;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span><strong>Masa Trial Enterprise Aktif:</strong> Toko Anda menikmati akses penuh fitur Enterprise tanpa kunci selama 30 hari pertama.</span>
+          </div>
+          ` : ''}
 
           <!-- Hak Akses Fitur Otomatis Sesuai Paket -->
           <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);">

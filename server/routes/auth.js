@@ -118,10 +118,10 @@ router.post('/register-tenant', async (req, res) => {
     try {
       await conn.beginTransaction();
 
-      // Buat tenant dengan trial 30 hari otomatis (Paket BASIC)
+      // Buat tenant dengan trial 30 hari otomatis (Paket ENTERPRISE Gratis Tanpa Kunci)
       const trialCode = 'SIV-TRIAL-30D-' + Math.floor(1000 + Math.random() * 9000);
       const [tenantIns] = await conn.execute(
-        'INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, plan_tier, status) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), ?, \'BASIC\', \'active\')',
+        'INSERT INTO tenants (name, slug, subscription_start, subscription_until, license_code, plan_tier, status) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), ?, \'ENTERPRISE\', \'active\')',
         [sn, slug, trialCode]
       );
       const tenantId = tenantIns.insertId;

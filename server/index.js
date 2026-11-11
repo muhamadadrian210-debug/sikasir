@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.9.9',
-    versionCode: 399,
-    releaseDate: '2026-11-09',
-    title: 'SiKasir v3.9.9 Otomatisasi Hak Akses Fitur Lisensi',
-    notes: 'Setiap paket lisensi yang dipilih dan dibayar otomatis membuka fitur spesifik (Basic, Pro, Enterprise) tanpa perlu konfigurasi manual.',
+    version: '3.10.0',
+    versionCode: 400,
+    releaseDate: '2026-11-11',
+    title: 'SiKasir v3.10.0 Trial Enterprise 1 Bulan Penuh & Akses Kopi Papa Ganteng',
+    notes: 'Masa trial 30 hari pertama kini otomatis menikmati seluruh fitur Enterprise tanpa batasan apa pun, termasuk Kopi Papa Ganteng dan seluruh mitra baru.',
     features: [
-      'Otomatisasi hak akses fitur sesuai paket (1 Bulan Standard, 6 Bulan Pro, 1 Tahun Enterprise)',
-      'Asisten AI, koreksi void, dan kasbon aktif otomatis mulai Paket Pro',
-      'Mutasi cabang, radar forensik siber, dan ekspor laporan lengkap aktif di Paket Enterprise',
-      'Modal edukasi upgrade interaktif saat mengakses fitur eksklusif'
+      'Masa uji coba (trial) 30 hari otomatis mendapatkan akses penuh versi Enterprise gratis tanpa kunci',
+      'Aktivasi versi Enterprise penuh untuk toko mitra Kopi Papa Ganteng',
+      'Asisten bisnis AI 24 jam, koreksi void, kasbon, dan mutasi cabang aktif untuk seluruh tenant trial',
+      'Audit log forensik dan radar keamanan siber toko aktif otomatis selama masa trial'
     ],
     apk_url: '/download/apk'
   });
