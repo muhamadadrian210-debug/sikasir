@@ -1750,7 +1750,30 @@ function generateThermalHtml(rec) {
   `;
 }
 
-function printReceiptThermal(rec) {
+async function printReceiptThermal(rec) {
+  // 1. Jika Bluetooth printer sudah terhubung langsung, cetak instan tanpa dialog browser
+  if (window.thermalPrinter && window.thermalPrinter.isConnected()) {
+    try {
+      if (typeof showToast === 'function') showToast('Mencetak langsung ke printer Bluetooth...');
+      await window.thermalPrinter.printReceipt(rec);
+      return;
+    } catch (err) {
+      console.error('[thermal] Gagal cetak via Bluetooth langsung:', err);
+      if (typeof showToast === 'function') showToast('Koneksi Bluetooth terputus, beralih ke print browser...');
+    }
+  }
+
+  // 2. Jika Web Bluetooth didukung browser, tampilkan modal pilihan cetak langsung atau spooler
+  if (window.thermalPrinter && window.thermalPrinter.isSupported()) {
+    showThermalPrinterOptionModal(rec);
+    return;
+  }
+
+  // 3. Fallback browser print biasa jika perangkat tidak memiliki Web Bluetooth
+  triggerSystemPrint(rec);
+}
+
+function triggerSystemPrint(rec) {
   let printArea = document.getElementById('thermal-print-area');
   if (!printArea) {
     printArea = document.createElement('div');
@@ -1759,6 +1782,169 @@ function printReceiptThermal(rec) {
   }
   printArea.innerHTML = generateThermalHtml(rec);
   window.print();
+}
+
+function showThermalPrinterOptionModal(rec) {
+  const modalId = 'modal-thermal-option';
+  let modalEl = document.getElementById(modalId);
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.id = modalId;
+    modalEl.className = 'modal-overlay';
+    modalEl.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(4px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+    document.body.appendChild(modalEl);
+  }
+
+  modalEl.innerHTML = `
+    <div class="modal" style="max-width: 420px; width: 100%; padding: 24px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+      </div>
+      <h3 style="margin: 0 0 8px; font-size: 1.18rem; font-weight: 800;">Cetak Struk Thermal</h3>
+      <p style="margin: 0 0 18px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.5;">
+        Cetak langsung ke printer Bluetooth tanpa aplikasi tambahan, atau gunakan pratinjau browser bawaan.
+      </p>
+      
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" class="btn btn-primary" id="btn-connect-and-print-bt" style="padding: 12px; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+          Sambungkan Printer Bluetooth
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-fallback-system-print" style="padding: 10px; font-size: 0.84rem;">
+          Cetak via Browser (Spooler)
+        </button>
+        <button type="button" class="btn btn-link" id="btn-cancel-thermal-modal" style="padding: 6px; font-size: 0.8rem; color: var(--text-muted);">
+          Batal
+        </button>
+      </div>
+    </div>
+  `;
+
+  modalEl.style.display = 'flex';
+  modalEl.querySelector('#btn-cancel-thermal-modal').onclick = () => {
+    modalEl.style.display = 'none';
+  };
+  modalEl.querySelector('#btn-fallback-system-print').onclick = () => {
+    modalEl.style.display = 'none';
+    triggerSystemPrint(rec);
+  };
+  modalEl.querySelector('#btn-connect-and-print-bt').onclick = async () => {
+    const btn = modalEl.querySelector('#btn-connect-and-print-bt');
+    btn.disabled = true;
+    btn.textContent = 'Mencari Printer Bluetooth...';
+    try {
+      await window.thermalPrinter.connect();
+      modalEl.style.display = 'none';
+      if (typeof showToast === 'function') showToast('Printer Bluetooth terhubung! Mencetak struk...');
+      await window.thermalPrinter.printReceipt(rec);
+    } catch (err) {
+      console.error(err);
+      if (err.name !== 'NotFoundError') {
+        alert('Gagal menyambung printer Bluetooth: ' + (err.message || 'Dibatalkan'));
+      }
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+        Sambungkan Printer Bluetooth
+      `;
+    }
+  };
+}
+
+function initBluetoothPrinterTopbar() {
+  const btn = document.getElementById('btn-topbar-printer');
+  const label = document.getElementById('topbar-printer-label');
+  if (!btn || !window.thermalPrinter) return;
+
+  function updateUi(status) {
+    if (status && status.connected) {
+      btn.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+      btn.style.color = '#10B981';
+      if (label) label.textContent = status.name || 'Printer OK';
+    } else {
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      if (label) label.textContent = 'Printer BT';
+    }
+  }
+
+  window.thermalPrinter.onStatusChange(updateUi);
+
+  btn.onclick = async () => {
+    if (window.thermalPrinter.isConnected()) {
+      showConnectedPrinterModal();
+    } else {
+      try {
+        await window.thermalPrinter.connect();
+        if (typeof showToast === 'function') showToast(`Printer Bluetooth ${window.thermalPrinter.getDeviceName()} terhubung!`);
+      } catch (err) {
+        if (err.name !== 'NotFoundError') {
+          alert('Gagal menyambungkan Bluetooth: ' + err.message);
+        }
+      }
+    }
+  };
+}
+
+function showConnectedPrinterModal() {
+  const modalId = 'modal-printer-connected';
+  let modalEl = document.getElementById(modalId);
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.id = modalId;
+    modalEl.className = 'modal-overlay';
+    modalEl.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(4px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+    document.body.appendChild(modalEl);
+  }
+
+  const devName = window.thermalPrinter.getDeviceName() || 'Thermal Printer';
+  modalEl.innerHTML = `
+    <div class="modal" style="max-width: 380px; width: 100%; padding: 22px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+      </div>
+      <h3 style="margin: 0 0 4px; font-size: 1.15rem; font-weight: 800;">Printer Bluetooth Terhubung</h3>
+      <p style="margin: 0 0 16px; font-size: 0.85rem; color: #10B981; font-weight: 700;">
+        ${escapeHtml(devName)}
+      </p>
+      
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button type="button" class="btn btn-primary" id="btn-test-print-bt" style="padding: 10px; font-weight: 700;">
+          Test Print Struk
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-disconnect-bt" style="padding: 10px; color: var(--danger);">
+          Putuskan Printer
+        </button>
+        <button type="button" class="btn btn-link" id="btn-close-bt-modal" style="padding: 6px; font-size: 0.8rem; color: var(--text-muted);">
+          Tutup
+        </button>
+      </div>
+    </div>
+  `;
+
+  modalEl.style.display = 'flex';
+  modalEl.querySelector('#btn-close-bt-modal').onclick = () => {
+    modalEl.style.display = 'none';
+  };
+  modalEl.querySelector('#btn-test-print-bt').onclick = async () => {
+    const btn = modalEl.querySelector('#btn-test-print-bt');
+    btn.disabled = true;
+    btn.textContent = 'Mencetak...';
+    try {
+      await window.thermalPrinter.printTest();
+      if (typeof showToast === 'function') showToast('Test print berhasil dikirim ke printer!');
+    } catch (e) {
+      alert('Gagal test print: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test Print Struk';
+    }
+  };
+  modalEl.querySelector('#btn-disconnect-bt').onclick = async () => {
+    await window.thermalPrinter.disconnect();
+    modalEl.style.display = 'none';
+    if (typeof showToast === 'function') showToast('Koneksi printer Bluetooth diputuskan.');
+  };
 }
 
 function printReceiptPdf(rec) {
@@ -3498,6 +3684,7 @@ if (btnLogoutEl) {
 
 async function init() {
   initTheme();
+  initBluetoothPrinterTopbar();
   try {
     await checkLicenseExpiryBanner();
   } catch {}

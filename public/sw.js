@@ -16,6 +16,7 @@ const SHELL = [
   '/js/mode.js',
   '/js/login.js',
   '/js/scanner.js',
+  '/js/thermal-printer.js',
   '/js/pwa-install.js',
   '/manifest.json',
   '/icons/logo.svg',
