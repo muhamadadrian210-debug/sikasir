@@ -17,7 +17,7 @@ class ApiService {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Client-App': 'sikasir-mobile-pos',
-        'User-Agent': 'SiKasirMobilePOS/3.6.0',
+        'User-Agent': 'SiKasirMobilePOS/3.10.2',
       },
     ));
 
@@ -42,6 +42,46 @@ class ApiService {
         return handler.next(error);
       },
     ));
+  }
+
+  static String getErrorMessage(dynamic error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        if (data['maintenance'] == true || error.response?.statusCode == 503) {
+          return data['message']?.toString() ??
+              data['error']?.toString() ??
+              'Sistem sedang dalam pemeliharaan berkala (Maintenance Mode).';
+        }
+        if (data['error'] != null) {
+          return data['error'].toString();
+        }
+        if (data['message'] != null) {
+          return data['message'].toString();
+        }
+      }
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return 'Waktu koneksi habis. Silakan periksa koneksi internet Anda.';
+      }
+      if (error.type == DioExceptionType.connectionError) {
+        return 'Tidak dapat terhubung ke server cloud. Pastikan internet aktif.';
+      }
+      if (error.response?.statusCode == 401 || error.response?.statusCode == 403) {
+        return 'Sesi login telah berakhir atau akses dibatasi. Silakan login ulang.';
+      }
+      if (error.response?.statusCode == 404) {
+        return 'Layanan atau data tidak ditemukan di server.';
+      }
+      if (error.response?.statusCode == 500) {
+        return 'Terjadi kendala internal pada server. Silakan coba beberapa saat lagi.';
+      }
+      if (error.response?.statusCode == 503) {
+        return 'Server sedang sibuk atau dalam pemeliharaan berkala.';
+      }
+    }
+    return error.toString().replaceFirst('Exception: ', '');
   }
 
   Future<String?> getToken() async {

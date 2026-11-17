@@ -51,7 +51,7 @@ class _PosScreenState extends State<PosScreen> {
       final res = await ApiService().get('/app-version');
       if (res.statusCode == 200 && mounted) {
         final data = res.data;
-        final v = data['version']?.toString() ?? '3.10.0';
+        final v = data['version']?.toString() ?? '3.10.2';
         PremiumNotification.showInfo(
           context,
           title: 'SiKasir v$v Aktif',
@@ -639,6 +639,7 @@ class _PosScreenState extends State<PosScreen> {
                                 _searchController.clear();
                                 pos.setSearchQuery('');
                                 pos.setSelectedCategory('Semua');
+                                _loadProducts();
                               },
                             ),
                           ],
