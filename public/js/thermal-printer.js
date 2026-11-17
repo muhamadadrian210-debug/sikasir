@@ -52,14 +52,19 @@ class ThermalBluetoothPrinter {
 
     this.isConnecting = true;
     try {
-      // Daftar UUID umum untuk printer thermal Bluetooth (ESC/POS)
+      // Daftar UUID lengkap untuk printer thermal Bluetooth (ESC/POS) termasuk FFE0, FFF0, NUS, dll.
       const optionalServices = [
         '000018f0-0000-1000-8000-00805f9b34fb', // Standard 18f0 service
         '0000ff00-0000-1000-8000-00805f9b34fb', // FF00 common thermal
+        '0000ffe0-0000-1000-8000-00805f9b34fb', // FFE0 HM-10 / CC2541 UART (Paling umum di printer thermal pasar Indonesia)
+        '0000fff0-0000-1000-8000-00805f9b34fb', // FFF0 common thermal
+        '0000fee7-0000-1000-8000-00805f9b34fb', // FEE7 IoT thermal
+        '0000ffe5-0000-1000-8000-00805f9b34fb', // FFE5 common thermal
         'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Pos-58 common
         '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC transparent UART
         '0000ae00-0000-1000-8000-00805f9b34fb',
-        '0000af00-0000-1000-8000-00805f9b34fb'
+        '0000af00-0000-1000-8000-00805f9b34fb',
+        '6e400001-b5a3-f393-e0a9-e50e24dcca9e'  // Nordic UART Service (NUS)
       ];
 
       const device = await navigator.bluetooth.requestDevice({
@@ -286,11 +291,27 @@ class ThermalBluetoothPrinter {
   }
 
   /**
-   * Cetak struk langsung via Bluetooth
+   * Cetak struk langsung via Bluetooth BLE
    */
   async printReceipt(rec) {
     const bytes = this.buildEscPosBytes(rec);
     await this.sendBytes(bytes);
+    return true;
+  }
+
+  /**
+   * Cetak struk via RawBT Android Print Service (Universal untuk semua printer Bluetooth SPP, USB, & WiFi)
+   */
+  printViaRawBt(rec) {
+    const bytes = this.buildEscPosBytes(rec);
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = window.btoa(binary);
+    const rawbtUri = 'rawbt:base64,' + base64;
+    window.location.href = rawbtUri;
     return true;
   }
 

@@ -1796,23 +1796,45 @@ function showThermalPrinterOptionModal(rec) {
   }
 
   modalEl.innerHTML = `
-    <div class="modal" style="max-width: 420px; width: 100%; padding: 24px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div class="modal" style="max-width: 440px; width: 100%; padding: 24px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
       <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
       </div>
-      <h3 style="margin: 0 0 8px; font-size: 1.18rem; font-weight: 800;">Cetak Struk Thermal</h3>
+      <h3 style="margin: 0 0 8px; font-size: 1.18rem; font-weight: 800;">Pilih Metode Cetak Struk</h3>
       <p style="margin: 0 0 18px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.5;">
-        Cetak langsung ke printer Bluetooth tanpa aplikasi tambahan, atau gunakan pratinjau browser bawaan.
+        Pilih jalur cetak yang sesuai dengan perangkat dan printer thermal Anda:
       </p>
       
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button type="button" class="btn btn-primary" id="btn-connect-and-print-bt" style="padding: 12px; font-weight: 700; display:flex; align-items:center; justify-content:center; gap:8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-          Sambungkan Printer Bluetooth
+      <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+        <button type="button" class="btn btn-primary" id="btn-print-rawbt" style="padding: 12px; font-weight: 700; display:flex; flex-direction:column; align-items:flex-start; gap:3px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.92rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            <span>Cetak Cepat via RawBT (Direkomendasikan HP)</span>
+          </div>
+          <span style="font-size:0.73rem; opacity:0.85; font-weight:normal;">Untuk printer Bluetooth/USB yang sudah terhubung di Bluetooth Android.</span>
         </button>
-        <button type="button" class="btn btn-secondary" id="btn-fallback-system-print" style="padding: 10px; font-size: 0.84rem;">
-          Cetak via Browser (Spooler)
+
+        <button type="button" class="btn btn-secondary" id="btn-connect-and-print-bt" style="padding: 11px; font-weight: 600; display:flex; flex-direction:column; align-items:flex-start; gap:3px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.88rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+            <span>Cetak via Direct Web Bluetooth (Chrome BLE)</span>
+          </div>
+          <span style="font-size:0.73rem; color:var(--text-muted); font-weight:normal;">Pairing langsung dari browser tanpa aplikasi perantara.</span>
         </button>
+
+        <button type="button" class="btn btn-secondary" id="btn-fallback-system-print" style="padding: 10px; font-size: 0.84rem; text-align:center;">
+          Cetak via Pratinjau Browser (Spooler / PDF)
+        </button>
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 0.74rem; color: var(--text-muted); text-align: left; line-height: 1.4;">
+        💡 <strong>Tips Printer Bluetooth:</strong> Jika menggunakan HP Android, pastikan aplikasi <strong>RawBT</strong> sudah terpasang dari Play Store agar struk langsung keluar tanpa setup rumit.
+        <div style="margin-top: 4px;">
+          <a href="https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter" target="_blank" rel="noopener" style="color: #10B981; font-weight: 600; text-decoration: underline;">Download RawBT Gratis di Play Store &rarr;</a>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;">
         <button type="button" class="btn btn-link" id="btn-cancel-thermal-modal" style="padding: 6px; font-size: 0.8rem; color: var(--text-muted);">
           Batal
         </button>
@@ -1823,6 +1845,14 @@ function showThermalPrinterOptionModal(rec) {
   modalEl.style.display = 'flex';
   modalEl.querySelector('#btn-cancel-thermal-modal').onclick = () => {
     modalEl.style.display = 'none';
+  };
+  modalEl.querySelector('#btn-print-rawbt').onclick = () => {
+    modalEl.style.display = 'none';
+    if (window.thermalPrinter && typeof window.thermalPrinter.printViaRawBt === 'function') {
+      window.thermalPrinter.printViaRawBt(rec);
+    } else {
+      triggerSystemPrint(rec);
+    }
   };
   modalEl.querySelector('#btn-fallback-system-print').onclick = () => {
     modalEl.style.display = 'none';
@@ -1844,10 +1874,14 @@ function showThermalPrinterOptionModal(rec) {
       }
       btn.disabled = false;
       btn.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-        Sambungkan Printer Bluetooth
+        <div style="display:flex; align-items:center; gap:8px; font-size:0.88rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+          <span>Cetak via Direct Web Bluetooth (Chrome BLE)</span>
+        </div>
+        <span style="font-size:0.73rem; color:var(--text-muted); font-weight:normal;">Pairing langsung dari browser tanpa aplikasi perantara.</span>
       `;
     }
+  };
   };
 }
 
