@@ -182,6 +182,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       onPressed: () {
                         final itemsList = items.map((e) => Map<String, dynamic>.from(e as Map)).toList();
                         ReceiptPrinterService.printReceipt(
+                          context: ctx,
                           storeName: 'SiKasir POS',
                           invoiceId: invoiceId,
                           cashierName: 'Kasir',

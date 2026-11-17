@@ -237,6 +237,7 @@ class _PosScreenState extends State<PosScreen> {
         items: items,
         onPrint: () {
           ReceiptPrinterService.printReceipt(
+            context: context,
             storeName: 'SiKasir POS',
             invoiceId: invoiceId,
             cashierName: 'Kasir',
