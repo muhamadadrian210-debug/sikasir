@@ -208,14 +208,15 @@ app.use('/api/shifts', shiftsRoutes);
 app.get('/download/apk', (req, res) => {
   const fs = require('fs');
   const candidates = [
-    path.join(__dirname, '..', 'SiKasir-v3.9.0.apk'),
+    path.join(__dirname, '..', 'SiKasir-v3.10.0.apk'),
     path.join(__dirname, '..', 'public', 'downloads', 'sikasir-pos.apk'),
+    path.join(__dirname, '..', 'SiKasir-v3.9.0.apk'),
     path.join(__dirname, '..', 'SiKasir-v3.8.6.apk'),
     path.join(__dirname, '..', 'SiKasir-POS-Mobile.apk'),
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) {
-      return res.download(c, 'SiKasir-POS-v3.9.0.apk');
+      return res.download(c, 'SiKasir-POS-v3.10.0.apk');
     }
   }
   if (process.env.APK_DOWNLOAD_URL) {
