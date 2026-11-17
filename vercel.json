@@ -16,6 +16,14 @@
       "dest": "server/index.js"
     },
     {
+      "src": "/download/apk",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "/download/(.*)",
+      "dest": "server/index.js"
+    },
+    {
       "src": "/",
       "dest": "public/index.html"
     },

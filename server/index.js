@@ -207,6 +207,14 @@ app.use('/api/shifts', shiftsRoutes);
 /** Download File APK Android Resmi */
 app.get('/download/apk', (req, res) => {
   const fs = require('fs');
+  const GITHUB_RELEASE_APK = 'https://github.com/muhamadadrian210-debug/sikasir/releases/download/v3.10.0/SiKasir-v3.10.0.apk';
+  const downloadUrl = process.env.APK_DOWNLOAD_URL || GITHUB_RELEASE_APK;
+
+  // Di Vercel serverless, wajib redirect ke CDN Release agar tidak kena limit payload 4.5MB
+  if (process.env.VERCEL) {
+    return res.redirect(downloadUrl);
+  }
+
   const candidates = [
     path.join(__dirname, '..', 'SiKasir-v3.10.0.apk'),
     path.join(__dirname, '..', 'public', 'downloads', 'sikasir-pos.apk'),
@@ -219,10 +227,7 @@ app.get('/download/apk', (req, res) => {
       return res.download(c, 'SiKasir-POS-v3.10.0.apk');
     }
   }
-  if (process.env.APK_DOWNLOAD_URL) {
-    return res.redirect(process.env.APK_DOWNLOAD_URL);
-  }
-  res.status(404).send('File APK belum tersedia untuk diunduh saat ini.');
+  return res.redirect(downloadUrl);
 });
 
 app.get('/ceo', (req, res) => {
