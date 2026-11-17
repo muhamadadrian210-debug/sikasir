@@ -254,7 +254,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       drawer: _buildDrawer(),
-      body: _buildCurrentTabBody(),
+      body: IndexedStack(
+        index: _selectedBottomTab,
+        children: [
+          const PosScreen(),
+          const HistoryScreen(),
+          const ProductsScreen(),
+          const ReportsScreen(),
+          _buildMoreMenuHub(),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -302,22 +311,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildCurrentTabBody() {
-    switch (_selectedBottomTab) {
-      case 0:
-        return const PosScreen();
-      case 1:
-        return const HistoryScreen();
-      case 2:
-        return const ProductsScreen();
-      case 3:
-        return const ReportsScreen();
-      case 4:
-      default:
-        return _buildMoreMenuHub();
-    }
   }
 
   // Hub Menu Lengkap (Majoo Style Grid)

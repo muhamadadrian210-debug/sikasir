@@ -51,7 +51,7 @@ class _PosScreenState extends State<PosScreen> {
       final res = await ApiService().get('/app-version');
       if (res.statusCode == 200 && mounted) {
         final data = res.data;
-        final v = data['version']?.toString() ?? '3.10.2';
+        final v = data['version']?.toString() ?? '3.10.3';
         PremiumNotification.showInfo(
           context,
           title: 'SiKasir v$v Aktif',
@@ -102,32 +102,63 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
-  Future<void> _loadProducts() async {
+  Future<void> _loadProducts({bool forceRefresh = false}) async {
     final pos = context.read<PosProvider>();
-    pos.setLoading(true);
 
-    try {
-      final res = await ApiService().get('/products');
-      if (res.statusCode == 200 && res.data is List) {
-        final rawList = (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        final list = rawList.map((e) => Product.fromJson(e)).toList();
-        pos.setProducts(list);
-        await LocalCacheService.saveProducts(rawList);
-      }
-    } catch (err) {
-      debugPrint('[POS] Error loading live products: $err');
-      // Fallback offline cache
+    // 1. Jika produk sudah ada di memori dan bukan refresh paksa, sync background tanpa block UI
+    if (pos.hasProducts && !forceRefresh) {
+      _syncProductsSilently(pos);
+      return;
+    }
+
+    // 2. Baca dari cache offline instan (0 ms) agar produk langsung muncul
+    if (!pos.hasProducts) {
       try {
         final cached = await LocalCacheService.getCachedProducts();
-        if (cached.isNotEmpty) {
+        if (cached.isNotEmpty && mounted) {
           final list = cached.map((e) => Product.fromJson(Map<String, dynamic>.from(e))).toList();
           pos.setProducts(list);
         }
       } catch (cacheErr) {
-        debugPrint('[POS] Error loading cached products: $cacheErr');
+        debugPrint('[POS] Cache read error: $cacheErr');
+      }
+    }
+
+    // 3. Hanya tampilkan loading spinner jika katalog di memori dan cache benar-benar masih kosong
+    if (!pos.hasProducts) {
+      pos.setLoading(true);
+    }
+
+    // 4. Tarik data terbaru dari server cloud
+    await _syncProductsSilently(pos);
+  }
+
+  Future<void> _syncProductsSilently(PosProvider pos) async {
+    try {
+      final res = await ApiService().get('/products');
+      if (res.statusCode == 200 && res.data is List && mounted) {
+        final rawList = (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        final list = rawList.map((e) => Product.fromJson(e)).toList();
+        pos.setProducts(list);
+        // Simpan ke local cache tanpa memblokir UI thread
+        LocalCacheService.saveProducts(rawList);
+      }
+    } catch (err) {
+      debugPrint('[POS] Error loading live products: $err');
+      // Fallback offline cache jika memori masih kosong
+      if (!pos.hasProducts) {
+        try {
+          final cached = await LocalCacheService.getCachedProducts();
+          if (cached.isNotEmpty && mounted) {
+            final list = cached.map((e) => Product.fromJson(Map<String, dynamic>.from(e))).toList();
+            pos.setProducts(list);
+          }
+        } catch (_) {}
       }
     } finally {
-      pos.setLoading(false);
+      if (pos.isLoading) {
+        pos.setLoading(false);
+      }
     }
   }
 
@@ -468,7 +499,7 @@ class _PosScreenState extends State<PosScreen> {
               const SizedBox(width: 8),
               // Tombol Refresh Sinkronisasi
               InkWell(
-                onTap: _loadProducts,
+                onTap: () => _loadProducts(forceRefresh: true),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: 46,

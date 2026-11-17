@@ -90,16 +90,16 @@ app.use('/api/setup', setupRoutes);
 /** Informasi Versi & Update Notifikasi Resmi SiKasir */
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '3.10.2',
-    versionCode: 402,
+    version: '3.10.3',
+    versionCode: 403,
     releaseDate: '2026-11-17',
-    title: 'SiKasir v3.10.2 Full Landscape Mode, Robust Decimal Parsing & Graceful Network Error Handling',
-    notes: 'Dukungan penuh rotasi layar miring (landscape) untuk tablet/HP kasir, perbaikan parsing katalog desimal MySQL, dan penanganan error 503 maintenance yang bersih tanpa pesan teknis membingungkan.',
+    title: 'SiKasir v3.10.3 Instant Stale-While-Revalidate & Persistent IndexedStack',
+    notes: 'Katalog produk kini muncul instan 0 ms dari cache lokal tanpa stuck loading spinner, background cloud sync tanpa mengunci kasir, dan navigasi tab yang persisten.',
     features: [
-      'Mode Layar Miring (Landscape Mode) penuh di semua halaman: POS kasir, produk, laporan, dan keamanan',
-      'Perbaikan parsing desimal katalog produk dari MySQL database tanpa error',
-      'Penanganan status koneksi dan maintenance mode yang ramah pengguna tanpa stack trace teknis',
-      'Direct Bluetooth ESC/POS engine: cetak struk tanpa instal aplikasi pihak ketiga apa pun'
+      'Katalog produk muncul instan (0 ms) dari offline cache tanpa loading spinner yang mengunci kasir',
+      'Sinkronisasi cloud berjalan hening di latar belakang (background sync)',
+      'IndexedStack navigation: tab Kasir tidak pernah reset atau reload ulang saat buka menu lain',
+      'Mode Layar Miring (Landscape Mode) penuh di semua halaman'
     ],
     apk_url: '/download/apk'
   });
@@ -207,7 +207,7 @@ app.use('/api/shifts', shiftsRoutes);
 /** Download File APK Android Resmi */
 app.get('/download/apk', (req, res) => {
   const fs = require('fs');
-  const GITHUB_RELEASE_APK = 'https://github.com/muhamadadrian210-debug/sikasir/releases/download/v3.10.2/SiKasir-v3.10.2.apk';
+  const GITHUB_RELEASE_APK = 'https://github.com/muhamadadrian210-debug/sikasir/releases/download/v3.10.3/SiKasir-v3.10.3.apk';
   const downloadUrl = process.env.APK_DOWNLOAD_URL || GITHUB_RELEASE_APK;
 
   // Di Vercel serverless, wajib redirect ke CDN Release agar tidak kena limit payload 4.5MB
@@ -216,6 +216,7 @@ app.get('/download/apk', (req, res) => {
   }
 
   const candidates = [
+    path.join(__dirname, '..', 'SiKasir-v3.10.3.apk'),
     path.join(__dirname, '..', 'SiKasir-v3.10.2.apk'),
     path.join(__dirname, '..', 'SiKasir-v3.10.1.apk'),
     path.join(__dirname, '..', 'SiKasir-v3.10.0.apk'),

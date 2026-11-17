@@ -191,6 +191,7 @@ class PosProvider extends ChangeNotifier {
 
   List<CartItem> get cart => _cart;
   bool get isLoading => _isLoading;
+  bool get hasProducts => _products.isNotEmpty;
   double get totalAmount => _cart.fold(0.0, (sum, it) => sum + it.subtotal);
   int get totalItemsCount => _cart.fold(0, (sum, it) => sum + it.qty);
 

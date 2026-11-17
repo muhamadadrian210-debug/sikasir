@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import '../core/services/api_service.dart';
+import '../core/services/local_cache_service.dart';
 import '../core/widgets/heavy_duty_barcode_scanner_modal.dart';
 import '../core/widgets/premium_notification.dart';
 import '../core/theme/app_theme.dart';
@@ -28,19 +29,35 @@ class _ProductsScreenState extends State<ProductsScreen> {
     _fetchData();
   }
 
-  Future<void> _fetchData() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchData({bool forceRefresh = false}) async {
+    // 1. Tampilkan dari cache dulu secara instan jika memori kosong
+    if (_products.isEmpty && !forceRefresh) {
+      try {
+        final cached = await LocalCacheService.getCachedProducts();
+        if (cached.isNotEmpty && mounted) {
+          setState(() => _products = cached);
+        }
+      } catch (_) {}
+    }
+
+    // 2. Hanya tampilkan spinner jika produk benar-benar masih kosong
+    if (_products.isEmpty) {
+      setState(() => _isLoading = true);
+    }
+
     try {
       final res = await ApiService().get('/products');
       final catRes = await ApiService().get('/categories');
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200 && mounted) {
+        final prodList = res.data is List ? List<Map<String, dynamic>>.from(res.data) : <Map<String, dynamic>>[];
         setState(() {
-          _products = res.data is List ? res.data : [];
+          _products = prodList;
           _categories = catRes.statusCode == 200 && catRes.data is List ? catRes.data : [];
         });
+        LocalCacheService.saveProducts(prodList);
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _products.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal memuat produk: ${ApiService.getErrorMessage(e)}')));
       }
     } finally {
