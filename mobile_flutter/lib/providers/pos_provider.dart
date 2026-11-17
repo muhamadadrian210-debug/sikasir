@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/services/api_service.dart';
+import '../core/theme/app_theme.dart';
 
 class ProductModifier {
   final String name;
@@ -14,7 +15,7 @@ class ProductModifier {
 
   factory ProductModifier.fromJson(Map<String, dynamic> json) => ProductModifier(
         name: json['name']?.toString() ?? '',
-        extraPrice: (json['extra_price'] ?? 0).toDouble(),
+        extraPrice: AppTheme.parseDouble(json['extra_price']),
       );
 }
 
@@ -45,7 +46,7 @@ class Product {
 
     if (json['modifiers'] is List) {
       mods = (json['modifiers'] as List)
-          .map((m) => ProductModifier.fromJson(m as Map<String, dynamic>))
+          .map((m) => ProductModifier.fromJson(m is Map<String, dynamic> ? m : Map<String, dynamic>.from(m as Map)))
           .toList();
     } else {
       // Smart Auto-Modifiers berdasarkan Kategori (Zero-Cost Intelligent Modifiers)
@@ -72,12 +73,12 @@ class Product {
     }
 
     return Product(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
+      id: AppTheme.parseInt(json['id']),
       barcode: json['barcode']?.toString() ?? '',
-      name: json['name']?.toString() ?? 'Produk',
-      purchasePrice: (json['purchase_price'] ?? 0).toDouble(),
-      salePrice: (json['sale_price'] ?? 0).toDouble(),
-      stock: json['stock'] is int ? json['stock'] : int.tryParse(json['stock'].toString()) ?? 0,
+      name: (json['name'] ?? 'Produk').toString().trim().isEmpty ? 'Produk' : json['name'].toString().trim(),
+      purchasePrice: AppTheme.parseDouble(json['purchase_price']),
+      salePrice: AppTheme.parseDouble(json['sale_price']),
+      stock: AppTheme.parseInt(json['stock']),
       category: cat,
       availableModifiers: mods,
     );

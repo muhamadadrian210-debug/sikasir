@@ -45,7 +45,7 @@ class _KasbonScreenState extends State<KasbonScreen> {
   void _sendWhatsAppReminder(Map<String, dynamic> debt) {
     final phone = (debt['customer_phone'] ?? debt['phone'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
     final name = debt['customer_name'] ?? debt['name'] ?? 'Pelanggan';
-    final total = _currency.format(debt['total'] ?? debt['debt_amount'] ?? 0);
+    final total = AppTheme.formatCurrency(debt['total'] ?? debt['debt_amount']);
     final invoice = debt['id'] ?? '-';
 
     String formattedPhone = phone;
@@ -344,7 +344,7 @@ class _KasbonScreenState extends State<KasbonScreen> {
                                       Text('WA: $phone  ·  ${date != null ? DateFormat('dd/MM/yy').format(date) : '-'}',
                                           style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
                                       const SizedBox(height: 4),
-                                      Text(_currency.format(amount),
+                                      Text(AppTheme.formatCurrency(amount),
                                           style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 14)),
                                     ],
                                   ),

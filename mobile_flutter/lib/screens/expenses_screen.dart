@@ -135,7 +135,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalExpense = _expenses.fold<double>(0, (sum, it) => sum + ((it['amount'] is num) ? (it['amount'] as num).toDouble() : 0));
+    final totalExpense = _expenses.fold<double>(0, (sum, it) => sum + AppTheme.parseDouble(it['amount']));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -228,7 +228,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   ),
                                 ),
                                 Text(
-                                  _currency.format(ex['amount'] ?? 0),
+                                  AppTheme.formatCurrency(ex['amount']),
                                   style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 14),
                                 ),
                               ],

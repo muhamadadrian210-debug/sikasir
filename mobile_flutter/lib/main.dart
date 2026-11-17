@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,8 +24,14 @@ import 'screens/cybersecurity_screen.dart';
 import 'screens/license_screen.dart';
 import 'core/widgets/customer_display_modal.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
   runApp(
     MultiProvider(
       providers: [
@@ -177,6 +184,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       );
     }
 
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     final titles = ['Kasir POS', 'Riwayat Transaksi', 'Manajemen Produk', 'Laporan Omset', 'Semua Menu'];
 
     return Scaffold(
@@ -184,8 +192,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
+        toolbarHeight: isLandscape ? 44 : 56,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Row(
               children: [
@@ -194,22 +204,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                    fontSize: isLandscape ? 14 : 16,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: EdgeInsets.symmetric(horizontal: isLandscape ? 5 : 7, vertical: isLandscape ? 1 : 2),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     _storeType,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.primaryDark,
                       fontWeight: FontWeight.bold,
-                      fontSize: 10.5,
+                      fontSize: isLandscape ? 9.5 : 10.5,
                     ),
                   ),
                 ),
@@ -218,9 +228,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             const SizedBox(height: 1),
             Text(
               titles[_selectedBottomTab],
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 11.5,
+                fontSize: isLandscape ? 10 : 11.5,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -229,11 +239,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.tv_rounded, color: AppColors.primaryDark),
+            iconSize: isLandscape ? 20 : 24,
             onPressed: () => CustomerDisplayModal.show(context),
             tooltip: 'Layar Pelanggan (CDS)',
           ),
           IconButton(
             icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+            iconSize: isLandscape ? 20 : 24,
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -257,6 +269,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedBottomTab,
+          iconSize: isLandscape ? 20 : 24,
+          selectedFontSize: isLandscape ? 10 : 12,
+          unselectedFontSize: isLandscape ? 9.5 : 11,
           onTap: (idx) {
             setState(() {
               _selectedBottomTab = idx;

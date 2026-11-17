@@ -16,7 +16,6 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
-  final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   final ImagePicker _picker = ImagePicker();
   List<dynamic> _products = [];
   List<dynamic> _categories = [];
@@ -643,97 +642,123 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ? const Center(
                         child: Text('Tidak ada produk yang cocok', style: TextStyle(color: AppColors.textSecondary)),
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, i) => const SizedBox(height: 10),
-                        itemBuilder: (ctx, idx) {
-                          final p = filtered[idx];
-                          final stock = (p['stock'] is num) ? (p['stock'] as num).toInt() : int.tryParse(p['stock']?.toString() ?? '0') ?? 0;
-                          final isOut = stock <= 0;
-                          final isLow = stock > 0 && stock <= 5;
-
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: AppTheme.cardDecoration(),
-                            child: Row(
-                              children: [
-                                // Icon Box
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isOut ? AppColors.dangerLight : (isLow ? AppColors.warningLight : AppColors.primaryLight),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      (p['name'] ?? 'P').toString().substring(0, 1).toUpperCase(),
-                                      style: TextStyle(
-                                        color: isOut ? AppColors.danger : (isLow ? AppColors.warning : AppColors.primaryDark),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Detail
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        p['name'] ?? '',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13.5,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'SKU: ${p['barcode'] ?? '-'} · Modal: ${_currency.format(p['purchase_price'] ?? 0)}',
-                                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _currency.format(p['sale_price'] ?? 0),
-                                        style: const TextStyle(
-                                          color: AppColors.primaryDark,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 13.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Stock Badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isOut ? AppColors.dangerLight : (isLow ? AppColors.warningLight : AppColors.successLight),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    '$stock pcs',
-                                    style: TextStyle(
-                                      color: isOut ? AppColors.danger : (isLow ? AppColors.warning : AppColors.primaryDark),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
-                                  onPressed: () => _showAddEditProductModal(p),
-                                ),
-                              ],
-                            ),
+                    : LayoutBuilder(
+                        builder: (ctx, constraints) {
+                          final isWide = constraints.maxWidth >= 600 || MediaQuery.of(context).orientation == Orientation.landscape;
+                          if (isWide) {
+                            return GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 3.3,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 10,
+                              ),
+                              itemCount: filtered.length,
+                              itemBuilder: (ctx, idx) => _buildProductRow(Map<String, dynamic>.from(filtered[idx] as Map)),
+                            );
+                          }
+                          return ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, i) => const SizedBox(height: 10),
+                            itemBuilder: (ctx, idx) => _buildProductRow(Map<String, dynamic>.from(filtered[idx] as Map)),
                           );
                         },
                       ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductRow(Map<String, dynamic> p) {
+    final stock = AppTheme.parseInt(p['stock']);
+    final isOut = stock <= 0;
+    final isLow = stock > 0 && stock <= 5;
+    final pName = (p['name'] ?? 'Produk').toString().trim();
+    final initial = pName.isNotEmpty ? pName.substring(0, 1).toUpperCase() : 'P';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: AppTheme.cardDecoration(),
+      child: Row(
+        children: [
+          // Icon Box
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isOut ? AppColors.dangerLight : (isLow ? AppColors.warningLight : AppColors.primaryLight),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: TextStyle(
+                  color: isOut ? AppColors.danger : (isLow ? AppColors.warning : AppColors.primaryDark),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Detail
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  pName.isNotEmpty ? pName : 'Produk',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'SKU: ${p['barcode'] ?? '-'} · Modal: ${AppTheme.formatCurrency(p['purchase_price'])}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  AppTheme.formatCurrency(p['sale_price']),
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Stock Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isOut ? AppColors.dangerLight : (isLow ? AppColors.warningLight : AppColors.successLight),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '$stock pcs',
+              style: TextStyle(
+                color: isOut ? AppColors.danger : (isLow ? AppColors.warning : AppColors.primaryDark),
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+            onPressed: () => _showAddEditProductModal(p),
           ),
         ],
       ),

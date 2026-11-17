@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class AppColors {
   // Brand Primary (Majoo Modern Emerald POS)
@@ -199,5 +200,25 @@ class AppTheme {
       borderRadius: BorderRadius.circular(20),
       border: border != null ? Border.all(color: border) : null,
     );
+  }
+
+  // Safe Number & Currency Parsing & Formatting (Anti-Crash Decimal/String)
+  static final _currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+  static double parseDouble(dynamic val) {
+    if (val == null) return 0.0;
+    if (val is num) return val.toDouble();
+    return double.tryParse(val.toString()) ?? 0.0;
+  }
+
+  static int parseInt(dynamic val) {
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    return int.tryParse(val.toString()) ?? 0;
+  }
+
+  static String formatCurrency(dynamic val) {
+    return _currencyFormat.format(parseDouble(val));
   }
 }

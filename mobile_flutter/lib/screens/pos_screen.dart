@@ -109,16 +109,22 @@ class _PosScreenState extends State<PosScreen> {
     try {
       final res = await ApiService().get('/products');
       if (res.statusCode == 200 && res.data is List) {
-        final list = (res.data as List).map((e) => Product.fromJson(e)).toList();
+        final rawList = (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        final list = rawList.map((e) => Product.fromJson(e)).toList();
         pos.setProducts(list);
-        await LocalCacheService.saveProducts((res.data as List).cast<Map<String, dynamic>>());
+        await LocalCacheService.saveProducts(rawList);
       }
-    } catch (_) {
+    } catch (err) {
+      debugPrint('[POS] Error loading live products: $err');
       // Fallback offline cache
-      final cached = await LocalCacheService.getCachedProducts();
-      if (cached.isNotEmpty) {
-        final list = cached.map((e) => Product.fromJson(e)).toList();
-        pos.setProducts(list);
+      try {
+        final cached = await LocalCacheService.getCachedProducts();
+        if (cached.isNotEmpty) {
+          final list = cached.map((e) => Product.fromJson(Map<String, dynamic>.from(e))).toList();
+          pos.setProducts(list);
+        }
+      } catch (cacheErr) {
+        debugPrint('[POS] Error loading cached products: $cacheErr');
       }
     } finally {
       pos.setLoading(false);
@@ -336,24 +342,31 @@ class _PosScreenState extends State<PosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width >= 900;
+    final orientation = MediaQuery.of(context).orientation;
+    final isLandscape = orientation == Orientation.landscape;
+    final isWideScreen = isLandscape || MediaQuery.of(context).size.width >= 720;
     final pos = context.watch<PosProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: isWideScreen ? _buildSplitLayout(pos) : _buildMobileLayout(pos),
+        child: isWideScreen ? _buildSplitLayout(pos, isLandscape) : _buildMobileLayout(pos),
       ),
     );
   }
 
-  // Layout 2 Kolom untuk Tablet / PC Desktop
-  Widget _buildSplitLayout(PosProvider pos) {
+  // Layout 2 Kolom untuk Mode Miring (Landscape) & Layar Lebar Tablet / PC
+  Widget _buildSplitLayout(PosProvider pos, bool isLandscape) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final catalogFlex = screenWidth >= 1100 ? 65 : (screenWidth >= 900 ? 60 : 56);
+    final cartFlex = 100 - catalogFlex;
+
     return Row(
       children: [
-        Expanded(flex: 6, child: _buildCatalogSection(pos)),
+        Expanded(flex: catalogFlex, child: _buildCatalogSection(pos, isLandscape: isLandscape)),
         Container(width: 1, color: AppColors.border),
-        Expanded(flex: 4, child: _buildCartSection(pos)),
+        Expanded(flex: cartFlex, child: _buildCartSection(pos, isLandscape: isLandscape)),
       ],
     );
   }
@@ -362,14 +375,14 @@ class _PosScreenState extends State<PosScreen> {
   Widget _buildMobileLayout(PosProvider pos) {
     return Column(
       children: [
-        Expanded(child: _buildCatalogSection(pos)),
+        Expanded(child: _buildCatalogSection(pos, isLandscape: false)),
         if (pos.cart.isNotEmpty) _buildMobileBottomBar(pos),
       ],
     );
   }
 
   // Bagian Katalog Produk (Header, Kategori & Grid)
-  Widget _buildCatalogSection(PosProvider pos) {
+  Widget _buildCatalogSection(PosProvider pos, {bool isLandscape = false}) {
     final categories = pos.categories;
 
     return Column(
@@ -633,17 +646,17 @@ class _PosScreenState extends State<PosScreen> {
                       ),
                     )
                   : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 190,
-                        childAspectRatio: 0.78,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                      padding: EdgeInsets.fromLTRB(isLandscape ? 12 : 16, 4, isLandscape ? 12 : 16, 20),
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: isLandscape ? 180 : 190,
+                        childAspectRatio: isLandscape ? 0.92 : 0.78,
+                        crossAxisSpacing: isLandscape ? 8 : 12,
+                        mainAxisSpacing: isLandscape ? 8 : 12,
                       ),
                       itemCount: pos.products.length,
                       itemBuilder: (context, idx) {
                         final p = pos.products[idx];
-                        return _buildProductCard(p, pos);
+                        return _buildProductCard(p, pos, isLandscape: isLandscape);
                       },
                     ),
         ),
@@ -652,7 +665,7 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   // Card Produk Majoo Style: Bersih, Avatar Berwarna, Badge Stok & Jumlah di Cart
-  Widget _buildProductCard(Product p, PosProvider pos) {
+  Widget _buildProductCard(Product p, PosProvider pos, {bool isLandscape = false}) {
     final isOut = p.stock <= 0;
     final inCartIdx = pos.cart.indexWhere((it) => it.product.id == p.id);
     final inCartQty = inCartIdx >= 0 ? pos.cart[inCartIdx].qty : 0;
@@ -707,58 +720,58 @@ class _PosScreenState extends State<PosScreen> {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(isLandscape ? 8 : 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Avatar / Gambar Produk Placeholder
                   Center(
                     child: Container(
-                      width: 64,
-                      height: 64,
+                      width: isLandscape ? 44 : 64,
+                      height: isLandscape ? 44 : 64,
                       decoration: BoxDecoration(
                         color: pastelBg,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
                         child: Text(
                           p.name.isNotEmpty ? p.name.substring(0, 1).toUpperCase() : 'P',
                           style: GoogleFonts.plusJakartaSans(
                             color: pastelIcon,
-                            fontSize: 24,
+                            fontSize: isLandscape ? 18 : 24,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  if (!isLandscape) const Spacer() else const SizedBox(height: 4),
                   // Nama Produk
                   Text(
                     p.name,
-                    maxLines: 2,
+                    maxLines: isLandscape ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                      height: 1.25,
+                      fontSize: isLandscape ? 11.5 : 12.5,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: isLandscape ? 2 : 6),
                   // Harga
                   Text(
-                    _currency.format(p.salePrice),
-                    style: const TextStyle(
+                    AppTheme.formatCurrency(p.salePrice),
+                    style: TextStyle(
                       color: AppColors.primaryDark,
                       fontWeight: FontWeight.w900,
-                      fontSize: 13.5,
+                      fontSize: isLandscape ? 12.5 : 13.5,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: isLandscape ? 2 : 4),
                   // Badge Stok
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: isOut
                           ? AppColors.dangerLight
@@ -771,7 +784,7 @@ class _PosScreenState extends State<PosScreen> {
                         color: isOut
                             ? AppColors.danger
                             : (p.stock <= 5 ? AppColors.warning : AppColors.primaryDark),
-                        fontSize: 10,
+                        fontSize: isLandscape ? 9.5 : 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -919,7 +932,7 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   // Cart Section (digunakan di Mobile Sheet & Tablet Split View)
-  Widget _buildCartSection(PosProvider pos, {bool isModal = false}) {
+  Widget _buildCartSection(PosProvider pos, {bool isModal = false, bool isLandscape = false}) {
     final subtotal = pos.totalAmount;
     final discount = pos.autoPromoDiscount;
     final taxable = (subtotal - discount).clamp(0.0, double.infinity);
@@ -1053,16 +1066,16 @@ class _PosScreenState extends State<PosScreen> {
           // Daftar Item Keranjang
           Expanded(
             child: pos.cart.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.remove_shopping_cart_outlined, size: 40, color: AppColors.textMuted),
-                        SizedBox(height: 8),
+                        Icon(Icons.remove_shopping_cart_outlined, size: isLandscape ? 28 : 40, color: AppColors.textMuted),
+                        SizedBox(height: isLandscape ? 4 : 8),
                         Text(
                           'Keranjang masih kosong\nPilih produk dari katalog di samping',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: isLandscape ? 11 : 12.5),
                         ),
                       ],
                     ),
@@ -1178,7 +1191,7 @@ class _PosScreenState extends State<PosScreen> {
 
           // Area Pajak, Split Bill & Metode Pembayaran
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: isLandscape ? 12 : 16, vertical: isLandscape ? 4 : 8),
             child: Column(
               children: [
                 // PB1 & Split Bill Row
@@ -1190,8 +1203,8 @@ class _PosScreenState extends State<PosScreen> {
                       child: Row(
                         children: [
                           SizedBox(
-                            width: 24,
-                            height: 24,
+                            width: 22,
+                            height: 22,
                             child: Checkbox(
                               value: _applyPB1,
                               activeColor: AppColors.primary,
@@ -1199,29 +1212,29 @@ class _PosScreenState extends State<PosScreen> {
                               onChanged: (v) => setState(() => _applyPB1 = v ?? false),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          const Text('Pajak PB1 Resto (10%)', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          const SizedBox(width: 4),
+                          Text('Pajak PB1 (10%)', style: TextStyle(fontSize: isLandscape ? 11 : 12, color: AppColors.textSecondary)),
                         ],
                       ),
                     ),
                     Row(
                       children: [
-                        const Text('Split Bill:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                        const SizedBox(width: 4),
+                        Text('Split:', style: TextStyle(fontSize: isLandscape ? 11 : 12, color: AppColors.textSecondary)),
+                        const SizedBox(width: 2),
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.remove_circle_outline, size: 18, color: AppColors.textSecondary),
+                          icon: const Icon(Icons.remove_circle_outline, size: 16, color: AppColors.textSecondary),
                           onPressed: _splitWays > 1 ? () => setState(() => _splitWays--) : null,
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text('$_splitWays Org', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: Text('$_splitWays Org', style: TextStyle(fontWeight: FontWeight.bold, fontSize: isLandscape ? 11 : 12)),
                         ),
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.add_circle_outline, size: 18, color: AppColors.primary),
+                          icon: const Icon(Icons.add_circle_outline, size: 16, color: AppColors.primary),
                           onPressed: () => setState(() => _splitWays++),
                         ),
                       ],
@@ -1230,17 +1243,17 @@ class _PosScreenState extends State<PosScreen> {
                 ),
                 if (_splitWays > 1)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      'Bayar per orang: ${_currency.format(perPerson)}',
-                      style: const TextStyle(color: AppColors.secondary, fontSize: 11.5, fontWeight: FontWeight.bold),
+                      'Bayar per orang: ${AppTheme.formatCurrency(perPerson)}',
+                      style: const TextStyle(color: AppColors.secondary, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ),
 
-                const SizedBox(height: 8),
+                SizedBox(height: isLandscape ? 4 : 8),
                 // Total Amount Display
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: isLandscape ? 6 : 8),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(10),
@@ -1248,10 +1261,10 @@ class _PosScreenState extends State<PosScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Total Pembayaran', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text('Total Pembayaran', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: isLandscape ? 12 : 13)),
                       Text(
-                        _currency.format(total),
-                        style: GoogleFonts.plusJakartaSans(color: AppColors.primaryDark, fontWeight: FontWeight.w900, fontSize: 18),
+                        AppTheme.formatCurrency(total),
+                        style: GoogleFonts.plusJakartaSans(color: AppColors.primaryDark, fontWeight: FontWeight.w900, fontSize: isLandscape ? 16 : 18),
                       ),
                     ],
                   ),

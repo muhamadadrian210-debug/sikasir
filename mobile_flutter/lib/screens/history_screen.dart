@@ -105,7 +105,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ...items.map((it) {
                   final name = it['name'] ?? it['product_name'] ?? 'Produk';
                   final qty = it['qty'] ?? 1;
-                  final price = (it['price'] ?? it['sale_price'] ?? 0).toDouble();
+                  final price = AppTheme.parseDouble(it['price'] ?? it['sale_price']);
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
@@ -414,7 +414,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        _currency.format(tx['total'] ?? 0),
+                                        AppTheme.formatCurrency(tx['total']),
                                         style: const TextStyle(
                                           color: AppColors.primaryDark,
                                           fontWeight: FontWeight.w900,

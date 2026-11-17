@@ -12,7 +12,6 @@ class ShiftScreen extends StatefulWidget {
 }
 
 class _ShiftScreenState extends State<ShiftScreen> {
-  final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   bool _isLoading = true;
   bool _hasActiveShift = false;
   Map<String, dynamic>? _shiftData;
@@ -85,7 +84,7 @@ class _ShiftScreenState extends State<ShiftScreen> {
   }
 
   void _showShiftReportDialog(Map<String, dynamic> summary) {
-    final variance = (summary['variance'] ?? 0).toDouble();
+    final variance = AppTheme.parseDouble(summary['variance']);
 
     showDialog(
       context: context,
@@ -101,10 +100,10 @@ class _ShiftScreenState extends State<ShiftScreen> {
             const SizedBox(height: 8),
             const Divider(color: AppColors.border),
             const SizedBox(height: 8),
-            _buildReportRow('Modal Awal', _currency.format(summary['initial_cash'] ?? 0)),
-            _buildReportRow('Total Penjualan Shift', _currency.format(summary['total_sales'] ?? 0), isHighlighted: true),
-            _buildReportRow('Uang Seharusnya (Expected)', _currency.format(summary['expected_cash'] ?? 0)),
-            _buildReportRow('Uang Fisik Dihitung Kasir', _currency.format(summary['actual_cash'] ?? 0)),
+            _buildReportRow('Modal Awal', AppTheme.formatCurrency(summary['initial_cash'])),
+            _buildReportRow('Total Penjualan Shift', AppTheme.formatCurrency(summary['total_sales']), isHighlighted: true),
+            _buildReportRow('Uang Seharusnya (Expected)', AppTheme.formatCurrency(summary['expected_cash'])),
+            _buildReportRow('Uang Fisik Dihitung Kasir', AppTheme.formatCurrency(summary['actual_cash'])),
             const SizedBox(height: 8),
             const Divider(color: AppColors.border),
             const SizedBox(height: 8),
@@ -113,7 +112,7 @@ class _ShiftScreenState extends State<ShiftScreen> {
               children: [
                 const Text('Selisih (Variance):', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                 Text(
-                  _currency.format(variance),
+                  AppTheme.formatCurrency(variance),
                   style: TextStyle(
                     color: variance == 0 ? AppColors.primaryDark : (variance > 0 ? AppColors.secondary : AppColors.danger),
                     fontWeight: FontWeight.w900,
@@ -266,9 +265,9 @@ class _ShiftScreenState extends State<ShiftScreen> {
               const SizedBox(height: 10),
 
               // KPI Nilai Shift
-              _buildMetricTile('Modal Awal Kasir', _currency.format(shift['initial_cash'] ?? 0)),
-              _buildMetricTile('Total Penjualan Shift', _currency.format(shift['total_sales'] ?? 0), isPrimary: true),
-              _buildMetricTile('Uang Seharusnya (Expected)', _currency.format(shift['expected_cash'] ?? 0), isBold: true),
+              _buildMetricTile('Modal Awal Kasir', AppTheme.formatCurrency(shift['initial_cash'])),
+              _buildMetricTile('Total Penjualan Shift', AppTheme.formatCurrency(shift['total_sales']), isPrimary: true),
+              _buildMetricTile('Uang Seharusnya (Expected)', AppTheme.formatCurrency(shift['expected_cash']), isBold: true),
 
               const SizedBox(height: 14),
               const Divider(color: AppColors.border),

@@ -41,11 +41,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final rev = (_marginData?['total_revenue'] ?? 0).toDouble();
-    final cost = (_marginData?['total_cost'] ?? 0).toDouble();
-    final profit = (_marginData?['total_profit'] ?? 0).toDouble();
-    final exp = (_marginData?['total_expenses'] ?? 0).toDouble();
-    final netProfit = (_marginData?['net_profit'] ?? profit).toDouble();
+    final rev = AppTheme.parseDouble(_marginData?['total_revenue']);
+    final cost = AppTheme.parseDouble(_marginData?['total_cost']);
+    final profit = AppTheme.parseDouble(_marginData?['total_profit']);
+    final exp = AppTheme.parseDouble(_marginData?['total_expenses']);
+    final netProfit = AppTheme.parseDouble(_marginData?['net_profit'] ?? profit);
     final products = (_marginData?['products'] as List?) ?? [];
 
     return Scaffold(
@@ -214,7 +214,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Terjual: ${p['qty_sold']} pcs · Omset: ${_currency.format(p['revenue'] ?? 0)}',
+                                      'Terjual: ${p['qty_sold']} pcs · Omset: ${AppTheme.formatCurrency(p['revenue'])}',
                                       style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
                                     ),
                                   ],
@@ -225,7 +225,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 children: [
                                   const Text('Untung Bersih', style: TextStyle(color: AppColors.textMuted, fontSize: 10)),
                                   Text(
-                                    _currency.format(p['profit'] ?? 0),
+                                    AppTheme.formatCurrency(p['profit']),
                                     style: const TextStyle(
                                       color: AppColors.primaryDark,
                                       fontWeight: FontWeight.w800,
