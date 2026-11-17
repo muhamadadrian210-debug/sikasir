@@ -41,6 +41,61 @@ class ThermalBluetoothPrinter {
     });
   }
 
+  async tryAutoConnect() {
+    if (!this.isSupported() || typeof navigator.bluetooth.getDevices !== 'function') return false;
+    try {
+      const devices = await navigator.bluetooth.getDevices();
+      if (!devices || devices.length === 0) return false;
+      const device = devices[0];
+      if (!device) return false;
+
+      this.device = device;
+      device.addEventListener('gattserverdisconnected', () => {
+        this.characteristic = null;
+        this.notifyStatus();
+      });
+
+      const server = await device.gatt.connect();
+      const optionalServices = [
+        '000018f0-0000-1000-8000-00805f9b34fb',
+        '0000ff00-0000-1000-8000-00805f9b34fb',
+        '0000ffe0-0000-1000-8000-00805f9b34fb',
+        '0000fff0-0000-1000-8000-00805f9b34fb',
+        '0000fee7-0000-1000-8000-00805f9b34fb',
+        '0000ffe5-0000-1000-8000-00805f9b34fb',
+        'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+        '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+        '0000ae00-0000-1000-8000-00805f9b34fb',
+        '0000af00-0000-1000-8000-00805f9b34fb',
+        '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
+      ];
+
+      let targetCharacteristic = null;
+      for (const serviceUuid of optionalServices) {
+        try {
+          const service = await server.getPrimaryService(serviceUuid);
+          const chars = await service.getCharacteristics();
+          for (const c of chars) {
+            if (c.properties.write || c.properties.writeWithoutResponse) {
+              targetCharacteristic = c;
+              break;
+            }
+          }
+        } catch {}
+        if (targetCharacteristic) break;
+      }
+
+      if (targetCharacteristic) {
+        this.characteristic = targetCharacteristic;
+        this.notifyStatus();
+        return true;
+      }
+    } catch (e) {
+      // Silent auto-connect fallback
+    }
+    return false;
+  }
+
   async connect() {
     if (!this.isSupported()) {
       throw new Error('Browser ini belum mendukung Web Bluetooth API. Gunakan Google Chrome atau Microsoft Edge.');

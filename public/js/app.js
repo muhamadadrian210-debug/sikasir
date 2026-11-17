@@ -1774,6 +1774,10 @@ async function printReceiptThermal(rec) {
 }
 
 function triggerSystemPrint(rec) {
+  // Sembunyikan modal opsi thermal agar tidak menutupi print preview
+  const optionModal = document.getElementById('modal-thermal-option');
+  if (optionModal) optionModal.style.display = 'none';
+
   let printArea = document.getElementById('thermal-print-area');
   if (!printArea) {
     printArea = document.createElement('div');
@@ -1781,7 +1785,11 @@ function triggerSystemPrint(rec) {
     document.body.appendChild(printArea);
   }
   printArea.innerHTML = generateThermalHtml(rec);
-  window.print();
+
+  // Berikan jeda sejenak agar DOM siap, lalu panggil dialog cetak bawaan sistem
+  setTimeout(() => {
+    window.print();
+  }, 60);
 }
 
 function showThermalPrinterOptionModal(rec) {
@@ -1796,45 +1804,35 @@ function showThermalPrinterOptionModal(rec) {
   }
 
   modalEl.innerHTML = `
-    <div class="modal" style="max-width: 440px; width: 100%; padding: 24px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div class="modal" style="max-width: 420px; width: 100%; padding: 24px; text-align: center; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-surface); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
       <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
       </div>
-      <h3 style="margin: 0 0 8px; font-size: 1.18rem; font-weight: 800;">Pilih Metode Cetak Struk</h3>
+      <h3 style="margin: 0 0 8px; font-size: 1.18rem; font-weight: 800;">Cetak Struk Thermal</h3>
       <p style="margin: 0 0 18px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.5;">
-        Pilih jalur cetak yang sesuai dengan perangkat dan printer thermal Anda:
+        Cetak langsung ke printer kasir tanpa perlu instal aplikasi tambahan:
       </p>
       
       <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
-        <button type="button" class="btn btn-primary" id="btn-print-rawbt" style="padding: 12px; font-weight: 700; display:flex; flex-direction:column; align-items:flex-start; gap:3px;">
+        <button type="button" class="btn btn-primary" id="btn-connect-and-print-bt" style="padding: 13px; font-weight: 700; display:flex; flex-direction:column; align-items:flex-start; gap:3px;">
           <div style="display:flex; align-items:center; gap:8px; font-size:0.92rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-            <span>Cetak Cepat via RawBT (Direkomendasikan HP)</span>
-          </div>
-          <span style="font-size:0.73rem; opacity:0.85; font-weight:normal;">Untuk printer Bluetooth/USB yang sudah terhubung di Bluetooth Android.</span>
-        </button>
-
-        <button type="button" class="btn btn-secondary" id="btn-connect-and-print-bt" style="padding: 11px; font-weight: 600; display:flex; flex-direction:column; align-items:flex-start; gap:3px;">
-          <div style="display:flex; align-items:center; gap:8px; font-size:0.88rem;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-            <span>Cetak via Direct Web Bluetooth (Chrome BLE)</span>
+            <span>Cetak Langsung via Bluetooth Thermal</span>
           </div>
-          <span style="font-size:0.73rem; color:var(--text-muted); font-weight:normal;">Pairing langsung dari browser tanpa aplikasi perantara.</span>
+          <span style="font-size:0.73rem; opacity:0.85; font-weight:normal;">Langsung sambungkan dari browser tanpa aplikasi perantara.</span>
         </button>
 
-        <button type="button" class="btn btn-secondary" id="btn-fallback-system-print" style="padding: 10px; font-size: 0.84rem; text-align:center;">
-          Cetak via Pratinjau Browser (Spooler / PDF)
+        <button type="button" class="btn btn-secondary" id="btn-fallback-system-print" style="padding: 11px; font-size: 0.84rem; display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+          <div style="font-weight:600;">Cetak via Dialog Bawaan HP / Sistem (Spooler)</div>
+          <span style="font-size:0.72rem; color:var(--text-muted);">Gunakan driver printer sistem atau simpan sebagai PDF.</span>
         </button>
       </div>
 
-      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 0.74rem; color: var(--text-muted); text-align: left; line-height: 1.4;">
-        💡 <strong>Tips Printer Bluetooth:</strong> Jika menggunakan HP Android, pastikan aplikasi <strong>RawBT</strong> sudah terpasang dari Play Store agar struk langsung keluar tanpa setup rumit.
-        <div style="margin-top: 4px;">
-          <a href="https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter" target="_blank" rel="noopener" style="color: #10B981; font-weight: 600; text-decoration: underline;">Download RawBT Gratis di Play Store &rarr;</a>
-        </div>
+      <div style="margin-top: 14px; padding: 10px; border-radius: 6px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.74rem; color: var(--text-muted); text-align: left; line-height: 1.4;">
+        ℹ️ <strong>Catatan Bluetooth:</strong> Pastikan <strong>Bluetooth</strong> dan <strong>Lokasi (GPS)</strong> di HP kasir dalam keadaan <strong>AKTIF</strong> agar browser diizinkan memindai printer kasir Anda.
       </div>
 
-      <div style="margin-top: 12px;">
+      <div style="margin-top: 14px;">
         <button type="button" class="btn btn-link" id="btn-cancel-thermal-modal" style="padding: 6px; font-size: 0.8rem; color: var(--text-muted);">
           Batal
         </button>
@@ -1845,14 +1843,6 @@ function showThermalPrinterOptionModal(rec) {
   modalEl.style.display = 'flex';
   modalEl.querySelector('#btn-cancel-thermal-modal').onclick = () => {
     modalEl.style.display = 'none';
-  };
-  modalEl.querySelector('#btn-print-rawbt').onclick = () => {
-    modalEl.style.display = 'none';
-    if (window.thermalPrinter && typeof window.thermalPrinter.printViaRawBt === 'function') {
-      window.thermalPrinter.printViaRawBt(rec);
-    } else {
-      triggerSystemPrint(rec);
-    }
   };
   modalEl.querySelector('#btn-fallback-system-print').onclick = () => {
     modalEl.style.display = 'none';
@@ -1870,18 +1860,19 @@ function showThermalPrinterOptionModal(rec) {
     } catch (err) {
       console.error(err);
       if (err.name !== 'NotFoundError') {
-        alert('Gagal menyambung printer Bluetooth: ' + (err.message || 'Dibatalkan'));
+        alert('Gagal menyambung printer Bluetooth: ' + (err.message || 'Dibatalkan') + '\n\nTips: Pastikan Bluetooth & Lokasi (GPS) di HP aktif.');
       }
       btn.disabled = false;
       btn.innerHTML = `
-        <div style="display:flex; align-items:center; gap:8px; font-size:0.88rem;">
+        <div style="display:flex; align-items:center; gap:8px; font-size:0.92rem;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-          <span>Cetak via Direct Web Bluetooth (Chrome BLE)</span>
+          <span>Cetak Langsung via Bluetooth Thermal</span>
         </div>
-        <span style="font-size:0.73rem; color:var(--text-muted); font-weight:normal;">Pairing langsung dari browser tanpa aplikasi perantara.</span>
+        <span style="font-size:0.73rem; opacity:0.85; font-weight:normal;">Langsung sambungkan dari browser tanpa aplikasi perantara.</span>
       `;
     }
   };
+}
   };
 }
 
@@ -1903,6 +1894,11 @@ function initBluetoothPrinterTopbar() {
   }
 
   window.thermalPrinter.onStatusChange(updateUi);
+
+  // Auto connect jika printer pernah diizinkan sebelumnya
+  if (typeof window.thermalPrinter.tryAutoConnect === 'function') {
+    window.thermalPrinter.tryAutoConnect().catch(() => {});
+  }
 
   btn.onclick = async () => {
     if (window.thermalPrinter.isConnected()) {
